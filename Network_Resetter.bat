@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		8.1.616
+:: Verson:		8.2.633
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -85,6 +85,14 @@ SET CONTINUOUS=0
 
 ::------------Misc Settings------------
 
+:: Auto-Retry                                                   TODO!!!!!!!!!!!
+::  "1" for On, "0" for Off
+:: If the connection fixes fail in regular mode (not
+:: CONTINUOUS), this makes the program continue to attempt
+:: to fix the connection until it either succeeds or the 
+:: program is closed
+SET AUTO_RETRY=0
+
 :: If CONTINUOUS is set to 1, this is how many minutes between
 :: connection tests.
 :: Integers Only! (aka 0,1,2,etc)
@@ -130,6 +138,22 @@ SET START_MINIMIZED=0
 
 
 ::---------Advanced Settings-----------
+
+:: Omit ALL user input                                       TODO!!!!!!!!!!!!!!!!!
+::  "1" for True, "0" for False
+:: Instead of asking the user (you) for varification or to
+:: adjust a setting, this program will assume that all settings
+:: are intentional and will continue with whatever settings are
+:: available.
+:: Situations this effects:
+:: -Failed first connection attempt: Continues with either exit
+::  or retry, depending on what AUTO_RETRY is set to.
+:: -Invalid Network Name: Continues without the NETWORK_RESET fix
+:: -Both fixes disabled: Continues without both fixes. Check 
+::  internet connection only
+:: -About to run on unsupported OS: Continue running without
+::  user varification
+SET OMIT_USER_INPUT=0
 
 :: Try to reset the IP Address
 ::  "1" for True, "0" for False
@@ -218,6 +242,7 @@ CALL :TEST_CONTINUOUS_VAL
 CALL :TEST_OSDETECTOVERRIDE_VAL
 CALL :TEST_USENETWORKRESET
 CALL :TEST_USEIP_VAL
+CALL :TEST_OMITUSERINPUT
 CALL :TEST_FIXES_VALS
 IF %USE_NETWORK_RESET%==1 CALL :DETECT_OS
 IF %USE_NETWORK_RESET%==1 CALL :TEST_NETWORK_NAME
@@ -225,6 +250,7 @@ IF %USE_NETWORK_RESET%==1 CALL :TEST_MINUTES_VAL
 CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 CALL :TEST_STARTMINIMIZED
+CALL :TEST_AUTORETRY_VAL
 
 
 ::Copy to startup folder if set to start when 
@@ -233,6 +259,11 @@ CALL :CHECK_START_AT_LOGON
 
 :: -----------------END INITIALIZE PROGRAM------------------
 
+
+
+:: ------------------TO FIX OR NOT TO FIX-------------------
+IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
+:: ----------------END TO FIX OR NOT TO FIX-----------------
 
 
 :: -------------INITIAL NETWORK CONNECTION TEST-------------
@@ -268,7 +299,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v8.1.616   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v8.2.633   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -315,12 +346,18 @@ IF %DEBUGN%==0 (
 	IF %SHOW_ALL_ALERTS%==1 SET SpecificStatus=
 	SET isWaiting=1
 	CALL :STATS
-	CALL :STATS
-	CALL :STATS
-	CALL :STATS
+	CALL :PINGER
+	CALL :PINGER
+	CALL :PINGER
 	SET isWaiting=0
 	
 	::SECOND TEST
+	SET currently=Testing Internet Connection...[2nd Attempt]
+	SET currently2=
+	SET SpecificStatus=
+	SET isWaiting=0
+	CALL :STATS
+	
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
 	
@@ -786,24 +823,24 @@ IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
 :: Get OS name
 VER | FIND "2003" > NUL
-IF %ERRORLEVEL% == 0 GOTO UNSUPPORTED
+IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
 VER | FIND "XP" > NUL
-IF %ERRORLEVEL% == 0 GOTO OLDVER
+IF %ERRORLEVEL% == 0 GOTO :OLDVER
 VER | FIND "2000" > NUL
-IF %ERRORLEVEL% == 0 GOTO UNSUPPORTED
+IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
 VER | FIND "NT" > NUL
-IF %ERRORLEVEL% == 0 GOTO UNSUPPORTED
-for /f "tokens=3*" %%i IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName ^| Find "ProductName"') DO set vers=%%i %%j
-echo %vers% | find "Windows 7" > NUL
-if %ERRORLEVEL% == 0 goto NewVer
-echo %vers% | find "Windows Server 2008" > NUL
-if %ERRORLEVEL% == 0 goto NewVer
-echo %vers% | find "Windows Vista" > NUL
-if %ERRORLEVEL% == 0 goto NewVer
+IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
+FOR /F "tokens=3*" %%i IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName ^| Find "ProductName"') DO set vers=%%i %%j
+ECHO %vers% | find "Windows 7" > NUL
+IF %ERRORLEVEL% == 0 GOTO :NewVer
+ECHO %vers% | find "Windows Server 2008" > NUL
+IF %ERRORLEVEL% == 0 GOTO :NewVer
+ECHO %vers% | find "Windows Vista" > NUL
+IF %ERRORLEVEL% == 0 GOTO :NewVer
 
 
 :UNSUPPORTED
-:: INTERNAL BRANCH (RUN_ON_SUPPORTED || SYSTEM_TOO_OLD)
+:: INTERNAL BRANCH (RUN_ON_SUPPORTED || SYSTEM_UNSUPPORTED)
 SET currently=Operating System is unsupported
 SET currently2=
 SET SpecificStatus=
@@ -816,7 +853,7 @@ VER
 CALL :PINGER
 IF %OS_DETECT_OVERRIDE%==1 GOTO :RUN_ON_UNSUPPORTED
 CALL :PINGER
-GOTO SYSTEM_TOO_OLD
+GOTO :SYSTEM_UNSUPPORTED
 
 :OldVer
 :: RETURN winVistaOrNewer (0)
@@ -840,19 +877,20 @@ GOTO :EOF
 
 
 :RUN_ON_UNSUPPORTED
-:: INTERNAL BRANCH (CONTINUE_RUN_ANYWAY || SYSTEM_TOO_OLD)
+:: INTERNAL BRANCH (CONTINUE_RUN_ANYWAY || SYSTEM_UNSUPPORTED)
 SET currently=Attempting to run on UNSUPPORTED Operating System...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
+IF %OMIT_USER_INPUT%==1 GOTO :CONTINUE_RUN_ANYWAY
 ECHO.
 ECHO.
 ECHO This may cuase unexpected behavior in this program.
 ECHO Are you sure you want to do this?
 SET /P usrInpt=[y/n] 
 IF "%usrInpt%"=="y" GOTO :CONTINUE_RUN_ANYWAY
-IF "%usrInpt%"=="n" GOTO :SYSTEM_TOO_OLD
+IF "%usrInpt%"=="n" GOTO :SYSTEM_UNSUPPORTED
 GOTO :RUN_ON_UNSUPPORTED
 
 :CONTINUE_RUN_ANYWAY
@@ -891,11 +929,13 @@ GOTO :EOF
 
 :DONT_STARTUP
 SET currently=Program is not set to start at user log on.
-SET currently2=Removing copies of self in Startup folder (if any)
+SET currently2=Removing copies of self in Startup folder, if any
 SET SpecificStatus=
 SET isWaiting=0
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
+TYPE NUL > "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
+DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
+
 GOTO :EOF
 :: ------------------END CHECK START AT LOG ON-------------------
 
@@ -1182,12 +1222,66 @@ GOTO :EOF
 :: --------------END TEST START_AT_LOGON VALUE-------------------
 
 
+:TEST_OMITUSERINPUT
+:: ----------------TEST OMIT_USER_INPUT VALUE---------------------
+:: Makes certain OMIT_USER_INPUT has valid value
+:: Sets to 0 if invalid
+
+SET currently=Checking if OMIT_USER_INPUT is a valid answer (0 or 1)...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%OMIT_USER_INPUT%"=="0" GOTO :EOF
+IF "%OMIT_USER_INPUT%"=="1" GOTO :EOF
+SET currently=OMIT_USER_INPUT does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting OMIT_USER_INPUT to "0"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET OMIT_USER_INPUT=0
+GOTO :EOF
+:: --------------END TEST OMIT_USER_INPUT VALUE-------------------
+
+
+
+:TEST_AUTORETRY_VAL
+:: ----------------TEST AUTO_RETRY VALUE---------------------
+:: Makes certain AUTO_RETRY has valid value
+:: Sets to 0 if invalid
+
+SET currently=Checking if AUTO_RETRY is a valid answer (0 or 1)...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%AUTO_RETRY%"=="0" GOTO :EOF
+IF "%AUTO_RETRY%"=="1" GOTO :EOF
+SET currently=AUTO_RETRY does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting AUTO_RETRY to "0"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET AUTO_RETRY=0
+GOTO :EOF
+:: --------------END TEST AUTO_RETRY VALUE-------------------
+
+
 
 :TEST_FIXES_VALS
 :: --------------------TEST FIXES VALUES-------------------------
-:: SAFE BRANCH (RETURN || EXIT)
 :: If fixes are disabled, gives option of enable both
-:: or EXIT
+:: or Continue
 
 SET currently=Checking if values for Fixes are valid...
 SET currently2=
@@ -1198,31 +1292,36 @@ IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF %USE_IP_RESET%==1 GOTO :TEST_FIXES_VALS_OK
 IF %USE_NETWORK_RESET%==1 GOTO :TEST_FIXES_VALS_OK
 
+:TEST_FIXES_VALS_INQUERY
 SET currently=Both fixes are disabled.
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
+IF %OMIT_USER_INPUT%==1 GOTO :TEST_FIXES_VALS_AUTO
 ECHO.
 ECHO.
 ECHO Would you like to temporarily enable both of the fixes?
-ECHO "n" will exit the program.
+ECHO.
+ECHO [ "n" : Run program but check internet connection only ]
+ECHO [ "y" : Enable both fixes ]
 ECHO.
 
 SET /P usrInpt=[y/n] 
-IF "%usrInpt%"=="n" GOTO :TEST_FIXES_VALS_EXIT
+IF "%usrInpt%"=="n" GOTO :TEST_FIXES_VALS_LEAVE
 IF "%usrInpt%"=="y" GOTO :TEST_FIXES_VALS_SET_ENABLE
+GOTO :TEST_FIXES_VALS_INQUERY
 
 
-
-:TEST_FIXES_VALS_EXIT
-SET currently=Both fixes are disabled. This program requires
-SET currently2=at least one fix to be enabled. EXITING...
+:TEST_FIXES_VALS_LEAVE
+SET currently=Both fixes are disabled. This program will not
+SET currently2=fix the connection if it is unconnected.
 SET SpecificStatus=
+SET Using_Fixes=0
 SET isWaiting=0
 CALL :STATS
-CALL :PINGER
-EXIT
+GOTO :EOF
+
 
 :TEST_FIXES_VALS_SET_ENABLE
 SET currently=Setting USE_IP_RESET and USE_NETWORK_RESET to 1
@@ -1233,6 +1332,7 @@ CALL :STATS
 SET isWaiting=0
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET=1
+SET Using_Fixes=1
 SET currently=Checking validity of Settings...
 SET currently2=
 SET SpecificStatus=
@@ -1240,9 +1340,17 @@ SET isWaiting=0
 CALL STATS
 GOTO :EOF
 
+
 :TEST_FIXES_VALS_OK
+SET Using_Fixes=1
+
 GOTO :EOF
 
+
+:TEST_FIXES_VALS_AUTO
+SET Using_Fixes=0
+
+GOTO :EOF
 :: ------------------END TEST FIXES VALUES-----------------------
 
 
@@ -1282,6 +1390,7 @@ SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
+IF %OMIT_USER_INPUT%==1 GOTO :NEED_NETWORK_AUTO
 ECHO.
 ECHO.
 ECHO Would you like to view current network connections?
@@ -1341,12 +1450,22 @@ CALL :STATS
 CALL :STATS
 SET isWaiting=0
 EXIT
+
+:NEED_NETWORK_AUTO
+SET currently=The network was not found. NETWORK_RESET fix
+SET currently2=will be temporarily disabled
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+SET USE_NETWORK_RESET=0
+GOTO :EOF
 :: -------------END PROGRAM NEEDS NETWORK NAME-------------------
 
 
 
 
-:SYSTEM_TOO_OLD
+:SYSTEM_UNSUPPORTED
 :: --------------UNSUPPORTED OPERATING SYSTEM--------------------
 :: EXIT
 SET currently=This Operating System is not currently supported.
@@ -1361,25 +1480,75 @@ EXIT
 
 
 
+:CHECK_CONNECTION_ONLY
+:: ---------CHECK INTERNET CONNECION ONLY (NO FIXES)-------------
+:: SAFE BRANCH (GOTO ( CHECK_CONNECTION_ONLY || EXIT ) )
+SET currently=Set to check connection only
+SET currently2= (will not fix connection if not connected)
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+CALL :TEST
+IF %TEST_Results%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
+GOTO :CHECK_CONNECTION_ONLY_FAIL
+
+:CHECK_CONNECTION_ONLY_SUCCESS
+SET currently=Currently Connected to the Internet. EXITING...
+IF %CONTINUOUS%==1 SET currently=Currently Connected to the Internet.
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY
+EXIT
+
+:CHECK_CONNECTION_ONLY_FAIL
+IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
+SET currently=NOT Connected to the Internet.
+SET currently2=No fixes are set to be used. EXITING...
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+EXIT
+
+:CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
+SET currently=NOT Connected to the Internet.
+SET currently2=Waiting to re-check connection.
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+SET /A delaymins=CHECK_DELAY
+CALL :WAIT
+GOTO :CHECK_CONNECTION_ONLY
+
+:: -------END CHECK INTERNET CONNECION ONLY (NO FIXES)-----------
+
+
 :FAILED
 :: -------------------FIX ATTEMPT FAILED-------------------------
-:: BRANCH (CONTINUOUS_FAIL || FIX || EXIT)
-IF %CONTINUOUS%==1 GOTO :CONTINUOUS_FAIL
+:: BRANCH (FAILED_CONTINUOUS || FIX || EXIT)
+IF %CONTINUOUS%==1 GOTO :FAILED_CONTINUOUS
 SET currently=Unable to Connect to Internet.
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
+IF %AUTO_RETRY%==1 GOTO :FIX
+IF %OMIT_USER_INPUT%==1 EXIT
 ECHO Retry?
 SET /P usrInpt=[y/n] 
 IF "%usrInpt%"=="n" EXIT
 IF "%usrInpt%"=="y" GOTO :FIX
 GOTO :FAILED
+
 :: -----------------END FIX ATTEMPT FAILED-----------------------
 
 
-:CONTINUOUS_FAIL
+:FAILED_CONTINUOUS
 :: ----------------FIX ATTEMPT FAILED (RETRY)--------------------
 :: GOTO FIX
 SET currently=Unable to Connect to Internet (Retrying...)
@@ -1394,9 +1563,9 @@ GOTO :FIX
 
 :SUCCESS
 :: ------------------FIX ATTEMPT SUCCEEDED-----------------------
-:: BRANCH (CONTINUOUS_SUCCESS || EXIT)
+:: BRANCH (SUCCESS_CONTINUOUS || EXIT)
 
-IF %CONTINUOUS%==1 GOTO :CONTINUOUS_SUCCESS
+IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
 SET currently2=
 SET SpecificStatus= 
@@ -1413,7 +1582,7 @@ EXIT
 :: ----------------END FIX ATTEMPT SUCCEEDED---------------------
 
 
-:CONTINUOUS_SUCCESS
+:SUCCESS_CONTINUOUS
 :: -------------FIX ATTEMPT SUCCEEDED (RECHECK)------------------
 :: BRANCH (SUCCESS || FIX)
 SET currently=Successfully Connected to Internet.
