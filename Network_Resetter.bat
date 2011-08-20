@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		6.1.431
+:: Verson:		6.2.435
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -99,14 +99,14 @@ SET CHECK_DELAY=3
 :: important messages
 :: This is mainly for people who like to follow along and see
 :: exactly what the program is doing.
-SET SHOW_ALL_ALERTS=0
+:: This is really only useful if SLWMSG is true.
+SET SHOW_ALL_ALERTS=1
 
 :: Slow Messages
 ::  "1" for True, "0" for False
 :: Program will pause for every message it displays to allow the
-:: user to read them (If SHOW_ALL_ALERTS is true, this value is
-:: set to true, no matter what its value is here)
-SET SLWMSG=1
+:: user to read them
+SET SLWMSG=0
 
 
 :: Override OS Detection
@@ -311,7 +311,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v6.1.431   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.435   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -613,6 +613,11 @@ GOTO :EOF
 
 
 :DETECT_OS
+
+SET currently=Checking if Operating System is supported...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+
 VER | FIND "2003" > NUL
 IF %ERRORLEVEL% == 0 GOTO TOO_OLD
 
@@ -638,16 +643,25 @@ if %ERRORLEVEL% == 0 goto NewVer
 
 
 :TOO_OLD
+SET currently=Operating System is unsupported
+SET currently2=
+CALL :STATS
+VER
+CALL :PINGER
 IF %OS_DETECT_OVERRIDE%==1 GOTO :RUN_ON_UNSUPPORTED
-BREAK
-BREAK
 GOTO SYSTEM_TOO_OLD
 
 :OldVer
+SET currently=Operating System is WindowsXP (supported)
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=0
 GOTO :EOF
 
 :NewVer
+SET currently=Operating System is supported
+SET currently2= (%vers%)
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=1
 GOTO :EOF
 
@@ -769,7 +783,6 @@ SET currently=Checking if SHOW_ALL_ALERTS is a valid answer (0 or 1)...
 SET currently2=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF "%SHOW_ALL_ALERTS%"=="0" GOTO :EOF
-IF "%SHOW_ALL_ALERTS%"=="1" SET SLWMSG=1
 IF "%SHOW_ALL_ALERTS%"=="1" GOTO :EOF
 SET currently=SHOW_ALL_ALERTS does not equal "1" or "0"
 SET currently2=
@@ -852,8 +865,6 @@ SET isWaiting=0
 EXIT
 
 :FAILED
-BREAK
-BREAK
 IF %CONTINUOUS%==1 GOTO :CONTINUOUS_FAIL
 SET currently=Unable to Connect to Internet.
 SET currently2=
@@ -877,8 +888,6 @@ SET isWaiting=0
 GOTO :FIX
 
 :SUCCESS
-BREAK
-BREAK
 IF %CONTINUOUS%==1 GOTO :CONTINUOUS_SUCCESS
 SET currently=Successfully Connected to Internet. EXITING...
 SET currently2=
