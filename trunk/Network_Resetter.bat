@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		6.0.425
+:: Verson:		6.1.431
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -29,6 +29,13 @@
 ::				your network connection, the network connection may still
 ::				be disabled. To fix this, re-run this program.
 ::				You can set MINUTES to 0 for a quick run. 
+::
+::				"This Operating System is not currently supported."
+::				-The only thing you can do in this case is email me
+::				the name of the Operating System and I'll try to add
+::				support for it.
+::				You can bypass the OS detection below in Advanced
+::				Settings, but the program may exhibit unusual behavior.
 ::
 ::				"Could not find <network> | This program requires a valid
 ::				network connection | please open with notpade for more"
@@ -102,6 +109,17 @@ SET SHOW_ALL_ALERTS=0
 SET SLWMSG=1
 
 
+:: Override OS Detection
+::  "1" for True, "0" for False
+:: The only time you would use this is if you are getting a 
+:: "This Operating System is not currently supported" message.
+:: This will force the program to continue running.
+:: WARNING: Running this program on an unsupported OS may cause
+:: this program to not work correctly. 
+SET OS_DETECT_OVERRIDE=0
+
+
+
 :: Programmer Tool - Debugging
 ::  "1" for On, "0" for Off
 :: Debugging mode disables actual functionality of this 
@@ -151,6 +169,7 @@ CALL :TEST_SLWMSG_VAL
 CALL :TEST_SHOWALLALERTS_VAL
 CALL :TEST_DEBUGN_VAL
 CALL :TEST_CONTINUOUS_VAL
+CALL :TEST_OSDETECTOVERRIDE_VAL
 CALL :DETECT_OS
 CALL :TEST_NETWORK_NAME
 CALL :TEST_MINUTES_VAL
@@ -292,7 +311,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v6.0.425   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v6.1.431   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -595,16 +614,16 @@ GOTO :EOF
 
 :DETECT_OS
 VER | FIND "2003" > NUL
-IF %ERRORLEVEL% == 0 GOTO OLDVER
+IF %ERRORLEVEL% == 0 GOTO TOO_OLD
 
 VER | FIND "XP" > NUL
 IF %ERRORLEVEL% == 0 GOTO OLDVER
 
 VER | FIND "2000" > NUL
-IF %ERRORLEVEL% == 0 GOTO OLDVER
+IF %ERRORLEVEL% == 0 GOTO TOO_OLD
 
 VER | FIND "NT" > NUL
-IF %ERRORLEVEL% == 0 GOTO OLDVER
+IF %ERRORLEVEL% == 0 GOTO TOO_OLD
 
 for /f "tokens=3*" %%i IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName ^| Find "ProductName"') DO set vers=%%i %%j
 
@@ -618,6 +637,12 @@ echo %vers% | find "Windows Vista" > NUL
 if %ERRORLEVEL% == 0 goto NewVer
 
 
+:TOO_OLD
+IF %OS_DETECT_OVERRIDE%==1 GOTO :RUN_ON_UNSUPPORTED
+BREAK
+BREAK
+GOTO SYSTEM_TOO_OLD
+
 :OldVer
 SET winVistaOrNewer=0
 GOTO :EOF
@@ -625,6 +650,23 @@ GOTO :EOF
 :NewVer
 SET winVistaOrNewer=1
 GOTO :EOF
+
+
+:RUN_ON_UNSUPPORTED
+SET currently=Attempting to run on UNSUPPORTED Operating System...
+SET currently2=
+SET SpecificStatus=
+CALL :STATS
+ECHO.
+ECHO.
+ECHO This may cuase unexpected behavior in this program.
+ECHO Are you sure you want to do this?
+SET /P usrInpt=[y/n] 
+IF "%usrInpt%"=="y" GOTO :OldVer
+IF "%usrInpt%"=="n" GOTO :SYSTEM_TOO_OLD
+GOTO :RUN_ON_UNSUPPORTED
+
+
 
 
 
@@ -660,8 +702,8 @@ SET currently2=
 CALL :STATS
 SET currently=Setting CONTINUOUS to "0"...
 SET currently2=
-SET CONTINUOUS=0
 CALL :STATS
+SET CONTINUOUS=0
 GOTO :EOF
 
 :TEST_USEIP_VAL
@@ -675,8 +717,8 @@ SET currently2=
 CALL :STATS
 SET currently=Setting USE_IP_RESET to "1"...
 SET currently2=
-SET USE_IP_RESET=1
 CALL :STATS
+SET USE_IP_RESET=1
 GOTO :EOF
 
 :TEST_CHECKDELAY_VAL
@@ -703,8 +745,8 @@ SET currently2=
 CALL :STATS
 SET currently=Setting DEBUGN to "0"...
 SET currently2=
-SET DEBUGN=0
 CALL :STATS
+SET DEBUGN=0
 GOTO :EOF
 
 :TEST_SLWMSG_VAL
@@ -718,8 +760,8 @@ SET currently2=
 CALL :STATS
 SET currently=Setting SLWMSG to "1"...
 SET currently2=
-SET SLWMSG=1
 CALL :STATS
+SET SLWMSG=1
 GOTO :EOF
 
 :TEST_SHOWALLALERTS_VAL
@@ -734,37 +776,63 @@ SET currently2=
 CALL :STATS
 SET currently=Setting SHOW_ALL_ALERTS to "1"...
 SET currently2=
-SET SHOW_ALL_ALERTS=1
 CALL :STATS
+SET SHOW_ALL_ALERTS=1
+GOTO :EOF
+
+:TEST_OSDETECTOVERRIDE_VAL
+SET currently=Checking if OS_DETECT_OVERRIDE is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%OS_DETECT_OVERRIDE%"=="0" GOTO :EOF
+IF "%OS_DETECT_OVERRIDE%"=="1" GOTO :EOF
+SET currently=OS_DETECT_OVERRIDE does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting OS_DETECT_OVERRIDE to "0"...
+SET currently2=
+CALL :STATS
+SET OS_DETECT_OVERRIDE=0
 GOTO :EOF
 
 
 :NEED_NETWORK
-SET currently="%NETWORK%" was not found. 
+SET currently=Could not find "%NETWORK%"
 SET currently2=
 CALL :STATS
+ECHO.
+ECHO.
 ECHO Would you like to view current network connections?
-CHOICE
-IF ERRORLEVEL 2 GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
+SET /P usrInpt=[y/n] 
+IF "%usrInpt%"=="n" GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
+IF "%usrInpt%"=="y" GOTO :DISPLAY_NETWORK_CONNECTIONS
+GOTO :NEED_NETWORK
+:DISPLAY_NETWORK_CONNECTIONS
 SET currently2=Showing Network Connections...
 CALL :STATS
 IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
+CALL :STATS
+ECHO.
+ECHO.
 ECHO Would you like to set the Network Name now?
-CHOICE
-IF ERRORLEVEL 2 GOTO :DONT_SET_NETWORK_NAME
+SET /P usrInpt=[y/n] 
+IF "%usrInpt%"=="n" GOTO :DONT_SET_NETWORK_NAME
+IF "%usrInpt%"=="y" GOTO :SET_NETWORK_NAME
+GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
+
+:SET_NETWORK_NAME
 SET currently2=Opening file to edit Settings...
 CALL :STATS
 IF %DEBUGN%==0 notepad "%THISFILEPATH%"
-
-
+PAUSE
 GOTO :SETTINGS
 
 :DONT_SET_NETWORK_NAME
-SET currently="%NETWORK%" was not found. EXITING...
-SET currently2=
+SET currently=The network was not found. This program requires 
+SET currently2=a valid network name to run. EXITING...
 SET isWaiting=1
 CALL :STATS
 CALL :STATS
@@ -772,32 +840,40 @@ SET isWaiting=0
 EXIT
 
 
+
+:SYSTEM_TOO_OLD
+SET currently=This Operating System is not currently supported.
+SET currently2=EXITING...
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+CALL :STATS
+SET isWaiting=0
+EXIT
+
 :FAILED
 BREAK
 BREAK
 IF %CONTINUOUS%==1 GOTO :CONTINUOUS_FAIL
 SET currently=Unable to Connect to Internet.
 SET currently2=
-SET SpecificStatus= 
+SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 ECHO Retry?
-CHOICE
-IF ERRORLEVEL 2 EXIT
-GOTO :FIX
+SET /P usrInpt=[y/n] 
+IF "%usrInpt%"=="n" EXIT
+IF "%usrInpt%"=="y" GOTO :FIX
+GOTO :FAILED
 
 :CONTINUOUS_FAIL
-SET currently=Unable to Connect to Internet.
+SET currently=Unable to Connect to Internet (Retrying...)
 SET currently2=
 SET SpecificStatus= 
-CALL :STATS
-SET currently2=
-SET currently=Unable to Connect to Internet (Retrying...)
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
-CALL :PINGER
 GOTO :FIX
 
 :SUCCESS
@@ -825,8 +901,7 @@ SET SpecificStatus=
 CALL :STATS
 SET currently=Waiting to re-check Internet Connection...
 SET currently2=
-SET SpecificStatus= 
-BREAK
-SET delaymins=%CHECK_DELAY%
+SET SpecificStatus=
+SET /A delaymins=CHECK_DELAY
 CALL :WAIT
 GOTO :TEST
