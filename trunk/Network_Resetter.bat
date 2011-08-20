@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		7.1.459
+:: Verson:		7.2.463
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -41,7 +41,7 @@
 ::				Settings, but the program may exhibit unusual behavior.
 ::
 ::				"Could not find <network> | This program requires a valid
-::				network connection | please open with notpade for more information"
+::				network connection | please open with notpad for more information"
 ::				-To fix this please correct the NETWORK setting below.
 ::				
 ::				Regardless of what the "Disclaimer" says, this program
@@ -113,7 +113,7 @@ SET SHOW_ALL_ALERTS=1
 SET SLWMSG=0
 
 
-:: Start Program at user logon - NEW!
+:: Start Program at user log on
 ::  "1" for True, "0" for False
 :: When true, the program will start when you log on.
 :: Especially usefull when running in CONTINUOUS Mode.
@@ -126,8 +126,8 @@ SET START_AT_LOGON=0
 :: Start Minimized
 ::  "1" for True, "0" for False
 :: When true, program will minimize itself when its run
-:: This is usefull if you have the program running 
-:: continuously and at startup.
+:: This is especially usefull if you have the program running 
+:: continuously and set to start at user log on.
 SET START_MINIMIZED=0
 
 
@@ -167,6 +167,9 @@ SET DEBUGN=0
 
 :: --------Main Code---------
 
+::Output only what program tells it to with "ECHO"
+@ECHO OFF
+
 :: Restart itself minimized if set to do so
 :: But first check for proper value for 
 :: START_MINIMIZED
@@ -179,8 +182,7 @@ EXIT
 
 :START_PROGRAM
 
-::Output only what program tells it to with "ECHO"
-@ECHO OFF
+
 
 :: Set CMD window size
 MODE CON COLS=81 LINES=30
@@ -214,7 +216,8 @@ CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 
 
-::Copy to startup if set to do so
+::Copy to startup folder if set to start when 
+::user logs on
 CALL :CHECK_START_AT_LOGON
 
 
@@ -358,7 +361,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v7.1.459   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v7.2.463   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -720,11 +723,24 @@ GOTO :RUN_ON_UNSUPPORTED
 
 
 :CHECK_START_AT_LOGON
+SET currently=Checking if set to start at user log on...
+SET currently2=
+SET SpecificStatus=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF %START_AT_LOGON%==0 GOTO :DONT_STARTUP
+
+SET currently=Program is set to start at user log on.
+SET currently2=Copying self to Startup Folder...
+SET SpecificStatus=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 COPY %THISFILENAME% "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
 GOTO :EOF
 
 :DONT_STARTUP
+SET currently=Program is not set to start at user log on.
+SET currently2=Removing copies of self in Startup folder (if any)
+SET SpecificStatus=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
 GOTO :EOF
 
