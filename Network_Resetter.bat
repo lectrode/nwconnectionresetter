@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		10.0.693
+:: Verson:		10.2.732
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -109,6 +109,13 @@ SET CHECK_DELAY=3
 :: see exactly what the program is doing.
 :: This is really only useful if SLWMSG is true.
 SET SHOW_ALL_ALERTS=1
+
+
+:: Show Advanced Testing Output
+::  "1" for True, "0" for False
+:: When true, will show more details reguarding testing 
+:: the internet
+SET SHOW_ADVANCED_TESTING=0
 
 
 :: Slow Messages
@@ -270,6 +277,7 @@ CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 CALL :TEST_STARTMINIMIZED
 CALL :TEST_AUTORETRY_VAL
+CALL :TEST_SHOWADVANCEDTESTING
 
 
 ::Copy to startup folder if set to start when 
@@ -318,7 +326,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v10.0.693  ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v10.2.732  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -354,59 +362,74 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-IF %DEBUGN%==1 GOTO :TEST_FAILED
-	
-SET /A founds=0
-SET /A times=0
-SET /A nots=0
-SET /A totalTests=0
+SET main_tests=0
 
+
+
+:TEST_INIT
+IF %DEBUGN%==1 GOTO :TEST_FAILED
+
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
+SET founds=0
+SET times=0
+SET nots=0
+SET totalTests=0
+SET fluke_test_eliminator=5
+SET fluke_test__total_eliminator=1
+SET testCycle=0
+
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate www.google.com...
 :TEST_TESTING
+SET testCycle+=1
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Cycle %testCycle%
 PING -n 1 www.google.com|FIND "Reply from " >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_FOUND
-PING -n 1 www.google.com|FIND "request could " >NUL
-IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
 PING -n 1 www.google.com|FIND "Request timed" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_TIMED_OUT
+PING -n 1 www.google.com|FIND "request could " >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
 GOTO :TEST_TESTING
 
 
 :TEST_FOUND
-ECHO Found
-SET /A founds+=1
-SET /A times=0
-SET /A nots=0
-SET /A unkn=0
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Found
 SET /A totalTests+=1
-IF %founds% GEQ 5 GOTO :TEST_SUCCEEDED
+SET /A founds+=1
+SET times=0
+SET nots=0
+IF %founds% GEQ %fluke_test_eliminator% GOTO :TEST_SUCCEEDED
 GOTO :TEST_TESTING
 
 
 :TEST_NOT_CONNECTED
-ECHO Not Connected
-SET /A founds=0
-SET /A times=0
-SET /A nots+=1
-SET /A unkn=0
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Not Found
 SET /A totalTests+=1
-IF %nots% GEQ 5 GOTO :TEST_FAILED
+SET /A nots+=1
+SET founds=0
+SET times=0
+IF %nots% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
 GOTO :TEST_TESTING
 
 
 :TEST_TIMED_OUT
-ECHO Timed Out
-SET /A founds=0
-SET /A times+=1
-SET /A nots=0
-SET /A unkn=0
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Timed Out
 SET /A totalTests+=1
-IF %times% GEQ 5 GOTO :TEST_SUCCEEDED
+SET /A times+=1
+SET founds=0
+SET nots=0
+IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_EXCEEDED_TEST_LIMIT
 IF %totalTests% GEQ 15 GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
 
 
 :TEST_FAILED
-:: DEBUGGING || BOTH TESTS FAILED
+:: DEBUGGING || FAILED A TEST
+SET /A main_tests=main_tests+1
+SET /A ttlTestsPlus1=totalTests+1
+IF %main_tests%==1 IF %ttlTestsPlus1% GTR %fluke_test_eliminator% GOTO :TEST_INIT
+
+IF %SLWMSG%==1 CALL :PINGER
+
 SET currently=Internet Connection not detected
 SET currently2=
 SET SpecificStatus=
@@ -418,6 +441,7 @@ SET TEST_Results=0
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
+IF %SLWMSG%==1 CALL :PINGER
 SET TEST_Results=1
 SET currently=Internet Connection detected. However, this is a poor 
 SET currently2=quality connection. Internet browsing may be slow.
@@ -428,6 +452,7 @@ SET isWaiting=0
 GOTO :EOF
 
 :TEST_SUCCEEDED
+IF %SLWMSG%==1 CALL :PINGER
 SET TEST_Results=1
 GOTO :EOF
 :: ----------------END TEST INTERNET CONNECTION-----------------
@@ -512,7 +537,7 @@ SET isWaiting=0
 CALL :STATS
 
 ::Release IP Address
-IF %DEBUGN%==0 IPCONFIG /RELEASE
+IF %DEBUGN%==0 IPCONFIG /RELEASE >NUL
 
 
 ::Flush DNS Cache
@@ -522,7 +547,7 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-IF %DEBUGN%==0 IPCONFIG /FLUSHDNS
+IF %DEBUGN%==0 IPCONFIG /FLUSHDNS >NUL
 
 
 ::Renew IP Address
@@ -582,10 +607,15 @@ GOTO :EOF
 
 
 :PINGER
-:: -------------------PINGER (PROGRAM SLEEP)---------------------
-PING 127.0.0.1 >NUL
+:: ------------------------PROGRAM SLEEP-------------------------
+:: SLEEP
+:: Program sleeps for %1 seconds
+IF "%1"=="" SET pN=3
+IF NOT "%1"=="" SET pN=%1
+PING -n 2 -w 1000 127.0.0.1>NUL
+PING -n %pN% -w 1000 127.0.0.1>NUL
 GOTO :EOF
-:: -----------------END PINGER (PROGRAM SLEEP)-------------------
+:: ------------------------END PROGRAM SLEEP---------------------
 
 
 :WAIT
@@ -1061,7 +1091,7 @@ GOTO :EOF
 :: Makes certain CONTINUOUS has a valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if CONTINUOUS is a valid answer (0 or 1)...
+SET currently=Checking if CONTINUOUS has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1377,6 +1407,35 @@ CALL :STATS
 SET AUTO_RETRY=0
 GOTO :EOF
 :: --------------END TEST AUTO_RETRY VALUE-------------------
+
+
+
+:TEST_SHOWADVANCEDTESTING
+:: ----------------TEST SHOW_ADVANCED_TESTING VALUE---------------------
+:: Makes certain SHOW_ADVANCED_TESTING has valid value
+:: Sets to 0 if invalid
+
+SET currently=Checking if SHOW_ADVANCED_TESTING has 
+SET currently2=a valid value (0 or 1)...
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%SHOW_ADVANCED_TESTING%"=="0" GOTO :EOF
+IF "%SHOW_ADVANCED_TESTING%"=="1" GOTO :EOF
+SET currently=SHOW_ADVANCED_TESTING does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting SHOW_ADVANCED_TESTING to "0"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET SHOW_ADVANCED_TESTING=0
+GOTO :EOF
+:: --------------END TEST SHOW_ADVANCED_TESTING VALUE-------------------
+
 
 
 
