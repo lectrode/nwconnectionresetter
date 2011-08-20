@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		6.2.435
+:: Verson:		6.2.436
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -159,7 +159,7 @@ SET THISFILEPATH=%~0
 ::Display program introduction
 ::Call it twice to last longer
 CALL :PROGRAM_INTRO
-REM CALL :PROGRAM_INTRO
+:: CALL :PROGRAM_INTRO
 
 ::Initial CHECKS
 SET currently=Checking validity of Settings...
@@ -311,7 +311,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.435   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.436   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -354,16 +354,12 @@ SET /A HOURS="(TTLSCNDS/3600)"
 SET /A MINUTES2="(TTLSCNDS-(HOURS*3600))/60"
 SET /A SECONDS="TTLSCNDS-((HOURS*3600)+(MINUTES2*60))"
 
-::Set HOURS to "","##:", or "0#:"
+::Set HOURS to "" or "##:"
 ::(always 2 digits or nothing)
 IF %HOURS%==0 (
 	SET HOURS=
 ) ELSE (
-	IF %HOURS% LEQ 9 (
-		SET HOURS=0%HOURS%:
-	) ELSE (
-		SET HOURS=%HOURS%:
-	)
+	SET HOURS=%HOURS%:
 )
 
 ::Set MINUTES2 to "","##:", "00:", or "0#:"
@@ -376,11 +372,7 @@ IF %MINUTES2%==0 (
 		SET MINUTES2=00:
 	)
 ) ELSE (
-	IF %MINUTES2% LEQ 9 (
-	SET MINUTES2=0%MINUTES2%:
-	) ELSE (
 	SET MINUTES2=%MINUTES2%:
-	)
 )
 
 ::Set SECONDS to "##" or "0#"
@@ -410,11 +402,7 @@ SET /A ticker+=1
 IF %hrs%==0 (
 	SET hrs=
 ) ELSE (
-	IF %hrs% LEQ 9 (
-		SET hrs=0%hrs%:
-	) ELSE (
-		SET hrs=%hrs%:
-	)
+	SET hrs=%hrs%:
 )
 
 ::Set mins to "","##:", "00:", or "0#:"
@@ -427,7 +415,9 @@ IF %mins%==0 (
 		SET mins=00:
 	)
 ) ELSE (
-	IF NOT "%mins%"=="" (
+	IF "%hrs%"=="" (
+		SET mins=%mins%:
+	) ELSE (
 		IF %mins% LEQ 9 (
 			SET mins=0%mins%:
 		) ELSE (
