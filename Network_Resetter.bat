@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		6.3.447
+:: Verson:		7.1.459
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -11,7 +11,10 @@
 ::				Website:	http://electrodexs.net
 ::				Email: 		stevenspchelp@gmail.com
 ::
-:: Notes:		Make sure the settings below are correct BEFORE
+:: Notes:		This is easiest read in a program such as Notepad++
+::				and using the font "Curier New" size 10.
+::				
+::				Make sure the settings below are correct BEFORE
 ::				you run the program. (default settings should be
 ::				good for computers running Vista and Windows 7 and
 ::				using the *DEFAULT* wireless connection)
@@ -45,7 +48,7 @@
 ::				does not change or modify anything "system threatening"
 ::				(aka it's perfectly safe)
 ::				Of course, this cannot be guaranteed if you get this from
-::				anyone other than Lectrode.
+::				anyone other than Lectrode (Steven Hoff).
 ::
 :: Disclaimer:	This program is provided "AS-IS" and the author has no
 ::				responsibility for what may happen to your computer.
@@ -110,6 +113,16 @@ SET SHOW_ALL_ALERTS=1
 SET SLWMSG=0
 
 
+:: Start Program at user logon - NEW!
+::  "1" for True, "0" for False
+:: When true, the program will start when you log on.
+:: Especially usefull when running in CONTINUOUS Mode.
+:: In order for this setting to take effect, you have
+:: to run this program at least up to the point where
+:: it tests your internet connection.
+SET START_AT_LOGON=0
+
+
 :: Start Minimized
 ::  "1" for True, "0" for False
 :: When true, program will minimize itself when its run
@@ -117,11 +130,6 @@ SET SLWMSG=0
 :: continuously and at startup.
 SET START_MINIMIZED=0
 
-
-:: Start Program at user logon
-
-
-:: Enable/Disable use args for settings
 
 
 :: Override OS Detection
@@ -180,6 +188,7 @@ MODE CON COLS=81 LINES=30
 ::Set initial variables
 SET isWaiting=0
 SET THISFILEPATH=%~0
+SET THISFILENAME=%~n0.bat
 
 
 
@@ -202,6 +211,11 @@ CALL :TEST_NETWORK_NAME
 CALL :TEST_MINUTES_VAL
 CALL :TEST_USEIP_VAL
 CALL :TEST_CHECKDELAY_VAL
+CALL :TEST_STARTATLOGON
+
+
+::Copy to startup if set to do so
+CALL :CHECK_START_AT_LOGON
 
 
 ::TEST internet connection
@@ -344,7 +358,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.447   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v7.1.459   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -705,6 +719,16 @@ GOTO :RUN_ON_UNSUPPORTED
 
 
 
+:CHECK_START_AT_LOGON
+IF %START_AT_LOGON%==0 GOTO :DONT_STARTUP
+COPY %THISFILENAME% "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
+GOTO :EOF
+
+:DONT_STARTUP
+DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
+GOTO :EOF
+
+
 
 
 :TEST_NETWORK_NAME
@@ -820,7 +844,7 @@ GOTO :EOF
 :TEST_STARTMINIMIZED
 SET currently=Checking if STARTMINIMIZED is a valid answer (0 or 1)...
 SET currently2=
-IF "%START_MINIMIZED%"=="1" CALL :STATS
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF "%START_MINIMIZED%"=="0" GOTO :EOF
 IF "%START_MINIMIZED%"=="1" GOTO :EOF
 SET currently=START_MINIMIZED does not equal "1" or "0"
@@ -830,6 +854,22 @@ SET currently=Setting START_MINIMIZED to "0"...
 SET currently2=
 CALL :STATS
 SET START_MINIMIZED=0
+GOTO :EOF
+
+
+:TEST_STARTATLOGON
+SET currently=Checking if START_AT_LOGON is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%START_AT_LOGON%"=="0" GOTO :EOF
+IF "%START_AT_LOGON%"=="1" GOTO :EOF
+SET currently=START_AT_LOGON does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting START_AT_LOGON to "0"...
+SET currently2=
+CALL :STATS
+SET START_AT_LOGON=0
 GOTO :EOF
 
 
@@ -880,12 +920,13 @@ GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
 SET currently2=Opening file to edit Settings...
 CALL :STATS
 IF %DEBUGN%==0 notepad "%THISFILEPATH%"
-PAUSE
+
+:PAST_SET_NETWORK_NAME
 GOTO :SETTINGS
 
 :DONT_SET_NETWORK_NAME
 SET currently=The network was not found. This program requires 
-SET currently2=a valid network name to run. EXITING...
+SET currently2=a valid connection name to run. EXITING...
 SET isWaiting=1
 CALL :STATS
 CALL :STATS
@@ -904,6 +945,7 @@ CALL :STATS
 SET isWaiting=0
 EXIT
 
+
 :FAILED
 IF %CONTINUOUS%==1 GOTO :CONTINUOUS_FAIL
 SET currently=Unable to Connect to Internet.
@@ -918,6 +960,7 @@ IF "%usrInpt%"=="n" EXIT
 IF "%usrInpt%"=="y" GOTO :FIX
 GOTO :FAILED
 
+
 :CONTINUOUS_FAIL
 SET currently=Unable to Connect to Internet (Retrying...)
 SET currently2=
@@ -926,6 +969,7 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 GOTO :FIX
+
 
 :SUCCESS
 IF %CONTINUOUS%==1 GOTO :CONTINUOUS_SUCCESS
