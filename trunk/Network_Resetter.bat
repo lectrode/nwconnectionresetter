@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		7.2.463
+:: Verson:		7.3.473
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -48,7 +48,7 @@
 ::				does not change or modify anything "system threatening"
 ::				(aka it's perfectly safe)
 ::				Of course, this cannot be guaranteed if you get this from
-::				anyone other than Lectrode (Steven Hoff).
+::				anyone other than Lectrode.
 ::
 :: Disclaimer:	This program is provided "AS-IS" and the author has no
 ::				responsibility for what may happen to your computer.
@@ -223,6 +223,57 @@ CALL :CHECK_START_AT_LOGON
 
 ::TEST internet connection
 CALL :TEST
+IF %TEST_Results%==1 GOTO :SUCCESS
+GOTO :FIX
+
+
+
+::Display Program Introduction Method
+:PROGRAM_INTRO
+CLS
+ECHO  ******************************************************************************
+ECHO  *                                                                            *
+ECHO  *                  *Settings and documentation on how to use                 *
+ECHO  *                   this program can be accessed via Notepad                 *
+ECHO  *                                                                            *
+ECHO  *                                                                            *
+ECHO  ******************************************************************************
+ECHO.
+ECHO.
+CALL :PINGER
+GOTO :EOF
+
+:STATS
+CLS
+						ECHO  ******************************************************************************
+						ECHO  *      ******   Lectrode's Network Connection Resetter v7.3.473   ******     *
+						ECHO  ******************************************************************************
+IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
+IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*                             *
+						ECHO  *                                                                            *
+						ECHO  * Connection:    "%NETWORK%"
+						ECHO  *                                                                            *
+						ECHO  * Current State: %currently%
+						ECHO  *                %currently2%
+						ECHO  *                                                                            *
+						ECHO  * %SpecificStatus%
+						ECHO  *                                                                            *
+						ECHO  ******************************************************************************
+
+IF "%SLWMSG%"=="1" (
+	CALL :PINGER
+) ELSE (
+	IF "%isWaiting%"=="1" CALL :PINGER
+)
+
+GOTO :EOF
+
+
+
+
+
+
 
 
 ::":FIX" is called if ":TEST" fails
@@ -258,7 +309,7 @@ IF %DEBUGN%==0 IPCONFIG /FLUSHDNS
 
 ::Set & Display Status
 SET currently=Renewing IP Address
-SET currently2=(May get error messages, but you can ignore them)
+SET currently2=(May take a couple minutes)
 CALL :STATS
 
 ::Renew IP Address
@@ -266,6 +317,7 @@ IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
 
 ::TEST internet connection
 CALL :TEST
+IF %TEST_Results%==1 GOTO :SUCCESS
 
 ::If it gets here, Resetting IP didn't fix the problem
 SET currently2=
@@ -298,6 +350,8 @@ CALL :ENABLE_NW
 
 ::TEST internet connection
 CALL :TEST
+IF %TEST_Results%==1 GOTO :SUCCESS
+
 
 ::Calculate Minutes to be displayed
 SET /A mins="TTLSCNDS/60"
@@ -318,9 +372,10 @@ SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 ::First Test
-IF %DEBUGN%==0 (
+IF %DEBUGN%==1 GOTO :SKIP_NET_TEST
+
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
-	IF NOT ERRORLEVEL 1 goto :SUCCESS
+	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
 	::First test failed, wait 12 seconds (enabling adapter takes a while)
 	IF %SHOW_ALL_ALERTS%==1 SET currently=First test failed,
 	IF %SHOW_ALL_ALERTS%==1 SET currently2=waiting a few seconds before trying again.
@@ -330,61 +385,25 @@ IF %DEBUGN%==0 (
 	CALL :STATS
 	::Second Test
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
-	IF NOT ERRORLEVEL 1 goto :SUCCESS
+	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
 	::Second Test failed. 
 	SET isWaiting=0
 	IF %SHOW_ALL_ALERTS%==1 SET currently=Both tests failed.
 	IF %SHOW_ALL_ALERTS%==1 SET currently2=
 	CALL :STATS
-)
+
+:SKIP_NET_TEST
+
 SET isWaiting=0
 SET currently2=
 SET currently=Internet Connection not detected
 CALL :STATS
+SET TEST_Results=0
 GOTO :EOF
 
-::Display Program Introduction Method
-:PROGRAM_INTRO
-CLS
-ECHO  ******************************************************************************
-ECHO  *                                                                            *
-ECHO  *                  *Settings and documentation on how to use                 *
-ECHO  *                   this program can be accessed via Notepad                 *
-ECHO  *                                                                            *
-ECHO  *                                                                            *
-ECHO  ******************************************************************************
-ECHO.
-ECHO.
-CALL :PINGER
+:TEST_SUCCEEDED
+SET TEST_Results=1
 GOTO :EOF
-
-:STATS
-CLS
-						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v7.2.463   ******     *
-						ECHO  ******************************************************************************
-IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
-IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*                             *
-						ECHO  *                                                                            *
-						ECHO  * Connection:    "%NETWORK%"
-						ECHO  *                                                                            *
-						ECHO  * Current State: %currently%
-						ECHO  *                %currently2%
-						ECHO  *                                                                            *
-						ECHO  * %SpecificStatus%
-						ECHO  *                                                                            *
-						ECHO  ******************************************************************************
-
-IF "%SLWMSG%"=="1" (
-	CALL :PINGER
-) ELSE (
-	IF "%isWaiting%"=="1" CALL :PINGER
-)
-
-GOTO :EOF
-
-
 
 
 :PINGER
@@ -692,8 +711,8 @@ IF %OS_DETECT_OVERRIDE%==1 GOTO :RUN_ON_UNSUPPORTED
 GOTO SYSTEM_TOO_OLD
 
 :OldVer
-SET currently=Operating System is WindowsXP (supported)
-SET currently2=
+SET currently=Operating System is supported
+SET currently2=(WindowsXP)
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=0
 GOTO :EOF
@@ -716,9 +735,16 @@ ECHO.
 ECHO This may cuase unexpected behavior in this program.
 ECHO Are you sure you want to do this?
 SET /P usrInpt=[y/n] 
-IF "%usrInpt%"=="y" GOTO :OldVer
+IF "%usrInpt%"=="y" GOTO :CONTINUE_RUN_ANYWAY
 IF "%usrInpt%"=="n" GOTO :SYSTEM_TOO_OLD
 GOTO :RUN_ON_UNSUPPORTED
+
+:CONTINUE_RUN_ANYWAY
+SET currently=Continuing to run program. OS is treated
+SET currently2=as though it were WindowsXP
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+SET winVistaOrNewer=0
+GOTO :EOF
 
 
 
@@ -951,6 +977,7 @@ EXIT
 
 
 
+
 :SYSTEM_TOO_OLD
 SET currently=This Operating System is not currently supported.
 SET currently2=EXITING...
@@ -1013,4 +1040,6 @@ SET currently2=
 SET SpecificStatus=
 SET /A delaymins=CHECK_DELAY
 CALL :WAIT
-GOTO :TEST
+CALL :TEST
+IF %TEST_Results%==1 GOTO :SUCCESS
+GOTO :FIX
