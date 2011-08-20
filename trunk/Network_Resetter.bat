@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		6.2.436
+:: Verson:		6.3.447
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -16,7 +16,7 @@
 ::				good for computers running Vista and Windows 7 and
 ::				using the *DEFAULT* wireless connection)
 ::
-::				If it seems "stuck" on something to do with ipconfig
+::				If it seems stuck on "Resetting IP Address"
 ::				don't worry about it. It should get past it within a 
 ::				few minutes. If it persists longer than 10 minutes,
 ::				email me and I'll help you. If this happens often, you
@@ -38,13 +38,13 @@
 ::				Settings, but the program may exhibit unusual behavior.
 ::
 ::				"Could not find <network> | This program requires a valid
-::				network connection | please open with notpade for more"
+::				network connection | please open with notpade for more information"
 ::				-To fix this please correct the NETWORK setting below.
 ::				
 ::				Regardless of what the "Disclaimer" says, this program
 ::				does not change or modify anything "system threatening"
 ::				(aka it's perfectly safe)
-::				Of course, this can not be guaranteed if you get this from
+::				Of course, this cannot be guaranteed if you get this from
 ::				anyone other than Lectrode.
 ::
 :: Disclaimer:	This program is provided "AS-IS" and the author has no
@@ -63,7 +63,9 @@ SET MINUTES=10
 
 :: Name of the Network to be reset
 :: Network connections on your computer can be found at
-:: Control Panel\Network and Internet\Network Connections
+:: Windows 7:	Control Panel (Large or Small icons) -> Network and Sharing Center -> Change Adapter Settings
+:: Vista:		Control Panel (Classic view) -> Network and Sharing Center -> Manage Network Connections
+:: Windows XP:	Control Panel (Classic view) -> Network Connections
 SET NETWORK=Wireless Network Connection
 
 
@@ -80,10 +82,9 @@ SET CONTINUOUS=0
 
 ::---------Advanced Settings-----------
 
-:: Initially try to reset IP Address
+:: Try to reset the IP Address
 ::  "1" for True, "0" for False
-:: Unless you frequently get an error stating "No operation can be
-:: performed on <network> while it has its media disconnected" you
+:: Unless you frequently get stuck on "Reseting IP address" you
 :: should leave this enabled.
 SET USE_IP_RESET=1
 
@@ -95,18 +96,32 @@ SET CHECK_DELAY=3
 
 :: Show ALL messages, even if they're unimportant
 ::  "1" for True, "0" for False
-:: Regardless of what you set this too, this program will display 
-:: important messages
-:: This is mainly for people who like to follow along and see
-:: exactly what the program is doing.
+:: NOTE: Regardless of what you set this too, this program will 
+:: always display important messages.
+:: This option is mainly for people who like to follow along and
+:: see exactly what the program is doing.
 :: This is really only useful if SLWMSG is true.
 SET SHOW_ALL_ALERTS=1
 
 :: Slow Messages
 ::  "1" for True, "0" for False
-:: Program will pause for every message it displays to allow the
-:: user to read them
+:: When true, program will pause for every message it displays to 
+:: allow the user to read them (run time will be longer)
 SET SLWMSG=0
+
+
+:: Start Minimized
+::  "1" for True, "0" for False
+:: When true, program will minimize itself when its run
+:: This is usefull if you have the program running 
+:: continuously and at startup.
+SET START_MINIMIZED=0
+
+
+:: Start Program at user logon
+
+
+:: Enable/Disable use args for settings
 
 
 :: Override OS Detection
@@ -115,7 +130,7 @@ SET SLWMSG=0
 :: "This Operating System is not currently supported" message.
 :: This will force the program to continue running.
 :: WARNING: Running this program on an unsupported OS may cause
-:: this program to not work correctly. 
+:: this program to exhibit unusual behavior. 
 SET OS_DETECT_OVERRIDE=0
 
 
@@ -143,6 +158,18 @@ SET DEBUGN=0
 
 
 :: --------Main Code---------
+
+:: Restart itself minimized if set to do so
+:: But first check for proper value for 
+:: START_MINIMIZED
+CALL :TEST_STARTMINIMIZED
+IF NOT %START_MINIMIZED%==1 GOTO :START_PROGRAM
+IF NOT "%MINIMIZED%"=="" GOTO :START_PROGRAM
+SET MINIMIZED=TRUE
+START /MIN CMD /C "%~dpnx0"
+EXIT
+
+:START_PROGRAM
 
 ::Output only what program tells it to with "ECHO"
 @ECHO OFF
@@ -218,7 +245,7 @@ SET currently2=(May get error messages, but you can ignore them)
 CALL :STATS
 
 ::Renew IP Address
-IF %DEBUGN%==0 IPCONFIG /RENEW
+IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
 
 ::TEST internet connection
 CALL :TEST
@@ -270,6 +297,7 @@ GOTO :EOF
 :TEST
 SET currently2=
 SET currently=Testing Internet Connection...
+SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 ::First Test
@@ -277,6 +305,8 @@ IF %DEBUGN%==0 (
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 goto :SUCCESS
 	::First test failed, wait 12 seconds (enabling adapter takes a while)
+	IF %SHOW_ALL_ALERTS%==1 SET currently=First test failed,
+	IF %SHOW_ALL_ALERTS%==1 SET currently2=waiting a few seconds before trying again.
 	CALL :STATS
 	CALL :STATS
 	CALL :STATS
@@ -284,8 +314,11 @@ IF %DEBUGN%==0 (
 	::Second Test
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 goto :SUCCESS
-	::Second Test failed. Go back to 
-	::where ":TEST" was called from
+	::Second Test failed. 
+	SET isWaiting=0
+	IF %SHOW_ALL_ALERTS%==1 SET currently=Both tests failed.
+	IF %SHOW_ALL_ALERTS%==1 SET currently2=
+	CALL :STATS
 )
 SET isWaiting=0
 SET currently2=
@@ -298,8 +331,8 @@ GOTO :EOF
 CLS
 ECHO  ******************************************************************************
 ECHO  *                                                                            *
-ECHO  *                                                                            *
-ECHO  *                  *Settings can be changed via Notepad                      *
+ECHO  *                  *Settings and documentation on how to use                 *
+ECHO  *                   this program can be accessed via Notepad                 *
 ECHO  *                                                                            *
 ECHO  *                                                                            *
 ECHO  ******************************************************************************
@@ -311,7 +344,7 @@ GOTO :EOF
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.436   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v6.2.447   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -329,7 +362,7 @@ IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*   
 IF "%SLWMSG%"=="1" (
 	CALL :PINGER
 ) ELSE (
-	IF %isWaiting%==1 CALL :PINGER
+	IF "%isWaiting%"=="1" CALL :PINGER
 )
 
 GOTO :EOF
@@ -782,6 +815,23 @@ SET currently2=
 CALL :STATS
 SET SHOW_ALL_ALERTS=1
 GOTO :EOF
+
+
+:TEST_STARTMINIMIZED
+SET currently=Checking if STARTMINIMIZED is a valid answer (0 or 1)...
+SET currently2=
+IF "%START_MINIMIZED%"=="1" CALL :STATS
+IF "%START_MINIMIZED%"=="0" GOTO :EOF
+IF "%START_MINIMIZED%"=="1" GOTO :EOF
+SET currently=START_MINIMIZED does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting START_MINIMIZED to "0"...
+SET currently2=
+CALL :STATS
+SET START_MINIMIZED=0
+GOTO :EOF
+
 
 :TEST_OSDETECTOVERRIDE_VAL
 SET currently=Checking if OS_DETECT_OVERRIDE is a valid answer (0 or 1)...
