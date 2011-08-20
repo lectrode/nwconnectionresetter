@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		5.1.406
+:: Verson:		6.0.425
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -20,7 +20,7 @@
 ::				don't worry about it. It should get past it within a 
 ::				few minutes. If it persists longer than 10 minutes,
 ::				email me and I'll help you. If this happens often, you
-::				can disable it below under "Settings"
+::				can disable it below under "Advanced Settings"
 ::
 ::				If after running the program it still won't connect, try
 ::				increasing the number of MINUTES to wait.
@@ -29,10 +29,6 @@
 ::				your network connection, the network connection may still
 ::				be disabled. To fix this, re-run this program.
 ::				You can set MINUTES to 0 for a quick run. 
-::
-::				The constant "Pinging 127.0.0.1 with 32 bits of data..."
-::				is normal. It is the only way that this program language
-::				can "sleep" or pause for a few seconds
 ::
 ::				"Could not find <network> | This program requires a valid
 ::				network connection | please open with notpade for more"
@@ -49,12 +45,13 @@
 ::				Use at your own risk.
 
 
-
 :: -----Settings------
+:SETTINGS
 
 :: Number of minutes to wait before re-enabling
 :: the network adapter (5-15 reccomended)
-:: Integers Only! (aka 0,1,2,etc   NOT  "1.5")
+:: Integers Only! (aka 0,1,2,etc)
+:: (anything else will be evaluated as "0")
 SET MINUTES=10
 
 :: Name of the Network to be reset
@@ -64,7 +61,7 @@ SET NETWORK=Wireless Network Connection
 
 
 :: CONTINUOUS MODE - Constant check and run
-::  "1" for True, "0" for false
+::  "1" for On, "0" for Off
 :: Program will constantly run and will check your connection
 :: every few minutes to ensure you are connected. If it 
 :: detects that you have been disconected, it will automatically
@@ -77,7 +74,7 @@ SET CONTINUOUS=0
 ::---------Advanced Settings-----------
 
 :: Initially try to reset IP Address
-::  "1" for True, "0" for false
+::  "1" for True, "0" for False
 :: Unless you frequently get an error stating "No operation can be
 :: performed on <network> while it has its media disconnected" you
 :: should leave this enabled.
@@ -85,7 +82,24 @@ SET USE_IP_RESET=1
 
 :: If CONTINUOUS is set to 1, this is how many minutes between
 :: connection tests.
+:: Integers Only! (aka 0,1,2,etc)
+:: (anything else will be evaluated as "0")
 SET CHECK_DELAY=3
+
+:: Show ALL messages, even if they're unimportant
+::  "1" for True, "0" for False
+:: Regardless of what you set this too, this program will display 
+:: important messages
+:: This is mainly for people who like to follow along and see
+:: exactly what the program is doing.
+SET SHOW_ALL_ALERTS=0
+
+:: Slow Messages
+::  "1" for True, "0" for False
+:: Program will pause for every message it displays to allow the
+:: user to read them (If SHOW_ALL_ALERTS is true, this value is
+:: set to true, no matter what its value is here)
+SET SLWMSG=1
 
 
 :: Programmer Tool - Debugging
@@ -99,8 +113,16 @@ SET DEBUGN=0
 
 
 
-
+:: *****************************************************************
 :: ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
+:: *****************************************************************
+
+
+
+
+
+
+
 
 :: --------Main Code---------
 
@@ -110,22 +132,31 @@ SET DEBUGN=0
 :: Set CMD window size
 MODE CON COLS=81 LINES=30
 
-::Set isWaiting to 0
+::Set initial variables
 SET isWaiting=0
+SET THISFILEPATH=%~0
+
 
 
 ::Display program introduction
-::Called twice to last longer
+::Call it twice to last longer
 CALL :PROGRAM_INTRO
-CALL :PROGRAM_INTRO
+REM CALL :PROGRAM_INTRO
 
 ::Initial CHECKS
 SET currently=Checking validity of Settings...
 SET currently2=
 CALL :STATS
+CALL :TEST_SLWMSG_VAL
+CALL :TEST_SHOWALLALERTS_VAL
+CALL :TEST_DEBUGN_VAL
+CALL :TEST_CONTINUOUS_VAL
 CALL :DETECT_OS
 CALL :TEST_NETWORK_NAME
 CALL :TEST_MINUTES_VAL
+CALL :TEST_USEIP_VAL
+CALL :TEST_CHECKDELAY_VAL
+
 
 ::TEST internet connection
 CALL :TEST
@@ -255,17 +286,17 @@ ECHO  *                                                                         
 ECHO  ******************************************************************************
 ECHO.
 ECHO.
-PING 127.0.0.1
+CALL :PINGER
 GOTO :EOF
 
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v5.0.402   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v6.0.425   ******     *
 						ECHO  ******************************************************************************
-IF %DEBUGN%==1 			ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF %CONTINUOUS%==1 		ECHO  *                                                                            *
-IF %CONTINUOUS%==1 		ECHO  *                              *Continuous Mode*                             *
+IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
+IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*                             *
 						ECHO  *                                                                            *
 						ECHO  * Connection:    "%NETWORK%"
 						ECHO  *                                                                            *
@@ -276,9 +307,8 @@ IF %CONTINUOUS%==1 		ECHO  *                              *Continuous Mode*     
 						ECHO  *                                                                            *
 						ECHO  ******************************************************************************
 
-IF %DEBUGN%==1 (
+IF "%SLWMSG%"=="1" (
 	CALL :PINGER
-	ECHO Debugn On
 ) ELSE (
 	IF %isWaiting%==1 CALL :PINGER
 )
@@ -289,7 +319,7 @@ GOTO :EOF
 
 
 :PINGER
-PING 127.0.0.1
+PING 127.0.0.1 >NUL
 GOTO :EOF
 
 :WAIT
@@ -412,11 +442,8 @@ CALL :STATS
 ::DETECT_OS sets winVistaOrNewer to 1 or 0
 CALL :DETECT_OS
 
-
-IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE|FIND "name is not registered " >NUL
-IF NOT ERRORLEVEL 1 GOTO :INTERFACE_NOT_FOUND
-
-
+CALL :TEST_NETWORK_NAME
+IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :DISABLE_OLD_OS
 SET currently2=
 SET currently="%NETWORK%" Disabled
@@ -433,7 +460,7 @@ CALL :STATS
 ::DETECT_OS sets winVistaOrNewer to 1 or 0
 CALL :DETECT_OS
 
-
+CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :ENABLE_OLD_OS
 
@@ -498,8 +525,9 @@ ECHO wscript.sleep 2000 >>DisableNetwork.vbs
 ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>DisableNetwork.vbs
 ECHO objFSO.DeleteFile WScript.ScriptFullName >>DisableNetwork.vbs
 ECHO Set objFSO = Nothing >>DisableNetwork.vbs
-cscript DisableNetwork.vbs
 @ECHO off
+CALL :STATS
+cscript DisableNetwork.vbs
 GOTO :EOF
 
 
@@ -558,8 +586,9 @@ ECHO wscript.sleep 2000 >>EnableNetwork.vbs
 ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>EnableNetwork.vbs
 ECHO objFSO.DeleteFile WScript.ScriptFullName >>EnableNetwork.vbs
 ECHO Set objFSO = Nothing >>EnableNetwork.vbs
-cscript EnableNetwork.vbs
 @ECHO off
+CALL :STATS
+cscript EnableNetwork.vbs
 GOTO :EOF
 
 
@@ -597,12 +626,116 @@ GOTO :EOF
 SET winVistaOrNewer=1
 GOTO :EOF
 
+
+
 :TEST_NETWORK_NAME
-NETSH INTERFACE SET INTERFACE NAME="%NETWORK%" NEWNAME="%NETWORK%"|FIND "name is not registered " >NUL
-IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
+SET currently=Checking if "%NETWORK%"
+SET currently2=is a valid network connection name...
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORK%" NEWNAME="%NETWORK%"|FIND "name is not registered " >NUL
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
 GOTO :EOF
 
 :TEST_MINUTES_VAL
+SET currently=Checking if MINUTES is a valid number...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%MINUTES%"=="0" GOTO :EOF
+
+SET /a num=MINUTES
+IF "%num%"=="0" SET currently="%MINUTES%" is not a valid answer.
+IF "%num%"=="0" SET currently2=Setting MINUTES to 10...
+IF "%num%"=="0" CALL :STATS
+IF "%num%"=="0" SET MINUTES=10
+GOTO :EOF
+
+:TEST_CONTINUOUS_VAL
+SET currently=Checking if CONTINUOUS is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%CONTINUOUS%"=="0" GOTO :EOF
+IF "%CONTINUOUS%"=="1" GOTO :EOF
+SET currently=CONTINUOUS does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting CONTINUOUS to "0"...
+SET currently2=
+SET CONTINUOUS=0
+CALL :STATS
+GOTO :EOF
+
+:TEST_USEIP_VAL
+SET currently=Checking if USE_IP_RESET is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%USE_IP_RESET%"=="0" GOTO :EOF
+IF "%USE_IP_RESET%"=="1" GOTO :EOF
+SET currently=USE_IP_RESET does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting USE_IP_RESET to "1"...
+SET currently2=
+SET USE_IP_RESET=1
+CALL :STATS
+GOTO :EOF
+
+:TEST_CHECKDELAY_VAL
+SET currently=Checking if CHECK_DELAY is a valid number...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%CHECK_DELAY%"=="0" GOTO :EOF
+
+SET /a num=CHECK_DELAY
+IF "%num%"=="0" SET currently="%CHECK_DELAY%" is not a valid answer.
+IF "%num%"=="0" SET currently2=Setting CHECK_DELAY to 3...
+IF "%num%"=="0" CALL :STATS
+IF "%num%"=="0" SET CHECK_DELAY=3
+GOTO :EOF
+
+:TEST_DEBUGN_VAL
+SET currently=Checking if DEBUGN is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%DEBUGN%"=="0" GOTO :EOF
+IF "%DEBUGN%"=="1" GOTO :EOF
+SET currently=DEBUGN does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting DEBUGN to "0"...
+SET currently2=
+SET DEBUGN=0
+CALL :STATS
+GOTO :EOF
+
+:TEST_SLWMSG_VAL
+SET currently=Checking if SLWMSG is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%SLWMSG%"=="0" GOTO :EOF
+IF "%SLWMSG%"=="1" GOTO :EOF
+SET currently=SLWMSG does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting SLWMSG to "1"...
+SET currently2=
+SET SLWMSG=1
+CALL :STATS
+GOTO :EOF
+
+:TEST_SHOWALLALERTS_VAL
+SET currently=Checking if SHOW_ALL_ALERTS is a valid answer (0 or 1)...
+SET currently2=
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%SHOW_ALL_ALERTS%"=="0" GOTO :EOF
+IF "%SHOW_ALL_ALERTS%"=="1" SET SLWMSG=1
+IF "%SHOW_ALL_ALERTS%"=="1" GOTO :EOF
+SET currently=SHOW_ALL_ALERTS does not equal "1" or "0"
+SET currently2=
+CALL :STATS
+SET currently=Setting SHOW_ALL_ALERTS to "1"...
+SET currently2=
+SET SHOW_ALL_ALERTS=1
+CALL :STATS
 GOTO :EOF
 
 
@@ -613,47 +746,87 @@ CALL :STATS
 ECHO Would you like to view current network connections?
 CHOICE
 IF ERRORLEVEL 2 GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
-%SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
+SET currently2=Showing Network Connections...
+CALL :STATS
+IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
+
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
+ECHO Would you like to set the Network Name now?
+CHOICE
+IF ERRORLEVEL 2 GOTO :DONT_SET_NETWORK_NAME
+SET currently2=Opening file to edit Settings...
+CALL :STATS
+IF %DEBUGN%==0 notepad "%THISFILEPATH%"
 
-pause
-GOTO :EOF
 
+GOTO :SETTINGS
+
+:DONT_SET_NETWORK_NAME
+SET currently="%NETWORK%" was not found. EXITING...
+SET currently2=
+SET isWaiting=1
+CALL :STATS
+CALL :STATS
+SET isWaiting=0
+EXIT
 
 
 :FAILED
+BREAK
+BREAK
+IF %CONTINUOUS%==1 GOTO :CONTINUOUS_FAIL
 SET currently=Unable to Connect to Internet.
 SET currently2=
-IF %winVistaOrNewer%==0 SET currently=Unable to Connect to Internet. Could not 
-IF %winVistaOrNewer%==0 SET currently2=reset network (Unsupported on this system)
 SET SpecificStatus= 
-IF %CONTINUOUS%==1 CALL :STATS
-IF %CONTINUOUS%==1 SET currently2=
-IF %CONTINUOUS%==1 SET currently=Unable to Connect to Internet (Retrying...)
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
-IF %CONTINUOUS%==1 CALL :PINGER
-IF %CONTINUOUS%==1 GOTO :FIX
-SET /P goAgain=Retry? (y or n)
+ECHO Retry?
+CHOICE
+IF ERRORLEVEL 2 EXIT
+GOTO :FIX
 
-IF NOT %goAgain%==y EXIT
+:CONTINUOUS_FAIL
+SET currently=Unable to Connect to Internet.
+SET currently2=
+SET SpecificStatus= 
+CALL :STATS
+SET currently2=
+SET currently=Unable to Connect to Internet (Retrying...)
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+CALL :PINGER
 GOTO :FIX
 
 :SUCCESS
-SET isWaiting=0
+BREAK
+BREAK
+IF %CONTINUOUS%==1 GOTO :CONTINUOUS_SUCCESS
+SET currently=Successfully Connected to Internet. EXITING...
 SET currently2=
-IF %CONTINUOUS%==0 SET currently=Successfully Connected to Internet. EXITING...
-IF %CONTINUOUS%==1 SET currently=Successfully Connected to Internet.
 SET SpecificStatus= 
+SET isWaiting=0
 CALL :STATS
+ECHO.
+ECHO.
+ECHO If you still cannot access the internet, you may need
+ECHO to log into the network via Cisco or a similar program.
 CALL :PINGER
-IF %CONTINUOUS%==1 SET currently=Connected to Internet. Waiting to re-check...
-IF %CONTINUOUS%==1 CALL :STATS
-IF %CONTINUOUS%==1 SET delaymins=%CHECK_DELAY%
-IF %CONTINUOUS%==1 CALL :WAIT
-IF %CONTINUOUS%==1 GOTO :TEST
+CALL :PINGER
 IF %DEBUGN%==1 PAUSE
 EXIT
 
+:CONTINUOUS_SUCCESS
+SET currently=Successfully Connected to Internet.
+SET currently2=
+SET SpecificStatus= 
+CALL :STATS
+SET currently=Waiting to re-check Internet Connection...
+SET currently2=
+SET SpecificStatus= 
+BREAK
+SET delaymins=%CHECK_DELAY%
+CALL :WAIT
+GOTO :TEST
