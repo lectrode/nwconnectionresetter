@@ -1,11 +1,12 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		8.2.633
+:: Verson:		9.0.651
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
-::				2) Disable connection, wait specified time, re-enable connection
+::				2) Reset Network Connection (Quick Reset)
+::				3) Reset Network Connection (Slow Reset)
 ::
 :: Author:		Lectrode 
 ::				Website:	http://electrodexs.net
@@ -62,7 +63,7 @@
 :: the network adapter (5-15 reccomended)
 :: Integers Only! (aka 0,1,2,etc)
 :: (anything else will be evaluated as "0")
-SET MINUTES=10
+SET MINUTES=15
 
 :: Name of the Network to be reset
 :: Network connections on your computer can be found at
@@ -85,7 +86,7 @@ SET CONTINUOUS=0
 
 ::------------Misc Settings------------
 
-:: Auto-Retry                                                   TODO!!!!!!!!!!!
+:: Auto-Retry
 ::  "1" for On, "0" for Off
 :: If the connection fixes fail in regular mode (not
 :: CONTINUOUS), this makes the program continue to attempt
@@ -129,7 +130,7 @@ SET START_AT_LOGON=0
 
 :: Start Minimized
 ::  "1" for True, "0" for False
-:: When true, program will minimize itself when its run
+:: When true, program will minimize itself when it is run
 :: This is especially usefull if you have the program running 
 :: continuously and set to start at user log on.
 SET START_MINIMIZED=0
@@ -139,7 +140,7 @@ SET START_MINIMIZED=0
 
 ::---------Advanced Settings-----------
 
-:: Omit ALL user input                                       TODO!!!!!!!!!!!!!!!!!
+:: Omit ALL user input
 ::  "1" for True, "0" for False
 :: Instead of asking the user (you) for varification or to
 :: adjust a setting, this program will assume that all settings
@@ -148,8 +149,8 @@ SET START_MINIMIZED=0
 :: Situations this effects:
 :: -Failed first connection attempt: Continues with either exit
 ::  or retry, depending on what AUTO_RETRY is set to.
-:: -Invalid Network Name: Continues without the NETWORK_RESET fix
-:: -Both fixes disabled: Continues without both fixes. Check 
+:: -Invalid Network Name: Continues without the NETWORK_RESET fixes
+:: -All fixes disabled: Continues without any fixes. Check 
 ::  internet connection only
 :: -About to run on unsupported OS: Continue running without
 ::  user varification
@@ -161,8 +162,15 @@ SET OMIT_USER_INPUT=0
 :: should leave this enabled.
 SET USE_IP_RESET=1
 
-:: Try to reset the Network Connection
+:: Try to reset the Network Connection (Quick Reset)
 ::  "1" for True, "0" for False
+:: In most cases this should be left enabled.
+SET USE_NETWORK_RESET_FAST=1
+
+:: Try to reset the Network Connection (Slow Reset)
+::  "1" for True, "0" for False
+:: Slow Reset works more often than Quick Reset.
+:: Quick reset it tried first if it is enabled.
 :: In most cases this should be left enabled.
 SET USE_NETWORK_RESET=1
 
@@ -241,12 +249,23 @@ CALL :TEST_DEBUGN_VAL
 CALL :TEST_CONTINUOUS_VAL
 CALL :TEST_OSDETECTOVERRIDE_VAL
 CALL :TEST_USENETWORKRESET
+CALL :TEST_USENETWORKRESETFAST
 CALL :TEST_USEIP_VAL
 CALL :TEST_OMITUSERINPUT
 CALL :TEST_FIXES_VALS
-IF %USE_NETWORK_RESET%==1 CALL :DETECT_OS
-IF %USE_NETWORK_RESET%==1 CALL :TEST_NETWORK_NAME
-IF %USE_NETWORK_RESET%==1 CALL :TEST_MINUTES_VAL
+
+IF %USE_NETWORK_RESET%==1 (
+	CALL :DETECT_OS
+	CALL :TEST_NETWORK_NAME
+	CALL :TEST_MINUTES_VAL
+) ELSE (
+	IF %USE_NETWORK_RESET_FAST%==1 (
+		CALL :DETECT_OS
+		CALL :TEST_NETWORK_NAME
+		CALL :TEST_MINUTES_VAL
+	)
+)
+
 CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 CALL :TEST_STARTMINIMIZED
@@ -299,7 +318,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v8.2.633   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v9.0.651   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -328,7 +347,7 @@ GOTO :EOF
 :: ------------------TEST INTERNET CONNECTION-------------------
 :: RETURN (TEST_Results= (1 || 0) )
 
-SET currently=Testing Internet Connection...
+SET currently=Testing Internet Connection...[1st Test]
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=1
@@ -340,7 +359,7 @@ IF %DEBUGN%==0 (
 	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
 	
-	::First test failed, wait 12 seconds (enabling adapter takes a while)
+	::First test failed, wait 15 seconds (enabling adapter takes a while)
 	IF %SHOW_ALL_ALERTS%==1 SET currently=First test failed,
 	IF %SHOW_ALL_ALERTS%==1 SET currently2=waiting a few seconds before trying again.
 	IF %SHOW_ALL_ALERTS%==1 SET SpecificStatus=
@@ -349,10 +368,11 @@ IF %DEBUGN%==0 (
 	CALL :PINGER
 	CALL :PINGER
 	CALL :PINGER
+	CALL :PINGER
 	SET isWaiting=0
 	
 	::SECOND TEST
-	SET currently=Testing Internet Connection...[2nd Attempt]
+	SET currently=Testing Internet Connection...[2nd Test]
 	SET currently2=
 	SET SpecificStatus=
 	SET isWaiting=0
@@ -410,6 +430,23 @@ IF %USE_IP_RESET%==1 (
 	CALL :STATS
 )
 :: ***END RESET IP ADDRESS***
+
+
+:: *****RESET NETWORK CONNECTION FAST*****
+
+IF %USE_NETWORK_RESET_FAST%==1 (
+	CALL :FIX_RESET_NETWORK_FAST
+	CALL :TEST
+	IF %TEST_Results%==1 GOTO :SUCCESS
+
+	::FIX FAILED
+	SET currently=Quickly reseting the Network Connection
+	SET currently2=did not fix the problem
+	SET SpecificStatus=
+	SET isWaiting=0
+	CALL :STATS
+)
+:: ***END RESET NETWORK CONNECTION***
 
 
 :: *****RESET NETWORK CONNECTION*****
@@ -477,6 +514,18 @@ GOTO :EOF
 :: -----------------END FIX: RESET IP ADDRESS--------------------
 
 
+
+:FIX_RESET_NETWORK_FAST
+:: -------------FIX: RESET NETWORK CONNECTION FAST---------------
+::Disable Network, Enable Network
+CALL :DISABLE_NW
+CALL :ENABLE_NW
+
+:: CANNOT TEST HERE
+:: Checking network connection here causes unecessary recursion 
+
+GOTO :EOF
+:: -----------END FIX: RESET NETWORK CONNECTION FAST-------------
 
 
 
@@ -1013,7 +1062,7 @@ GOTO :EOF
 :: Makes certain USE_NETWORK_RESET has a valid value
 :: Sets to 1 if invalid
 
-SET currently=Checking if USE_NETWORK_RESET is a valid answer (0 or 1)...
+SET currently=Checking if USE_NETWORK_RESET has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1035,12 +1084,39 @@ GOTO :EOF
 :: ---------------END TEST USE_NETWORK_RESET VALUE---------------
 
 
+:TEST_USENETWORKRESETFAST
+:: ---------------TEST USE_NETWORK_RESET_FAST VALUE--------------
+:: Makes certain USE_NETWORK_RESET_FAST has a valid value
+:: Sets to 1 if invalid
+
+SET currently=Checking if USE_NETWORK_RESET_FAST has a valid 
+SET currently2=value (0 or 1)...
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%USE_NETWORK_RESET_FAST%"=="0" GOTO :EOF
+IF "%USE_NETWORK_RESET_FAST%"=="1" GOTO :EOF
+SET currently=USE_NETWORK_RESET_FAST does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting USE_NETWORK_RESET_FAST to "1"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET USE_NETWORK_RESET_FAST=1
+GOTO :EOF
+:: -------------END TEST USE_NETWORK_RESET_FAST VALUE------------
+
+
 :TEST_USEIP_VAL
 :: -------------------TEST USE_IP_RESET VALUE--------------------
 :: Makes certain USE_IP_RESET has valid value
 :: Sets to 1 if invalid
 
-SET currently=Checking if USE_IP_RESET is a valid answer (0 or 1)...
+SET currently=Checking if USE_IP_RESET has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1076,7 +1152,7 @@ IF "%CHECK_DELAY%"=="0" GOTO :EOF
 
 SET /a num=CHECK_DELAY
 IF "%num%"=="0" (
-	SET currently="%CHECK_DELAY%" is not a valid answer.
+	SET currently="%CHECK_DELAY%" is not a valid value.
 	SET currently2=Setting CHECK_DELAY to 3...
 	SET SpecificStatus=
 	SET isWaiting=0
@@ -1092,7 +1168,7 @@ GOTO :EOF
 :: Makes certain DEBUGN has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if DEBUGN is a valid answer (0 or 1)...
+SET currently=Checking if DEBUGN is a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1119,7 +1195,7 @@ GOTO :EOF
 :: Makes certain SLWMSG has valid value
 :: Sets to 1 if invalid
 
-SET currently=Checking if SLWMSG is a valid answer (0 or 1)...
+SET currently=Checking if SLWMSG has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1146,7 +1222,7 @@ GOTO :EOF
 :: Makes certain SHOW_ALL_ALERTS has valid value
 :: Sets to 1 if invalid
 
-SET currently=Checking if SHOW_ALL_ALERTS is a valid answer (0 or 1)...
+SET currently=Checking if SHOW_ALL_ALERTS has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1173,7 +1249,7 @@ GOTO :EOF
 :: Makes certain START_MINIMIZED has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if STARTMINIMIZED is a valid answer (0 or 1)...
+SET currently=Checking if STARTMINIMIZED has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1200,7 +1276,7 @@ GOTO :EOF
 :: Makes certain START_AT_LOGON has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if START_AT_LOGON is a valid answer (0 or 1)...
+SET currently=Checking if START_AT_LOGON has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1227,7 +1303,7 @@ GOTO :EOF
 :: Makes certain OMIT_USER_INPUT has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if OMIT_USER_INPUT is a valid answer (0 or 1)...
+SET currently=Checking if OMIT_USER_INPUT has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1255,7 +1331,7 @@ GOTO :EOF
 :: Makes certain AUTO_RETRY has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if AUTO_RETRY is a valid answer (0 or 1)...
+SET currently=Checking if AUTO_RETRY has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1360,7 +1436,7 @@ GOTO :EOF
 :: Makes certain OS_DETECT_OVERRIDE has valid value
 :: Sets to 0 if invalid
 
-SET currently=Checking if OS_DETECT_OVERRIDE is a valid answer (0 or 1)...
+SET currently=Checking if OS_DETECT_OVERRIDE has a valid value (0 or 1)...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1384,7 +1460,7 @@ GOTO :EOF
 
 :NEED_NETWORK
 :: ---------------PROGRAM NEEDS NETWORK NAME---------------------
-:: EXIT (COMPLETE || RESTART)
+:: GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
 SET currently=Could not find "%NETWORK%"
 SET currently2=
 SET SpecificStatus=
@@ -1452,13 +1528,14 @@ SET isWaiting=0
 EXIT
 
 :NEED_NETWORK_AUTO
-SET currently=The network was not found. NETWORK_RESET fix
+SET currently=The network was not found. NETWORK_RESET fixes
 SET currently2=will be temporarily disabled
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 SET USE_NETWORK_RESET=0
+SET USE_NETWORK_RESET_FAST=0
 GOTO :EOF
 :: -------------END PROGRAM NEEDS NETWORK NAME-------------------
 
