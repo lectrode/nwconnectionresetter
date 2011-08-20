@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		8.0.611
+:: Verson:		8.1.616
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -41,7 +41,7 @@
 ::				Settings, but the program may exhibit unusual behavior.
 ::
 ::				"Could not find <network> | This program requires a valid
-::				network connection | please open with notpad for more information"
+::				network connection | please open with notepad for more information"
 ::				-To fix this please correct the NETWORK setting below.
 ::				
 ::				Regardless of what the "Disclaimer" says, this program
@@ -177,6 +177,8 @@ SET DEBUGN=0
 
 
 :: -------------------Initialize Program--------------------
+
+
 @ECHO OFF
 
 :: Restart itself minimized if set to do so
@@ -189,6 +191,7 @@ IF "%restartingProgram%"=="" (
 		)
 	)
 )
+
 
 :: Set CMD window size
 MODE CON COLS=81 LINES=30
@@ -213,14 +216,16 @@ CALL :TEST_SHOWALLALERTS_VAL
 CALL :TEST_DEBUGN_VAL
 CALL :TEST_CONTINUOUS_VAL
 CALL :TEST_OSDETECTOVERRIDE_VAL
-CALL :DETECT_OS
-CALL :TEST_NETWORK_NAME
-CALL :TEST_MINUTES_VAL
 CALL :TEST_USENETWORKRESET
 CALL :TEST_USEIP_VAL
+CALL :TEST_FIXES_VALS
+IF %USE_NETWORK_RESET%==1 CALL :DETECT_OS
+IF %USE_NETWORK_RESET%==1 CALL :TEST_NETWORK_NAME
+IF %USE_NETWORK_RESET%==1 CALL :TEST_MINUTES_VAL
 CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 CALL :TEST_STARTMINIMIZED
+
 
 ::Copy to startup folder if set to start when 
 ::user logs on
@@ -263,7 +268,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v8.0.611   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v8.1.616   ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -1175,6 +1180,71 @@ CALL :STATS
 SET START_AT_LOGON=0
 GOTO :EOF
 :: --------------END TEST START_AT_LOGON VALUE-------------------
+
+
+
+:TEST_FIXES_VALS
+:: --------------------TEST FIXES VALUES-------------------------
+:: SAFE BRANCH (RETURN || EXIT)
+:: If fixes are disabled, gives option of enable both
+:: or EXIT
+
+SET currently=Checking if values for Fixes are valid...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+
+IF %USE_IP_RESET%==1 GOTO :TEST_FIXES_VALS_OK
+IF %USE_NETWORK_RESET%==1 GOTO :TEST_FIXES_VALS_OK
+
+SET currently=Both fixes are disabled.
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+ECHO.
+ECHO.
+ECHO Would you like to temporarily enable both of the fixes?
+ECHO "n" will exit the program.
+ECHO.
+
+SET /P usrInpt=[y/n] 
+IF "%usrInpt%"=="n" GOTO :TEST_FIXES_VALS_EXIT
+IF "%usrInpt%"=="y" GOTO :TEST_FIXES_VALS_SET_ENABLE
+
+
+
+:TEST_FIXES_VALS_EXIT
+SET currently=Both fixes are disabled. This program requires
+SET currently2=at least one fix to be enabled. EXITING...
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+CALL :PINGER
+EXIT
+
+:TEST_FIXES_VALS_SET_ENABLE
+SET currently=Setting USE_IP_RESET and USE_NETWORK_RESET to 1
+SET currently2=(enabling both fixes)
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET=1
+SET currently=Checking validity of Settings...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL STATS
+GOTO :EOF
+
+:TEST_FIXES_VALS_OK
+GOTO :EOF
+
+:: ------------------END TEST FIXES VALUES-----------------------
+
 
 
 :TEST_OSDETECTOVERRIDE_VAL
