@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		4.4.346
+:: Verson:		5.1.406
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -23,7 +23,7 @@
 ::				can disable it below under "Settings"
 ::
 ::				If after running the program it still won't connect, try
-::				increasing the number of minutes to wait.
+::				increasing the number of MINUTES to wait.
 ::
 ::				If you close the program while it is attempting to fix
 ::				your network connection, the network connection may still
@@ -33,10 +33,16 @@
 ::				The constant "Pinging 127.0.0.1 with 32 bits of data..."
 ::				is normal. It is the only way that this program language
 ::				can "sleep" or pause for a few seconds
+::
+::				"Could not find <network> | This program requires a valid
+::				network connection | please open with notpade for more"
+::				-To fix this please correct the NETWORK setting below.
 ::				
 ::				Regardless of what the "Disclaimer" says, this program
 ::				does not change or modify anything "system threatening"
 ::				(aka it's perfectly safe)
+::				Of course, this can not be guaranteed if you get this from
+::				anyone other than Lectrode.
 ::
 :: Disclaimer:	This program is provided "AS-IS" and the author has no
 ::				responsibility for what may happen to your computer.
@@ -57,6 +63,19 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 
 
+:: CONTINUOUS MODE - Constant check and run
+::  "1" for True, "0" for false
+:: Program will constantly run and will check your connection
+:: every few minutes to ensure you are connected. If it 
+:: detects that you have been disconected, it will automatically
+:: attempt to repair your connection. If attempt fails, it will
+:: keep retrying until it succeeds.
+SET CONTINUOUS=0
+
+
+
+::---------Advanced Settings-----------
+
 :: Initially try to reset IP Address
 ::  "1" for True, "0" for false
 :: Unless you frequently get an error stating "No operation can be
@@ -64,22 +83,13 @@ SET NETWORK=Wireless Network Connection
 :: should leave this enabled.
 SET USE_IP_RESET=1
 
-
-:: CONTINUOUS MODE - Constant check and run (BETA)
-::  "1" for True, "0" for false
-:: Program will constantly run and will check your connection
-:: every few minutes to ensure you are connected. If it 
-:: detects that you have been disconected, it will automatically
-:: attempt to repair your connection. If attempt fails, it will
-:: keep retrying until it succeeds.
-SET CONTINUOUS=1
-
 :: If CONTINUOUS is set to 1, this is how many minutes between
 :: connection tests.
 SET CHECK_DELAY=3
 
+
 :: Programmer Tool - Debugging
-::  "1" for True, "0" for false
+::  "1" for On, "0" for Off
 :: Debugging mode disables actual functionality of this 
 :: program (aka it won't fix your connection when debugging)
 SET DEBUGN=0
@@ -103,16 +113,19 @@ MODE CON COLS=81 LINES=30
 ::Set isWaiting to 0
 SET isWaiting=0
 
-::See what OS the computer is running on
-::If it is running on a compatible OS, continue
-::If not, Display message saying so and continue.
-::TODO
 
-
-::Display program introduction (this is non-interactive program yada yada)
+::Display program introduction
 ::Called twice to last longer
 CALL :PROGRAM_INTRO
 CALL :PROGRAM_INTRO
+
+::Initial CHECKS
+SET currently=Checking validity of Settings...
+SET currently2=
+CALL :STATS
+CALL :DETECT_OS
+CALL :TEST_NETWORK_NAME
+CALL :TEST_MINUTES_VAL
 
 ::TEST internet connection
 CALL :TEST
@@ -209,24 +222,22 @@ SET currently2=
 SET currently=Testing Internet Connection...
 SET isWaiting=1
 CALL :STATS
-SET isWaiting=0
 ::First Test
 IF %DEBUGN%==0 (
-	CALL :STATS
-	CALL :STATS
-	PING -n 1 www.google.com|find "Reply from " >NUL
+	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 goto :SUCCESS
-	::First test failed, wait 12 seconds (bc enabling adapter takes a while)
+	::First test failed, wait 12 seconds (enabling adapter takes a while)
 	CALL :STATS
 	CALL :STATS
 	CALL :STATS
 	CALL :STATS
 	::Second Test
-	PING -n 1 www.google.com|find "Reply from " >NUL
+	PING -n 1 www.google.com|FIND "Reply from " >NUL
 	IF NOT ERRORLEVEL 1 goto :SUCCESS
 	::Second Test failed. Go back to 
 	::where ":TEST" was called from
 )
+SET isWaiting=0
 SET currently2=
 SET currently=Internet Connection not detected
 CALL :STATS
@@ -242,15 +253,15 @@ ECHO  *                  *Settings can be changed via Notepad                   
 ECHO  *                                                                            *
 ECHO  *                                                                            *
 ECHO  ******************************************************************************
-ECHO `
-ECHO `
+ECHO.
+ECHO.
 PING 127.0.0.1
 GOTO :EOF
 
 :STATS
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v4.4.346   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v5.0.402   ******     *
 						ECHO  ******************************************************************************
 IF %DEBUGN%==1 			ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF %CONTINUOUS%==1 		ECHO  *                                                                            *
@@ -264,11 +275,14 @@ IF %CONTINUOUS%==1 		ECHO  *                              *Continuous Mode*     
 						ECHO  * %SpecificStatus%
 						ECHO  *                                                                            *
 						ECHO  ******************************************************************************
+
 IF %DEBUGN%==1 (
-	IF %isWaiting%==0 (
-	PING 127.0.0.1
-	)
+	CALL :PINGER
+	ECHO Debugn On
+) ELSE (
+	IF %isWaiting%==1 CALL :PINGER
 )
+
 GOTO :EOF
 
 
@@ -382,7 +396,6 @@ SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
 
 ::Displays status on screen
 CALL :STATS
-CALL :PINGER
 
 ::Cycle through "WAITING" again if waiting time 
 ::has not been reached
@@ -400,9 +413,11 @@ CALL :STATS
 CALL :DETECT_OS
 
 
-IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
-IF %winVistaOrNewer%==0 IF %DEBUGN%==0 CALL :PINGER
-IF %winVistaOrNewer%==0 GOTO :CantDisable
+IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE|FIND "name is not registered " >NUL
+IF NOT ERRORLEVEL 1 GOTO :INTERFACE_NOT_FOUND
+
+
+IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :DISABLE_OLD_OS
 SET currently2=
 SET currently="%NETWORK%" Disabled
 CALL :STATS
@@ -414,11 +429,140 @@ SET currently2=
 SET currently=Enabling "%NETWORK%"
 SET SpecificStatus= 
 CALL :STATS
-IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
+
+::DETECT_OS sets winVistaOrNewer to 1 or 0
+CALL :DETECT_OS
+
+
+IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
+IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :ENABLE_OLD_OS
+
 SET currently2=
 SET currently="%NETWORK%" Enabled
 CALL :STATS
 GOTO :EOF
+
+
+:DISABLE_OLD_OS
+@ECHO on
+ECHO Const ssfCONTROLS = 3 >>DisableNetwork.vbs
+ECHO sConnectionName = "%NETWORK%" >>DisableNetwork.vbs
+ECHO sEnableVerb = "En&able" >>DisableNetwork.vbs
+ECHO sDisableVerb = "Disa&ble" >>DisableNetwork.vbs
+ECHO set shellApp = createobject("shell.application") >>DisableNetwork.vbs
+ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>DisableNetwork.vbs
+ECHO set oNetConnections = nothing >>DisableNetwork.vbs
+ECHO for each folderitem in oControlPanel.items >>DisableNetwork.vbs
+ECHO   if folderitem.name = "Network Connections" then >>DisableNetwork.vbs
+ECHO         set oNetConnections = folderitem.getfolder: exit for >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO next >>DisableNetwork.vbs
+ECHO if oNetConnections is nothing then >>DisableNetwork.vbs
+ECHO msgbox "Couldn't find 'Network Connections' folder" >>DisableNetwork.vbs
+ECHO wscript.quit >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO set oLanConnection = nothing >>DisableNetwork.vbs
+ECHO for each folderitem in oNetConnections.items >>DisableNetwork.vbs
+ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>DisableNetwork.vbs
+ECHO set oLanConnection = folderitem: exit for >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO next >>DisableNetwork.vbs
+ECHO Dim objFSO >>DisableNetwork.vbs
+ECHO if oLanConnection is nothing then >>DisableNetwork.vbs
+ECHO msgbox "Couldn't find %NETWORK%" >>DisableNetwork.vbs
+ECHO msgbox "This program requires a valid Network Connection name to work properly" >>DisableNetwork.vbs
+ECHO msgbox "Please close the program and open it with notepad for more information" >>DisableNetwork.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>DisableNetwork.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>DisableNetwork.vbs
+ECHO Set objFSO = Nothing >>DisableNetwork.vbs
+ECHO wscript.quit >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO bEnabled = true >>DisableNetwork.vbs
+ECHO set oEnableVerb = nothing >>DisableNetwork.vbs
+ECHO set oDisableVerb = nothing >>DisableNetwork.vbs
+ECHO s = "Verbs: " & vbcrlf >>DisableNetwork.vbs
+ECHO for each verb in oLanConnection.verbs >>DisableNetwork.vbs
+ECHO s = s & vbcrlf & verb.name >>DisableNetwork.vbs
+ECHO if verb.name = sEnableVerb then >>DisableNetwork.vbs
+ECHO set oEnableVerb = verb >>DisableNetwork.vbs
+ECHO bEnabled = false >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO if verb.name = sDisableVerb then >>DisableNetwork.vbs
+ECHO set oDisableVerb = verb >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO next >>DisableNetwork.vbs
+ECHO if bEnabled then >>DisableNetwork.vbs
+ECHO oDisableVerb.DoIt >>DisableNetwork.vbs
+ECHO end if >>DisableNetwork.vbs
+ECHO wscript.sleep 2000 >>DisableNetwork.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>DisableNetwork.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>DisableNetwork.vbs
+ECHO Set objFSO = Nothing >>DisableNetwork.vbs
+cscript DisableNetwork.vbs
+@ECHO off
+GOTO :EOF
+
+
+:ENABLE_OLD_OS
+@ECHO on
+ECHO Const ssfCONTROLS = 3 >>EnableNetwork.vbs
+ECHO sConnectionName = "%NETWORK%" >>EnableNetwork.vbs
+ECHO sEnableVerb = "En&able" >>EnableNetwork.vbs
+ECHO sDisableVerb = "Disa&ble" >>EnableNetwork.vbs
+ECHO set shellApp = createobject("shell.application") >>EnableNetwork.vbs
+ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>EnableNetwork.vbs
+ECHO set oNetConnections = nothing >>EnableNetwork.vbs
+ECHO for each folderitem in oControlPanel.items >>EnableNetwork.vbs
+ECHO   if folderitem.name = "Network Connections" then >>EnableNetwork.vbs
+ECHO         set oNetConnections = folderitem.getfolder: exit for >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO next >>EnableNetwork.vbs
+ECHO if oNetConnections is nothing then >>EnableNetwork.vbs
+ECHO msgbox "Couldn't find 'Network Connections' folder" >>EnableNetwork.vbs
+ECHO wscript.quit >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO set oLanConnection = nothing >>EnableNetwork.vbs
+ECHO for each folderitem in oNetConnections.items >>EnableNetwork.vbs
+ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>EnableNetwork.vbs
+ECHO set oLanConnection = folderitem: exit for >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO next >>EnableNetwork.vbs
+ECHO Dim objFSO >>EnableNetwork.vbs
+ECHO if oLanConnection is nothing then >>EnableNetwork.vbs
+ECHO msgbox "Couldn't find %NETWORK%" >>EnableNetwork.vbs
+ECHO msgbox "This program requires a valid Network Connection name to work properly" >>EnableNetwork.vbs
+ECHO msgbox "Please close the program and open it with notepad for more information" >>EnableNetwork.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>EnableNetwork.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>EnableNetwork.vbs
+ECHO Set objFSO = Nothing >>EnableNetwork.vbs
+ECHO wscript.quit >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO bEnabled = true >>EnableNetwork.vbs
+ECHO set oEnableVerb = nothing >>EnableNetwork.vbs
+ECHO set oDisableVerb = nothing >>EnableNetwork.vbs
+ECHO s = "Verbs: " & vbcrlf >>EnableNetwork.vbs
+ECHO for each verb in oLanConnection.verbs >>EnableNetwork.vbs
+ECHO s = s & vbcrlf & verb.name >>EnableNetwork.vbs
+ECHO if verb.name = sEnableVerb then >>EnableNetwork.vbs
+ECHO set oEnableVerb = verb >>EnableNetwork.vbs
+ECHO bEnabled = false >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO if verb.name = sDisableVerb then >>EnableNetwork.vbs
+ECHO set oDisableVerb = verb >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO next >>EnableNetwork.vbs
+ECHO if bEnabled = false then >>EnableNetwork.vbs
+ECHO oEnableVerb.DoIt >>EnableNetwork.vbs
+ECHO end if >>EnableNetwork.vbs
+ECHO wscript.sleep 2000 >>EnableNetwork.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>EnableNetwork.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>EnableNetwork.vbs
+ECHO Set objFSO = Nothing >>EnableNetwork.vbs
+cscript EnableNetwork.vbs
+@ECHO off
+GOTO :EOF
+
+
 
 :DETECT_OS
 VER | FIND "2003" > NUL
@@ -453,13 +597,28 @@ GOTO :EOF
 SET winVistaOrNewer=1
 GOTO :EOF
 
-:CantDisable
+:TEST_NETWORK_NAME
+NETSH INTERFACE SET INTERFACE NAME="%NETWORK%" NEWNAME="%NETWORK%"|FIND "name is not registered " >NUL
+IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
+GOTO :EOF
+
+:TEST_MINUTES_VAL
+GOTO :EOF
+
+
+:NEED_NETWORK
+SET currently="%NETWORK%" was not found. 
 SET currently2=
-SET currently=Your system does not support this method of fixing.
 CALL :STATS
-IF %DEBUGN%==0 CALL :PINGER
-BREAK
-GOTO :FAILED
+ECHO Would you like to view current network connections?
+CHOICE
+IF ERRORLEVEL 2 GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
+%SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
+
+:DONT_DISPLAY_NETWORK_CONNECTIONS
+
+pause
+GOTO :EOF
 
 
 
@@ -483,6 +642,7 @@ IF NOT %goAgain%==y EXIT
 GOTO :FIX
 
 :SUCCESS
+SET isWaiting=0
 SET currently2=
 IF %CONTINUOUS%==0 SET currently=Successfully Connected to Internet. EXITING...
 IF %CONTINUOUS%==1 SET currently=Successfully Connected to Internet.
