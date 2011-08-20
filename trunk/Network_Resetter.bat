@@ -1,18 +1,15 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		1.0.084
+:: Verson:		2.0.139
 ::
-:: Description:	Fixes network connection by disabling connection, 
-::              waiting specified time, and re-enabling connection.
+:: Description:	Fixes network connection by trying each of the following:
+::				1) Reset IP Address
+::				2) Disable connection, wait specified time, re-enable connection
 ::
 :: Author:		Lectrode (http://electrodexs.net)
 ::
-:: Notes:		This is a "non-interactive" program. This means that this
-::				program is meant to be run and forgot about. It
-::				requires no user input to run. 
-::
-::				Make sure the settings below are correct BEFORE
+:: Notes:		Make sure the settings below are correct BEFORE
 ::				you run the program. (default settings should be
 ::				good for computers running Vista and Windows 7 and
 ::				using the default wireless connection)
@@ -70,6 +67,32 @@ SET DEBUGN=0
 ::Called twice to last longer
 CALL :ProgramIntro
 CALL :ProgramIntro
+
+IF %DEBUGN%==0 CALL :Test
+
+
+:TOP
+
+CALL :MainCodeResetIP
+CALL :MainCodeNetworkReset
+
+GOTO :FAILED
+
+
+
+:MainCodeResetIP
+CALL :ResetIP
+
+IF %DEBUGN%==0 CALL :Test
+
+SET currently=Resetting IP did not fix the problem
+CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
+
+
+GOTO :EOF
+
+:MainCodeNetworkReset
 
 ::calculate number of PINGS
 SET /A PINGS="(MINUTES*60)/3"
@@ -168,6 +191,7 @@ IF %scnds% LEQ 9 SET scnds=0%scnds%
 
 ::Current Status
 SET currently=Waiting to re-enable "%Network%"
+SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES%%SECONDS%
 
 ::Displays status on screen
 CALL :Stats
@@ -182,30 +206,39 @@ IF %ticker% LEQ %PINGS% ( GOTO :WAITING )
 ::Once done waithing, Enable network adapter
 CALL :EnableNW
 
-::If debugging, don't exit program right away
-IF %DEBUGN%==1 ( PAUSE )
 
-::Close program
-EXIT
+IF %DEBUGN%==0 CALL :Test
+
+SET /A MINUTES="TTLSCNDS/60"
+
+SET currently=Waiting %MINUTES% minutes did not fix the problem
+CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
+
+GOTO :EOF
+
+:TEST
+PING -n 1 www.google.com|find "Reply from " >NUL
+IF NOT ERRORLEVEL 1 goto :SUCCESS
+GOTO :EOF
 
 
 :ProgramIntro
 CLS
-ECHO *
-ECHO *
-ECHO *
-ECHO *    *This is a non-interactive program
-ECHO *    *Please open with notepad for more information
-ECHO *
-ECHO *
-ECHO *
+ECHO * 
+ECHO * 
+ECHO * 
+ECHO *       *Settings can be changed via Notepad
+ECHO * 
+ECHO * 
+ECHO * 
 PING 127.0.0.1
 GOTO :EOF
 
 :Stats
 CLS
 ECHO ******************************************************************************
-ECHO *       ******   Lectrode's Network Connection Resetter v1.0.084   ******      *
+ECHO *      ******   Lectrode's Network Connection Resetter v2.0.139   ******     *
 ECHO ******************************************************************************
 IF %DEBUGN%==1 ECHO *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*
 ECHO *
@@ -213,7 +246,7 @@ ECHO * Network Connection: "%NETWORK%"
 ECHO *
 ECHO * Current State: %currently%
 ECHO *
-ECHO * Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES%%SECONDS%
+ECHO * %SpecificStatus%
 ECHO *
 ECHO ******************************************************************************
 GOTO :EOF
@@ -223,6 +256,7 @@ GOTO :EOF
 :DisableNW
 SET currently=Disabling "%Network%"
 CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
 IF %DEBUGN%==0 netsh interface set interface "%NETWORK%" DISABLE
 SET currently="%Network%" Disabled
 CALL :Stats
@@ -237,8 +271,39 @@ GOTO :EOF
 :EnableNW
 SET currently=Enabling "%Network%"
 CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
 IF %DEBUGN%==0 netsh interface set interface "%NETWORK%" ENABLE
 SET currently="%Network%" Enabled
 CALL :Stats
 GOTO :EOF
+
+:ResetIP
+SET currently=Releasing IP Address
+CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
+IF %DEBUGN%==0 IPCONFIG /RELEASE
+SET currently=Flushing DNS Cache
+CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
+IF %DEBUGN%==0 IPCONFIG /FLUSHDNS
+SET currently=Renewing IP Address
+CALL :Stats
+IF %DEBUGN%==1 CALL :Pinger
+IF %DEBUGN%==0 IPCONFIG /RENEW
+GOTO :EOF
+
+:FAILED
+SET currently=Unable to Connect to Internet.
+CALL :Stats
+REM CALL :Pinger
+SET /P goAgain=Retry? (y or n)
+IF NOT %goAgain%==y EXIT
+GOTO :TOP
+
+:SUCCESS
+SET currently=Successfully Connected to Internet. EXITING...
+CALL :Stats
+CALL :Pinger
+IF %DEBUGN%==1 PAUSE
+EXIT
 
