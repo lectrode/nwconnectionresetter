@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		9.0.651
+:: Verson:		10.0.693
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -63,7 +63,7 @@
 :: the network adapter (5-15 reccomended)
 :: Integers Only! (aka 0,1,2,etc)
 :: (anything else will be evaluated as "0")
-SET MINUTES=15
+SET MINUTES=10
 
 :: Name of the Network to be reset
 :: Network connections on your computer can be found at
@@ -318,7 +318,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v9.0.651   ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v10.0.693  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -347,49 +347,65 @@ GOTO :EOF
 :: ------------------TEST INTERNET CONNECTION-------------------
 :: RETURN (TEST_Results= (1 || 0) )
 
-SET currently=Testing Internet Connection...[1st Test]
+SET currently=Testing Internet Connection...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-IF %DEBUGN%==0 (
-	::FIRST TEST
-	PING -n 1 www.google.com|FIND "Reply from " >NUL
-	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
+IF %DEBUGN%==1 GOTO :TEST_FAILED
 	
-	::First test failed, wait 15 seconds (enabling adapter takes a while)
-	IF %SHOW_ALL_ALERTS%==1 SET currently=First test failed,
-	IF %SHOW_ALL_ALERTS%==1 SET currently2=waiting a few seconds before trying again.
-	IF %SHOW_ALL_ALERTS%==1 SET SpecificStatus=
-	SET isWaiting=1
-	CALL :STATS
-	CALL :PINGER
-	CALL :PINGER
-	CALL :PINGER
-	CALL :PINGER
-	SET isWaiting=0
-	
-	::SECOND TEST
-	SET currently=Testing Internet Connection...[2nd Test]
-	SET currently2=
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	
-	PING -n 1 www.google.com|FIND "Reply from " >NUL
-	IF NOT ERRORLEVEL 1 GOTO :TEST_SUCCEEDED
-	
-	
-	::Second Test failed. 
-	IF %SHOW_ALL_ALERTS%==1 SET currently=Both tests failed.
-	IF %SHOW_ALL_ALERTS%==1 SET currently2=
-	IF %SHOW_ALL_ALERTS%==1 SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-)
+SET /A founds=0
+SET /A times=0
+SET /A nots=0
+SET /A totalTests=0
 
+:TEST_TESTING
+PING -n 1 www.google.com|FIND "Reply from " >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_FOUND
+PING -n 1 www.google.com|FIND "request could " >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
+PING -n 1 www.google.com|FIND "Request timed" >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_TIMED_OUT
+GOTO :TEST_TESTING
+
+
+:TEST_FOUND
+ECHO Found
+SET /A founds+=1
+SET /A times=0
+SET /A nots=0
+SET /A unkn=0
+SET /A totalTests+=1
+IF %founds% GEQ 5 GOTO :TEST_SUCCEEDED
+GOTO :TEST_TESTING
+
+
+:TEST_NOT_CONNECTED
+ECHO Not Connected
+SET /A founds=0
+SET /A times=0
+SET /A nots+=1
+SET /A unkn=0
+SET /A totalTests+=1
+IF %nots% GEQ 5 GOTO :TEST_FAILED
+GOTO :TEST_TESTING
+
+
+:TEST_TIMED_OUT
+ECHO Timed Out
+SET /A founds=0
+SET /A times+=1
+SET /A nots=0
+SET /A unkn=0
+SET /A totalTests+=1
+IF %times% GEQ 5 GOTO :TEST_SUCCEEDED
+IF %totalTests% GEQ 15 GOTO :TEST_EXCEEDED_TEST_LIMIT
+GOTO :TEST_TESTING
+
+
+:TEST_FAILED
 :: DEBUGGING || BOTH TESTS FAILED
 SET currently=Internet Connection not detected
 SET currently2=
@@ -399,6 +415,16 @@ SET isWaiting=0
 CALL :STATS
 
 SET TEST_Results=0
+GOTO :EOF
+
+:TEST_EXCEEDED_TEST_LIMIT
+SET TEST_Results=1
+SET currently=Internet Connection detected. However, this is a poor 
+SET currently2=quality connection. Internet browsing may be slow.
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
 GOTO :EOF
 
 :TEST_SUCCEEDED
