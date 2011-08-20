@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		2.0.139
+:: Verson:		3.1.251
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -36,13 +36,26 @@
 :: Number of minutes to wait before re-enabling
 :: the network adapter (5-15 reccomended)
 :: Integers Only! (aka "0" or "1"   NOT  "1.5")
-SET MINUTES=10
+SET MINUTES=15
 
 :: Name of the Network to be reset
 :: Network connections on your computer can be found at
 :: Control Panel\Network and Internet\Network Connections
 SET NETWORK=Wireless Network Connection
 
+
+:: CONTINUOUS MODE - Constant check and run (BETA)
+::  "1" for True, "0" for false
+:: Program will constantly run and will check your connection
+:: every few minutes to ensure you are connected. If it 
+:: detects that you have been disconected, it will automatically
+:: attempt to repair your connection. If attempt fails, it will
+:: keep retrying until it succeeds.
+SET CONTINUOUS=1
+
+:: If CONTINUOUS is set to 1, this is how many minutes between
+:: connection tests.
+SET CHECKDELAY=3
 
 :: Programmer Tool - Debugging
 ::  "1" for True, "0" for false
@@ -63,39 +76,168 @@ SET DEBUGN=0
 ::Output only what program tells it to with "ECHO"
 @echo off
 
+:: Set CMD window size
+mode con cols=81 lines=30
+
 ::Display program introduction (this is non-interactive program yada yada)
 ::Called twice to last longer
 CALL :ProgramIntro
 CALL :ProgramIntro
 
+::Test internet connection
+::(called only if not Debugging)
 IF %DEBUGN%==0 CALL :Test
 
 
-:TOP
+::":FIX" is called if ":Test" fails
+:FIX
 
+::Call the fix methods
+::Each mothod calls ":Test" after it runs
 CALL :MainCodeResetIP
 CALL :MainCodeNetworkReset
 
+::If it gets here, none of the fixes above worked
 GOTO :FAILED
 
 
-
+::MainCodeResetIP method
 :MainCodeResetIP
-CALL :ResetIP
 
+::Set & Display Status
+SET currently=Releasing IP Address
+CALL :Stats
+
+::Release IP Address
+IF %DEBUGN%==0 IPCONFIG /RELEASE
+
+::Set & Display Status
+SET currently=Flushing DNS Cache
+CALL :Stats
+
+::Flush DNS Cache
+IF %DEBUGN%==0 IPCONFIG /FLUSHDNS
+
+::Set & Display Status
+SET currently=Renewing IP Address
+CALL :Stats
+
+::Renew IP Address
+IF %DEBUGN%==0 IPCONFIG /RENEW
+
+::Test internet connection
+::(called only if not Debugging)
 IF %DEBUGN%==0 CALL :Test
 
+::If it gets here, Resetting IP didn't fix the problem
 SET currently=Resetting IP did not fix the problem
 CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
 
-
+::End of MainCodeResetIP method
 GOTO :EOF
 
+
+
+::Method for Network Connection Reset
 :MainCodeNetworkReset
 
+::Disable network connection
+CALL :DisableNW
+
+::Set and Display status
+SET currently=Waiting to re-enable "%Network%"
+CALL :Stats
+
+::Cycle through updating time until limit is reached
+::limit is stored in delaymins
+SET delaymins=%MINUTES%
+CALL :WAIT
+
+::Once done waithing, Enable network connection
+CALL :EnableNW
+
+::Test internet connection
+::(called only if not Debugging)
+IF %DEBUGN%==0 CALL :Test
+
+::Calculate Minutes to be displayed
+SET /A MINUTES="TTLSCNDS/60"
+
+::Set and Display Status
+SET currently=Waiting %MINUTES% minutes did not fix the problem
+CALL :Stats
+
+::END of Network Reset Method
+GOTO :EOF
+
+:: ":Test" Method
+:TEST
+::First Test
+PING -n 1 www.google.com|find "Reply from " >NUL
+IF NOT ERRORLEVEL 1 goto :SUCCESS
+::First test failed, wait 3 seconds
+CALL :Pinger
+::Second Test
+PING -n 1 www.google.com|find "Reply from " >NUL
+IF NOT ERRORLEVEL 1 goto :SUCCESS
+::Second Test failed. Go back to 
+::where ":Test" was called from
+GOTO :EOF
+
+::Display Program Introduction Method
+:ProgramIntro
+CLS
+ECHO  ******************************************************************************
+ECHO  *                                                                            *
+ECHO  *                                                                            *
+ECHO  *                  *Settings can be changed via Notepad                      *
+ECHO  *                                                                            *
+ECHO  *                                                                            *
+ECHO  ******************************************************************************
+ECHO `
+ECHO `
+PING 127.0.0.1
+GOTO :EOF
+
+:Stats
+CLS
+					ECHO  ******************************************************************************
+					ECHO  *      ******   Lectrode's Network Connection Resetter v3.1.251   ******     *
+					ECHO  ******************************************************************************
+IF %DEBUGN%==1 		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+IF %CONTINUOUS%==1 	ECHO  *                                                                            *
+IF %CONTINUOUS%==1 	ECHO  *                              *Continuous Mode*                             *
+					ECHO  *                                                                            *
+					ECHO  * Connection:    "%NETWORK%"
+					ECHO  *                                                                            *
+					ECHO  * Current State: %currently%
+					ECHO  *                                                                            *
+					ECHO  * %SpecificStatus%
+					ECHO  *                                                                            *
+					ECHO  ******************************************************************************
+IF %DEBUGN%==1 CALL :Pinger
+GOTO :EOF
+
+
+
+:DisableNW
+SET currently=Disabling "%Network%"
+CALL :Stats
+
+IF %DEBUGN%==0 netsh interface set interface "%NETWORK%" DISABLE
+SET currently="%Network%" Disabled
+CALL :Stats
+GOTO :EOF
+
+
+:Pinger
+PING 127.0.0.1
+GOTO :EOF
+
+:WAIT
+
 ::calculate number of PINGS
-SET /A PINGS="(MINUTES*60)/3"
+SET /A PINGS="(delaymins*60)/3"
 
 ::Calculate total time
 SET /A TTLSCNDS="PINGS*3"
@@ -140,10 +282,8 @@ IF %SECONDS% LEQ 9 SET SECONDS=0%SECONDS%
 ::Set Ticker to 0
 SET ticker=0
 
-::Disable network connection
-CALL :DisableNW
+SET /A PINGS="delaymins*60/3"
 
-::Cycle through updating time until limit is reached
 :WAITING
 ::Set "Time left"
 SET /A left="PINGS-ticker"
@@ -189,8 +329,7 @@ IF %mins%==0 (
 ::(always 2 digits)
 IF %scnds% LEQ 9 SET scnds=0%scnds%
 
-::Current Status
-SET currently=Waiting to re-enable "%Network%"
+::Update TimeStamp
 SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES%%SECONDS%
 
 ::Displays status on screen
@@ -202,108 +341,43 @@ CALL :Pinger
 ::Cycle through "WAITING" again if waiting time 
 ::has not been reached
 IF %ticker% LEQ %PINGS% ( GOTO :WAITING )
-
-::Once done waithing, Enable network adapter
-CALL :EnableNW
-
-
-IF %DEBUGN%==0 CALL :Test
-
-SET /A MINUTES="TTLSCNDS/60"
-
-SET currently=Waiting %MINUTES% minutes did not fix the problem
-CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
-
-GOTO :EOF
-
-:TEST
-PING -n 1 www.google.com|find "Reply from " >NUL
-IF NOT ERRORLEVEL 1 goto :SUCCESS
-GOTO :EOF
-
-
-:ProgramIntro
-CLS
-ECHO * 
-ECHO * 
-ECHO * 
-ECHO *       *Settings can be changed via Notepad
-ECHO * 
-ECHO * 
-ECHO * 
-PING 127.0.0.1
-GOTO :EOF
-
-:Stats
-CLS
-ECHO ******************************************************************************
-ECHO *      ******   Lectrode's Network Connection Resetter v2.0.139   ******     *
-ECHO ******************************************************************************
-IF %DEBUGN%==1 ECHO *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*
-ECHO *
-ECHO * Network Connection: "%NETWORK%"
-ECHO *
-ECHO * Current State: %currently%
-ECHO *
-ECHO * %SpecificStatus%
-ECHO *
-ECHO ******************************************************************************
-GOTO :EOF
-
-
-
-:DisableNW
-SET currently=Disabling "%Network%"
-CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
-IF %DEBUGN%==0 netsh interface set interface "%NETWORK%" DISABLE
-SET currently="%Network%" Disabled
-CALL :Stats
-GOTO :EOF
-
-
-:Pinger
-PING 127.0.0.1
 GOTO :EOF
 
 
 :EnableNW
 SET currently=Enabling "%Network%"
+SET SpecificStatus= 
 CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
+
 IF %DEBUGN%==0 netsh interface set interface "%NETWORK%" ENABLE
 SET currently="%Network%" Enabled
 CALL :Stats
 GOTO :EOF
 
-:ResetIP
-SET currently=Releasing IP Address
-CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
-IF %DEBUGN%==0 IPCONFIG /RELEASE
-SET currently=Flushing DNS Cache
-CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
-IF %DEBUGN%==0 IPCONFIG /FLUSHDNS
-SET currently=Renewing IP Address
-CALL :Stats
-IF %DEBUGN%==1 CALL :Pinger
-IF %DEBUGN%==0 IPCONFIG /RENEW
-GOTO :EOF
+
 
 :FAILED
 SET currently=Unable to Connect to Internet.
+SET SpecificStatus= 
+IF %CONTINUOUS%==1 SET currently=Unable to Connect to Internet (Retrying...)
 CALL :Stats
-REM CALL :Pinger
+IF %CONTINUOUS%==1 CALL :Pinger
+IF %CONTINUOUS%==1 GOTO :FIX
 SET /P goAgain=Retry? (y or n)
 IF NOT %goAgain%==y EXIT
-GOTO :TOP
+GOTO :FIX
 
 :SUCCESS
-SET currently=Successfully Connected to Internet. EXITING...
+IF %CONTINUOUS%==0 SET currently=Successfully Connected to Internet. EXITING...
+IF %CONTINUOUS%==1 SET currently=Successfully Connected to Internet.
+SET SpecificStatus= 
 CALL :Stats
 CALL :Pinger
+IF %CONTINUOUS%==1 SET currently=Connected to Internet. Waiting to re-check...
+IF %CONTINUOUS%==1 CALL :Stats
+IF %CONTINUOUS%==1 SET delaymins=%CHECKDELAY%
+IF %CONTINUOUS%==1 CALL :WAIT
+IF %CONTINUOUS%==1 GOTO :TEST
 IF %DEBUGN%==1 PAUSE
 EXIT
 
