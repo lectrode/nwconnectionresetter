@@ -1,11 +1,11 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		11.0.816
+:: Verson:		11.4.901
 ::
 :: Description:	Fixes network connection by trying each of the following:
-::				1) Reset IP Address
-::				2) Reset Network Connection (Quick Reset)
+::				1) Reset Network Connection (Quick Reset)
+::				2) Reset IP Address
 ::				3) Reset Network Connection (Slow Reset)
 ::
 :: Author:		Lectrode 
@@ -98,7 +98,7 @@ SET AUTO_RETRY=0
 :: connection tests.
 :: Integers Only! (aka 0,1,2,etc)
 :: (anything else will be evaluated as "0")
-SET CHECK_DELAY=3
+SET CHECK_DELAY=1
 
 
 :: Show ALL messages, even if they're unimportant
@@ -123,6 +123,13 @@ SET SHOW_ADVANCED_TESTING=0
 :: When true, program will pause for every message it displays to 
 :: allow the user to read them (run time will be longer)
 SET SLWMSG=0
+
+
+:: Timer Refresh Rate (Update every # seconds)
+:: Integers greater than 0 Only! (aka 1,2,3,etc)
+:: (anything else will be evaluated as "1")
+:: (1-10 recommended)
+SET TIMER_REFRESH_RATE=1
 
 
 :: Start Program at user log on
@@ -163,6 +170,12 @@ SET START_MINIMIZED=0
 ::  user varification
 SET OMIT_USER_INPUT=0
 
+:: Skip Initial Network Connection Test
+:: "1" for True, "0" for False
+:: Select this if you want the program to immediately attempt to 
+:: fix your connection without testing the connection first
+SET SKIP_INITIAL_NTWK_TEST=0
+
 :: Try to reset the IP Address
 ::  "1" for True, "0" for False
 :: Unless you frequently get stuck on "Reseting IP address" you
@@ -180,6 +193,13 @@ SET USE_NETWORK_RESET_FAST=1
 :: Quick reset is tried first if it is enabled.
 :: In most cases this should be left enabled.
 SET USE_NETWORK_RESET=1
+
+
+:: Don't test Network Name more than once
+:: "1" for True, "0" for False
+:: Setting to True is ideal on most computers as long as the 
+:: Network Connection name does not change
+SET ONLY_ONE_NETWORK_NAME_TEST=1
 
 
 :: Override OS Detection
@@ -220,11 +240,19 @@ SET DEBUGN=0
 
 @ECHO OFF
 
+:: Restart as administrator
+:: DOES NOT CURRENTLY WORK!!!
+IF "%HasBeenRunAsAdmin%"=="" (
+	SET HasBeenRunAsAdmin=1
+	REM RUNAS /user;admin "%~dpnx0"
+	REM EXIT
+)
+
 :: Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" (
 	IF "%START_MINIMIZED%"=="1" (
 		IF "%MINIMIZED%"=="" (
-			SET MINIMIZED=TRUE
+			SET MINIMIZED=1
 			START /MIN CMD /C "%~dpnx0"
 			EXIT
 		)
@@ -239,6 +267,7 @@ MODE CON COLS=81 LINES=30
 SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET restartingProgram=
+SET has_tested_ntwk_name_recent=0
 
 ::Display program introduction
 ::Call it twice to last longer
@@ -263,21 +292,23 @@ CALL :TEST_FIXES_VALS
 
 IF %USE_NETWORK_RESET%==1 (
 	CALL :DETECT_OS
-	CALL :TEST_NETWORK_NAME
+	CALL :TEST_NETWORK_NAME 1
 	CALL :TEST_MINUTES_VAL
 ) ELSE (
 	IF %USE_NETWORK_RESET_FAST%==1 (
 		CALL :DETECT_OS
-		CALL :TEST_NETWORK_NAME
+		CALL :TEST_NETWORK_NAME 1
 		CALL :TEST_MINUTES_VAL
 	)
 )
-
+CALL :TEST_TIMERREFRESHRATE_VAL
 CALL :TEST_CHECKDELAY_VAL
 CALL :TEST_STARTATLOGON
 CALL :TEST_STARTMINIMIZED
 CALL :TEST_AUTORETRY_VAL
 CALL :TEST_SHOWADVANCEDTESTING
+CALL :TEST_SKIPINITIALNTWKTEST_VAL
+CALL :TEST_ONLYONENETWORKNAMETEST
 
 
 ::Copy to startup folder if set to start when 
@@ -296,6 +327,8 @@ IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
 :: -------------INITIAL NETWORK CONNECTION TEST-------------
 :: BRANCH (SUCCESS || FIX)
 :: Determine if connection needs to be fixed
+
+IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :FIX
 
 CALL :TEST isConnected
 IF %isConnected%==1 GOTO :SUCCESS
@@ -326,7 +359,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v11.0.816  ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v11.4.901  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -359,9 +392,9 @@ SETLOCAL
 SET currently=Testing Internet Connection...
 SET currently2=
 SET SpecificStatus=
-SET isWaiting=1
-CALL :STATS
 SET isWaiting=0
+CALL :STATS
+
 
 SET main_tests=0
 
@@ -395,8 +428,8 @@ GOTO :TEST_TIMED_OUT
 
 
 :TEST_CONNECTED
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Found Connection
 SET /A totalTests+=1
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Found Connection
 SET /A founds+=1
 SET times=0
 SET nots=0
@@ -405,8 +438,8 @@ GOTO :TEST_TESTING
 
 
 :TEST_NOT_CONNECTED
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Did not find Connection
 SET /A totalTests+=1
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Did not find Connection
 SET /A nots+=1
 SET founds=0
 SET times=0
@@ -415,8 +448,8 @@ GOTO :TEST_TESTING
 
 
 :TEST_TIMED_OUT
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Request Timed Out
 SET /A totalTests+=1
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out
 SET /A times+=1
 SET founds=0
 SET nots=0
@@ -442,7 +475,7 @@ GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
 IF %SLWMSG%==1 CALL :PINGER
-IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 2
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
 
 SET currently=Unable to varify internet connectivity. This is a
 SET currently2=poor quality connection. Internet browsing may be slow.
@@ -456,7 +489,7 @@ GOTO :EOF
 
 :TEST_SUCCEEDED
 IF %SLWMSG%==1 CALL :PINGER
-IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
 
 ENDLOCAL&SET %~1=1
 GOTO :EOF
@@ -470,23 +503,6 @@ GOTO :EOF
 :: BRANCH (SUCCESS || FAILED)
 :: Call the different methods of fixing
 :: This allows for different fixes to be added later
-
-
-:: *****RESET IP ADDRESS*****
-IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
-	CALL :FIX_RESET_IP
-	CALL :TEST isConnected
-	IF %isConnected%==1 GOTO :SUCCESS
-	
-	::FIX FAILED
-	SET currently=Resetting IP did not fix the problem
-	SET currently2=
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	
-:END_RESET_IP_MAIN
-:: ***END RESET IP ADDRESS***
 
 
 :: *****RESET NETWORK CONNECTION FAST*****
@@ -504,6 +520,23 @@ IF %USE_NETWORK_RESET_FAST%==0 GOTO :END_RESET_NETORK_FAST_MAIN
 	CALL :STATS
 :END_RESET_NETORK_FAST_MAIN
 :: ***END RESET NETWORK CONNECTION FAST***
+
+
+:: *****RESET IP ADDRESS*****
+IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
+	CALL :FIX_RESET_IP
+	CALL :TEST isConnected
+	IF %isConnected%==1 GOTO :SUCCESS
+	
+	::FIX FAILED
+	SET currently=Resetting IP did not fix the problem
+	SET currently2=
+	SET SpecificStatus=
+	SET isWaiting=0
+	CALL :STATS
+	
+:END_RESET_IP_MAIN
+:: ***END RESET IP ADDRESS***
 
 
 :: *****RESET NETWORK CONNECTION*****
@@ -537,7 +570,7 @@ GOTO :FAILED
 :: Fix internet connection by reseting the IP address
 
 SET currently=Releasing IP Address
-SET currently2=
+SET currently2=*May take a couple minutes*
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -558,7 +591,7 @@ IF %DEBUGN%==0 IPCONFIG /FLUSHDNS >NUL
 
 ::Renew IP Address
 SET currently=Renewing IP Address
-SET currently2=(May take a couple minutes)
+SET currently2=*May take a couple minutes*
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -579,7 +612,7 @@ CALL :DISABLE_NW
 CALL :ENABLE_NW
 
 :: CANNOT TEST HERE
-:: Checking network connection here causes unecessary recursion 
+:: Checking network connection here causes unwanted recursion 
 
 GOTO :EOF
 :: -----------END FIX: RESET NETWORK CONNECTION FAST-------------
@@ -606,7 +639,7 @@ CALL :ENABLE_NW
 
 
 :: CANNOT TEST HERE
-:: Checking network connection here causes unecessary recursion 
+:: Checking network connection here causes unwanted recursion 
 
 GOTO :EOF
 :: -------------END FIX: RESET NETWORK CONNECTION----------------
@@ -631,8 +664,8 @@ SETLOCAL
 :: ******INITIALIZE TIMER*****
 
 ::Calculate total time
-SET /A PINGS="(delaymins*60)/3"
-SET /A TTLSCNDS="PINGS*3"
+SET /A PINGS="(delaymins*60)/TIMER_REFRESH_RATE"
+SET /A TTLSCNDS="PINGS*TIMER_REFRESH_RATE"
 SET /A HOURS="(TTLSCNDS/3600)"
 SET /A MINUTES2="(TTLSCNDS-(HOURS*3600))/60"
 SET /A SECONDS="TTLSCNDS-((HOURS*3600)+(MINUTES2*60))"
@@ -674,7 +707,7 @@ SET ticker=0
 
 ::Calculate remaining time
 SET /A left="PINGS-ticker"
-SET /A ttlscndslft="left*3"
+SET /A ttlscndslft="left*TIMER_REFRESH_RATE"
 SET /A hrs="ttlscndslft/3600"
 SET /A mins="(ttlscndslft-(hrs*3600))/60"
 SET /A scnds="(ttlscndslft-((hrs*3600)+(mins*60)))"
@@ -720,14 +753,16 @@ IF %scnds% LEQ 9 SET scnds=0%scnds%
 SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
 
 ::Display updated TimeStamp
-SET isWaiting=1
-CALL :STATS
 SET isWaiting=0
+CALL :STATS
+CALL :PINGER %TIMER_REFRESH_RATE%
 
 ::Cycle through "WAITING" again if waiting time 
 ::has not been reached
 IF %ticker% LEQ %PINGS% GOTO :WAITING
 ENDLOCAL
+
+SET has_tested_ntwk_name_recent=0
 GOTO :EOF
 :: ---------------------END PROGRAM TIMER------------------------
 
@@ -743,11 +778,7 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-::DETECT_OS sets winVistaOrNewer to 1 or 0
-CALL :DETECT_OS
-
-:: TEST_NETWORK_NAME (EXIT || RETURN)
-CALL :TEST_NETWORK_NAME
+IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :DISABLE_OLD_OS
 
@@ -770,11 +801,8 @@ SET SpecificStatus=
 SET isWaiting=0 
 CALL :STATS
 
-::DETECT_OS sets winVistaOrNewer to 1 or 0
-CALL :DETECT_OS
-
 :: TEST_NETWORK_NAME (EXIT || RETURN)
-CALL :TEST_NETWORK_NAME
+IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :ENABLE_OLD_OS
 
@@ -1058,6 +1086,9 @@ GOTO :EOF
 :: ----------------------TEST NETWORK NAME-----------------------
 :: SAFE BRANCH (EXIT || RETURN)
 
+IF NOT "%~1"=="1" IF %has_tested_ntwk_name_recent% GEQ 1 GOTO :EOF
+SET /A has_tested_ntwk_name_recent+=1
+
 SET currently=Checking if "%NETWORK%"
 SET currently2=is a valid network connection name...
 SET SpecificStatus=
@@ -1308,6 +1339,39 @@ GOTO :EOF
 :: --------------END TEST SHOW_ALL_ALERTS VALUE------------------
 
 
+
+:TEST_TIMERREFRESHRATE_VAL
+:: ---------------TEST TIMER_REFRESH_RATE VALUE------------------
+:: Makes certain TIMER_REFRESH_RATE has valid value
+:: Sets to 3 if invalid
+
+SET currently=Checking if TIMER_REFRESH_RATE has a valid 
+SET currently2=value (1,2,3,etc)...
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+
+SET /a num=TIMER_REFRESH_RATE
+IF "%num%"=="0" (
+	SET currently="%TIMER_REFRESH_RATE%" is not a valid value.
+	SET currently2=Setting TIMER_REFRESH_RATE to 3...
+	SET SpecificStatus=
+	SET isWaiting=0
+	CALL :STATS
+	SET TIMER_REFRESH_RATE=3
+)
+IF %TIMER_REFRESH_RATE% GTR 0 GOTO :EOF
+SET currently="%TIMER_REFRESH_RATE%" is not a valid value.
+SET currently2=Setting TIMER_REFRESH_RATE to 3...
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET TIMER_REFRESH_RATE=3
+GOTO :EOF
+:: -------------END TEST TIMER_REFRESH_RATE VALUE----------------
+
+
+
 :TEST_STARTMINIMIZED
 :: ----------------TEST START_MINIMIZED VALUE--------------------
 :: Makes certain START_MINIMIZED has valid value
@@ -1363,7 +1427,7 @@ GOTO :EOF
 
 
 :TEST_OMITUSERINPUT
-:: ----------------TEST OMIT_USER_INPUT VALUE---------------------
+:: ----------------TEST OMIT_USER_INPUT VALUE--------------------
 :: Makes certain OMIT_USER_INPUT has valid value
 :: Sets to 0 if invalid
 
@@ -1386,12 +1450,40 @@ SET isWaiting=0
 CALL :STATS
 SET OMIT_USER_INPUT=0
 GOTO :EOF
-:: --------------END TEST OMIT_USER_INPUT VALUE-------------------
+:: --------------END TEST OMIT_USER_INPUT VALUE------------------
+
+
+
+:TEST_SKIPINITIALNTWKTEST_VAL
+:: ------------TEST SKIP_INITIAL_NTWK_TEST VALUE-----------------
+:: Makes certain SKIP_INITIAL_NTWK_TEST has valid value
+:: Sets to 0 if invalid
+
+SET currently=Checking if SKIP_INITIAL_NTWK_TEST has a valid value (0 or 1)...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%SKIP_INITIAL_NTWK_TEST%"=="0" GOTO :EOF
+IF "%SKIP_INITIAL_NTWK_TEST%"=="1" GOTO :EOF
+SET currently=SKIP_INITIAL_NTWK_TEST does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting SKIP_INITIAL_NTWK_TEST to "0"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET SKIP_INITIAL_NTWK_TEST=0
+GOTO :EOF
+:: ----------END TEST SKIP_INITIAL_NTWK_TEST VALUE---------------
 
 
 
 :TEST_AUTORETRY_VAL
-:: ----------------TEST AUTO_RETRY VALUE---------------------
+:: --------------------TEST AUTO_RETRY VALUE---------------------
 :: Makes certain AUTO_RETRY has valid value
 :: Sets to 0 if invalid
 
@@ -1414,12 +1506,12 @@ SET isWaiting=0
 CALL :STATS
 SET AUTO_RETRY=0
 GOTO :EOF
-:: --------------END TEST AUTO_RETRY VALUE-------------------
+:: ------------------END TEST AUTO_RETRY VALUE-------------------
 
 
 
 :TEST_SHOWADVANCEDTESTING
-:: ----------------TEST SHOW_ADVANCED_TESTING VALUE---------------------
+:: ------------TEST SHOW_ADVANCED_TESTING VALUE------------------
 :: Makes certain SHOW_ADVANCED_TESTING has valid value
 :: Sets to 0 if invalid
 
@@ -1442,7 +1534,35 @@ SET isWaiting=0
 CALL :STATS
 SET SHOW_ADVANCED_TESTING=0
 GOTO :EOF
-:: --------------END TEST SHOW_ADVANCED_TESTING VALUE-------------------
+:: -----------END TEST SHOW_ADVANCED_TESTING VALUE---------------
+
+
+
+:TEST_ONLYONENETWORKNAMETEST
+:: ----------TEST ONLY_ONE_NETWORK_NAME_TEST VALUE---------------
+:: Makes certain ONLY_ONE_NETWORK_NAME_TEST has valid value
+:: Sets to 0 if invalid
+
+SET currently=Checking if ONLY_ONE_NETWORK_NAME_TEST has 
+SET currently2=a valid value (0 or 1)...
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF "%ONLY_ONE_NETWORK_NAME_TEST%"=="0" GOTO :EOF
+IF "%ONLY_ONE_NETWORK_NAME_TEST%"=="1" GOTO :EOF
+SET currently=ONLY_ONE_NETWORK_NAME_TEST does not equal "1" or "0"
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET currently=Setting ONLY_ONE_NETWORK_NAME_TEST to "0"...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET ONLY_ONE_NETWORK_NAME_TEST=0
+GOTO :EOF
+:: ---------END TEST ONLY_ONE_NETWORK_NAME_TEST VALUE------------
 
 
 
@@ -1555,7 +1675,7 @@ GOTO :EOF
 :: ---------------PROGRAM NEEDS NETWORK NAME---------------------
 :: GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
 SET currently=Could not find "%NETWORK%"
-SET currently2=
+SET currently2=NOTE: This program requires admin privaleges to run!
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
