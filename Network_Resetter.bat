@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=30
+	SET rvsn=31
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -256,7 +256,7 @@ IF "%restartingProgram%"=="" (
 
 REM Set CMD window size & title
 MODE CON COLS=81 LINES=30
-TITLE Lectrode's Network Connection Resetter v%version%
+TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 REM Set initial variables
 SET THISFILEPATH=%~0
@@ -397,8 +397,8 @@ REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
 SET maxconchks=101
 CALL :CHECK_CONNECTED
-CALL :CHECK_INTERNET
-ENDLOCAL
+CALL :CHECK_INTERNET intresult
+ENDLOCAL&SET %1=%intresult%
 GOTO :EOF
 
 :CHECK_CONNECTED
@@ -439,7 +439,6 @@ ECHO Press any key to re-test connectivity
 PAUSE>NUL
 GOTO :CHECK_CONNECTED
 
-
 :CHECK_INTERNET
 SET currently=Testing Internet Connection...
 SET currently2=
@@ -447,9 +446,7 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-
 SET main_tests=0
-
 
 
 :TEST_INIT
@@ -539,14 +536,14 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-ENDLOCAL&SET %~1=1
+SET %~1=1
 GOTO :EOF
 
 :TEST_SUCCEEDED
 IF %SLWMSG%==1 CALL :PINGER
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
 
-ENDLOCAL&SET %~1=1
+SET %~1=1
 GOTO :EOF
 REM ----------------END TEST INTERNET CONNECTION-----------------
 
