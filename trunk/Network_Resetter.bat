@@ -1,221 +1,221 @@
-:: -----Program Info-----
-:: Name: 		Network Resetter
-::
-:: Verson:		11.4.901
-::
-:: Description:	Fixes network connection by trying each of the following:
-::				1) Reset Network Connection (Quick Reset)
-::				2) Reset IP Address
-::				3) Reset Network Connection (Slow Reset)
-::
-:: Author:		Lectrode 
-::				Website:	http://electrodexs.net
-::				Email: 		stevenspchelp@gmail.com
-::
-:: Notes:		This is easiest read in a program such as Notepad++
-::				and using the font "Curier New" size 10.
-::				
-::				Make sure the settings below are correct BEFORE
-::				you run the program. (default settings should be
-::				good for computers running Vista and Windows 7 and
-::				using the *DEFAULT* wireless connection)
-::
-::				If it seems stuck on "Resetting IP Address"
-::				don't worry about it. It should get past it within a 
-::				few minutes. If it persists longer than 10 minutes,
-::				email me and I'll help you. If this happens often, you
-::				can disable it below under "Advanced Settings"
-::
-::				If after running the program it still won't connect, try
-::				increasing the number of MINUTES to wait.
-::
-::				If you close the program while it is attempting to fix
-::				your network connection, the network connection may still
-::				be disabled. To fix this, re-run this program.
-::				You can set MINUTES to 0 for a quick run. 
-::
-::				"This Operating System is not currently supported."
-::				-The only thing you can do in this case is email me
-::				the name of the Operating System and I'll try to add
-::				support for it.
-::				You can bypass the OS detection below in Advanced
-::				Settings, but the program may exhibit unusual behavior.
-::
-::				"Could not find <network> | This program requires a valid
-::				network connection | please open with notepad for more information"
-::				-To fix this please correct the NETWORK setting below.
-::				
-::				Regardless of what the "Disclaimer" says, this program
-::				does not change or modify anything "system threatening"
-::				(aka it's perfectly safe)
-::				Of course, this cannot be guaranteed if you get this from
-::				anyone other than Lectrode.
-::
-:: Disclaimer:	This program is provided "AS-IS" and the author has no
-::				responsibility for what may happen to your computer.
-::				Use at your own risk.
+REM -----Program Info-----
+REM Name: 		Network Resetter
+REM Version:
+	SET Version=12.0.964
+REM 
+REM Description:	Fixes network connection by trying each of the following:
+REM 				1) Reset Network Connection (Quick Reset)
+REM 				2) Reset IP Address
+REM 				3) Reset Network Connection (Slow Reset)
+REM 
+REM Author:		Lectrode 
+REM 				Website:	http://electrodexs.net
+REM 				Email: 		stevenspchelp@gmail.com
+REM 
+REM Notes:		This is easiest read in a program such as Notepad++
+REM 				and using the font "Curier New" size 10.
+REM 				
+REM 				Make sure the settings below are correct BEFORE
+REM 				you run the program. (default settings should be
+REM 				good for computers running Vista and Windows 7 and
+REM 				using the *DEFAULT* wireless connection)
+REM 
+REM 				If it seems stuck on "Resetting IP Address"
+REM 				don't worry about it. It should get past it within a 
+REM 				few minutes. If it persists longer than 10 minutes,
+REM 				email me and I'll help you. If this happens often, you
+REM 				can disable it below under "Advanced Settings"
+REM 
+REM 				If after running the program it still won't connect, try
+REM 				increasing the number of MINUTES to wait.
+REM 
+REM 				If you close the program while it is attempting to fix
+REM 				your network connection, the network connection may still
+REM 				be disabled. To fix this, re-run this program.
+REM 				You can set MINUTES to 0 for a quick run. 
+REM 
+REM 				"This Operating System is not currently supported."
+REM 				-The only thing you can do in this case is email me
+REM 				the name of the Operating System and I'll try to add
+REM 				support for it.
+REM 				You can bypass the OS detection below in Advanced
+REM 				Settings, but the program may exhibit unusual behavior.
+REM 
+REM 				"Could not find <network> | This program requires a valid
+REM 				network connection | please open with notepad for more information"
+REM 				-To fix this please correct the NETWORK setting below.
+REM 				
+REM 				Regardless of what the "Disclaimer" says, this program
+REM 				does not change or modify anything "system threatening"
+REM 				(aka it's perfectly safe)
+REM 				Of course, this cannot be guaranteed if you get this from
+REM 				anyone other than Lectrode.
+REM 
+REM Disclaimer:	This program is provided "AS-IS" and the author has no
+REM 				responsibility for what may happen to your computer.
+REM 				Use at your own risk.
 
 
 
-:: -----Main Settings------
+REM -----Main Settings------
 
-:: Number of minutes to wait before re-enabling
-:: the network adapter (5-15 reccomended)
-:: Integers Only! (aka 0,1,2,etc)
-:: (anything else will be evaluated as "0")
+REM Number of minutes to wait before re-enabling
+REM the network adapter (5-15 reccomended)
+REM Integers Only! (aka 0,1,2,etc)
+REM (anything else will be evaluated as "0")
 SET MINUTES=10
 
-:: Name of the Network to be reset
-:: Network connections on your computer can be found at
-:: Windows 7:	Control Panel (Large or Small icons) -> Network and Sharing Center -> Change Adapter Settings
-:: Vista:		Control Panel (Classic view) -> Network and Sharing Center -> Manage Network Connections
-:: Windows XP:	Control Panel (Classic view) -> Network Connections
+REM Name of the Network to be reset
+REM Network connections on your computer can be found at
+REM Windows 7:	Control Panel (Large or Small icons) -> Network and Sharing Center -> Change Adapter Settings
+REM Vista:		Control Panel (Classic view) -> Network and Sharing Center -> Manage Network Connections
+REM Windows XP:	Control Panel (Classic view) -> Network Connections
 SET NETWORK=Wireless Network Connection
 
 
-:: CONTINUOUS MODE - Constant check and run
-::  "1" for On, "0" for Off
-:: Program will constantly run and will check your connection
-:: every few minutes to ensure you are connected. If it 
-:: detects that you have been disconected, it will automatically
-:: attempt to repair your connection. If attempt fails, it will
-:: keep retrying until it succeeds.
+REM CONTINUOUS MODE - Constant check and run
+REM  "1" for On, "0" for Off
+REM Program will constantly run and will check your connection
+REM every few minutes to ensure you are connected. If it 
+REM detects that you have been disconected, it will automatically
+REM attempt to repair your connection. If attempt fails, it will
+REM keep retrying until it succeeds.
 SET CONTINUOUS=0
 
 
 
-::------------Misc Settings------------
+REM ------------Misc Settings------------
 
-:: Auto-Retry
-::  "1" for On, "0" for Off
-:: If the connection fixes fail in regular mode (not
-:: CONTINUOUS), this makes the program continue to attempt
-:: to fix the connection until it either succeeds or the 
-:: program is closed
+REM Auto-Retry
+REM  "1" for On, "0" for Off
+REM If the connection fixes fail in regular mode (not
+REM CONTINUOUS), this makes the program continue to attempt
+REM to fix the connection until it either succeeds or the 
+REM program is closed
 SET AUTO_RETRY=0
 
-:: If CONTINUOUS is set to 1, this is how many minutes between
-:: connection tests.
-:: Integers Only! (aka 0,1,2,etc)
-:: (anything else will be evaluated as "0")
+REM If CONTINUOUS is set to 1, this is how many minutes between
+REM connection tests.
+REM Integers Only! (aka 0,1,2,etc)
+REM (anything else will be evaluated as "0")
 SET CHECK_DELAY=1
 
 
-:: Show ALL messages, even if they're unimportant
-::  "1" for True, "0" for False
-:: NOTE: Regardless of what you set this too, this program will 
-:: always display important messages.
-:: This option is mainly for people who like to follow along and
-:: see exactly what the program is doing.
-:: This is really only useful if SLWMSG is true.
+REM Show ALL messages, even if they're unimportant
+REM  "1" for True, "0" for False
+REM NOTE: Regardless of what you set this too, this program will 
+REM always display important messages.
+REM This option is mainly for people who like to follow along and
+REM see exactly what the program is doing.
+REM This is really only useful if SLWMSG is true.
 SET SHOW_ALL_ALERTS=1
 
 
-:: Show Advanced Testing Output
-::  "1" for True, "0" for False
-:: When true, will show more details reguarding testing 
-:: the internet
+REM Show Advanced Testing Output
+REM  "1" for True, "0" for False
+REM When true, will show more details reguarding testing 
+REM the internet
 SET SHOW_ADVANCED_TESTING=0
 
 
-:: Slow Messages
-::  "1" for True, "0" for False
-:: When true, program will pause for every message it displays to 
-:: allow the user to read them (run time will be longer)
+REM Slow Messages
+REM  "1" for True, "0" for False
+REM When true, program will pause for every message it displays to 
+REM allow the user to read them (run time will be longer)
 SET SLWMSG=0
 
 
-:: Timer Refresh Rate (Update every # seconds)
-:: Integers greater than 0 Only! (aka 1,2,3,etc)
-:: (anything else will be evaluated as "1")
-:: (1-10 recommended)
+REM Timer Refresh Rate (Update every # seconds)
+REM Integers greater than 0 Only! (aka 1,2,3,etc)
+REM (anything else will be evaluated as "1")
+REM (1-10 recommended)
 SET TIMER_REFRESH_RATE=1
 
 
-:: Start Program at user log on
-::  "1" for True, "0" for False
-:: When true, the program will start when you log on.
-:: Especially usefull when running in CONTINUOUS Mode.
-:: In order for this setting to take effect, you have
-:: to run this program at least up to the point where
-:: it tests your internet connection.
+REM Start Program at user log on
+REM  "1" for True, "0" for False
+REM When true, the program will start when you log on.
+REM Especially usefull when running in CONTINUOUS Mode.
+REM In order for this setting to take effect, you have
+REM to run this program at least up to the point where
+REM it tests your internet connection.
 SET START_AT_LOGON=0
 
 
-:: Start Minimized
-::  "1" for True, "0" for False
-:: When true, program will minimize itself when it is run
-:: This is especially usefull if you have the program running 
-:: continuously and set to start at user log on.
+REM Start Minimized
+REM  "1" for True, "0" for False
+REM When true, program will minimize itself when it is run
+REM This is especially usefull if you have the program running 
+REM continuously and set to start at user log on.
 SET START_MINIMIZED=0
 
 
 
 
-::---------Advanced Settings-----------
+REM ---------Advanced Settings-----------
 
-:: Omit ALL user input
-::  "1" for True, "0" for False
-:: Instead of asking the user (you) for varification or to
-:: adjust a setting, this program will assume that all settings
-:: are intentional and will continue with whatever settings are
-:: available.
-:: Situations this effects:
-:: -Failed first connection attempt: Continues with either exit
-::  or retry, depending on what AUTO_RETRY is set to.
-:: -Invalid Network Name: Continues without the NETWORK_RESET fixes
-:: -All fixes disabled: Continues without any fixes. Check 
-::  internet connection only
-:: -About to run on unsupported OS: Continue running without
-::  user varification
+REM Omit ALL user input
+REM  "1" for True, "0" for False
+REM Instead of asking the user (you) for varification or to
+REM adjust a setting, this program will assume that all settings
+REM are intentional and will continue with whatever settings are
+REM available.
+REM Situations this effects:
+REM -Failed first connection attempt: Continues with either exit
+REM  or retry, depending on what AUTO_RETRY is set to.
+REM -Invalid Network Name: Continues without the NETWORK_RESET fixes
+REM -All fixes disabled: Continues without any fixes. Check 
+REM  internet connection only
+REM -About to run on unsupported OS: Continue running without
+REM  user varification
 SET OMIT_USER_INPUT=0
 
-:: Skip Initial Network Connection Test
-:: "1" for True, "0" for False
-:: Select this if you want the program to immediately attempt to 
-:: fix your connection without testing the connection first
+REM Skip Initial Network Connection Test
+REM "1" for True, "0" for False
+REM Select this if you want the program to immediately attempt to 
+REM fix your connection without testing the connection first
 SET SKIP_INITIAL_NTWK_TEST=0
 
-:: Try to reset the IP Address
-::  "1" for True, "0" for False
-:: Unless you frequently get stuck on "Reseting IP address" you
-:: should leave this enabled.
+REM Try to reset the IP Address
+REM  "1" for True, "0" for False
+REM Unless you frequently get stuck on "Reseting IP address" you
+REM should leave this enabled.
 SET USE_IP_RESET=1
 
-:: Try to reset the Network Connection (Quick Reset)
-::  "1" for True, "0" for False
-:: In most cases this should be left enabled.
+REM Try to reset the Network Connection (Quick Reset)
+REM  "1" for True, "0" for False
+REM In most cases this should be left enabled.
 SET USE_NETWORK_RESET_FAST=1
 
-:: Try to reset the Network Connection (Slow Reset)
-::  "1" for True, "0" for False
-:: Slow Reset works more often than Quick Reset.
-:: Quick reset is tried first if it is enabled.
-:: In most cases this should be left enabled.
+REM Try to reset the Network Connection (Slow Reset)
+REM  "1" for True, "0" for False
+REM Slow Reset works more often than Quick Reset.
+REM Quick reset is tried first if it is enabled.
+REM In most cases this should be left enabled.
 SET USE_NETWORK_RESET=1
 
 
-:: Don't test Network Name more than once
-:: "1" for True, "0" for False
-:: Setting to True is ideal on most computers as long as the 
-:: Network Connection name does not change
+REM Don't test Network Name more than once
+REM "1" for True, "0" for False
+REM Setting to True is ideal on most computers as long as the 
+REM Network Connection name does not change
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 
 
-:: Override OS Detection
-::  "1" for True, "0" for False
-:: The only time you would use this is if you are getting a 
-:: "This Operating System is not currently supported" message.
-:: This will force the program to continue running.
-:: WARNING: Running this program on an unsupported OS may cause
-:: this program to exhibit unusual behavior. 
+REM Override OS Detection
+REM  "1" for True, "0" for False
+REM The only time you would use this is if you are getting a 
+REM "This Operating System is not currently supported" message.
+REM This will force the program to continue running.
+REM WARNING: Running this program on an unsupported OS may cause
+REM this program to exhibit unusual behavior. 
 SET OS_DETECT_OVERRIDE=0
 
 
-:: Programmer Tool - Debugging
-::  "1" for On, "0" for Off
-:: Debugging mode disables actual functionality of this 
-:: program (aka it won't fix your connection when debugging)
+REM Programmer Tool - Debugging
+REM  "1" for On, "0" for Off
+REM Debugging mode disables actual functionality of this 
+REM program (aka it won't fix your connection when debugging)
 SET DEBUGN=0
 
 
@@ -223,32 +223,32 @@ SET DEBUGN=0
 
 
 
-:: *****************************************************************
-:: ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
-:: *****************************************************************
+REM *****************************************************************
+REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
+REM *****************************************************************
 
 
 
 
 
 
-:: *************Main Code**************
+REM *************Main Code**************
 
 
-:: -------------------Initialize Program--------------------
+REM -------------------Initialize Program--------------------
 
 
 @ECHO OFF
 
-:: Restart as administrator
-:: DOES NOT CURRENTLY WORK!!!
+REM Restart as administrator
+REM DOES NOT CURRENTLY WORK!!!
 IF "%HasBeenRunAsAdmin%"=="" (
 	SET HasBeenRunAsAdmin=1
 	REM RUNAS /user;admin "%~dpnx0"
 	REM EXIT
 )
 
-:: Restart itself minimized if set to do so
+REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" (
 	IF "%START_MINIMIZED%"=="1" (
 		IF "%MINIMIZED%"=="" (
@@ -260,20 +260,20 @@ IF "%restartingProgram%"=="" (
 )
 
 
-:: Set CMD window size
+REM Set CMD window size
 MODE CON COLS=81 LINES=30
 
-::Set initial variables
+REM Set initial variables
 SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
 
-::Display program introduction
-::Call it twice to last longer
+REM Display program introduction
+REM Call it twice to last longer
 CALL :PROGRAM_INTRO
 
-::Initial CHECKS
+REM Initial CHECKS
 SET currently=Checking validity of Settings...
 SET currently2=
 SET SpecificStatus=
@@ -311,35 +311,35 @@ CALL :TEST_SKIPINITIALNTWKTEST_VAL
 CALL :TEST_ONLYONENETWORKNAMETEST
 
 
-::Copy to startup folder if set to start when 
-::user logs on
+REM Copy to startup folder if set to start when 
+REM user logs on
 CALL :CHECK_START_AT_LOGON
 
-:: -----------------END INITIALIZE PROGRAM------------------
+REM -----------------END INITIALIZE PROGRAM------------------
 
 
 
-:: ------------------TO FIX OR NOT TO FIX-------------------
+REM ------------------TO FIX OR NOT TO FIX-------------------
 IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
-:: ----------------END TO FIX OR NOT TO FIX-----------------
+REM ----------------END TO FIX OR NOT TO FIX-----------------
 
 
-:: -------------INITIAL NETWORK CONNECTION TEST-------------
-:: BRANCH (SUCCESS || FIX)
-:: Determine if connection needs to be fixed
+REM -------------INITIAL NETWORK CONNECTION TEST-------------
+REM BRANCH (SUCCESS || FIX)
+REM Determine if connection needs to be fixed
 
 IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :FIX
 
 CALL :TEST isConnected
 IF %isConnected%==1 GOTO :SUCCESS
 GOTO :FIX
-:: -----------END INITIAL NETWORK CONNECTION TEST-----------
+REM -----------END INITIAL NETWORK CONNECTION TEST-----------
 
 
 
 :PROGRAM_INTRO
-:: ----------------------PROGRAM INTRO----------------------
-:: Displays notice for 3 seconds
+REM ----------------------PROGRAM INTRO----------------------
+REM Displays notice for 3 seconds
 CLS
 ECHO  ******************************************************************************
 ECHO  *                                                                            *
@@ -352,14 +352,14 @@ ECHO.
 ECHO.
 CALL :PINGER
 GOTO :EOF
-:: ---------------------END PROGRAM INTRO--------------------
+REM ---------------------END PROGRAM INTRO--------------------
 
 
 :STATS
-:: ---------------------PROGRAM STATUS-----------------------
+REM ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v11.4.901  ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v%Version%  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -380,14 +380,14 @@ IF "%SLWMSG%"=="1" (
 	IF "%isWaiting%"=="1" CALL :PINGER
 )
 GOTO :EOF
-:: ---------------------END PROGRAM STATUS----------------------
+REM ---------------------END PROGRAM STATUS----------------------
 
 
 
 :TEST
 SETLOCAL
-:: ------------------TEST INTERNET CONNECTION-------------------
-:: RETURN (isConnected= (1 || 0) )
+REM ------------------TEST INTERNET CONNECTION-------------------
+REM RETURN (isConnected= (1 || 0) )
 
 SET currently=Testing Internet Connection...
 SET currently2=
@@ -459,7 +459,7 @@ GOTO :TEST_TESTING
 
 
 :TEST_FAILED
-:: DEBUGGING || FAILED A TEST
+REM DEBUGGING || FAILED A TEST
 SET /A main_tests=main_tests+1
 
 IF %SLWMSG%==1 CALL :PINGER
@@ -493,42 +493,42 @@ IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
 
 ENDLOCAL&SET %~1=1
 GOTO :EOF
-:: ----------------END TEST INTERNET CONNECTION-----------------
+REM ----------------END TEST INTERNET CONNECTION-----------------
 
 
 
 
 :FIX
-:: ------------------FIX INTERNET CONNECTION--------------------
-:: BRANCH (SUCCESS || FAILED)
-:: Call the different methods of fixing
-:: This allows for different fixes to be added later
+REM ------------------FIX INTERNET CONNECTION--------------------
+REM BRANCH (SUCCESS || FAILED)
+REM Call the different methods of fixing
+REM This allows for different fixes to be added later
 
 
-:: *****RESET NETWORK CONNECTION FAST*****
+REM *****RESET NETWORK CONNECTION FAST*****
 
 IF %USE_NETWORK_RESET_FAST%==0 GOTO :END_RESET_NETORK_FAST_MAIN
 	CALL :FIX_RESET_NETWORK_FAST
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
 
-	::FIX FAILED
+	REM FIX FAILED
 	SET currently=Quickly reseting the Network Connection
 	SET currently2=did not fix the problem
 	SET SpecificStatus=
 	SET isWaiting=0
 	CALL :STATS
 :END_RESET_NETORK_FAST_MAIN
-:: ***END RESET NETWORK CONNECTION FAST***
+REM ***END RESET NETWORK CONNECTION FAST***
 
 
-:: *****RESET IP ADDRESS*****
+REM *****RESET IP ADDRESS*****
 IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
 	CALL :FIX_RESET_IP
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
 	
-	::FIX FAILED
+	REM FIX FAILED
 	SET currently=Resetting IP did not fix the problem
 	SET currently2=
 	SET SpecificStatus=
@@ -536,17 +536,17 @@ IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
 	CALL :STATS
 	
 :END_RESET_IP_MAIN
-:: ***END RESET IP ADDRESS***
+REM ***END RESET IP ADDRESS***
 
 
-:: *****RESET NETWORK CONNECTION*****
+REM *****RESET NETWORK CONNECTION*****
 
 IF %USE_NETWORK_RESET%==0 GOTO :END_RESET_NETORK_MAIN
 	CALL :FIX_RESET_NETWORK
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
 
-	::FIX FAILED
+	REM FIX FAILED
 	SET /A mins="TTLSCNDS/60"
 	SET currently=Disabling Network for %mins% minutes
 	SET currently2=did not fix the problem
@@ -554,20 +554,20 @@ IF %USE_NETWORK_RESET%==0 GOTO :END_RESET_NETORK_MAIN
 	SET isWaiting=0
 	CALL :STATS
 :END_RESET_NETORK_MAIN
-:: ***END RESET NETWORK CONNECTION***
+REM ***END RESET NETWORK CONNECTION***
 
 
 
-::FIXES FAILED
+REM FIXES FAILED
 GOTO :FAILED
-:: -----------------END FIX INTERNET CONNECTION------------------
+REM -----------------END FIX INTERNET CONNECTION------------------
 
 
 
 
 :FIX_RESET_IP
-:: -------------------FIX: RESET IP ADDRESS----------------------
-:: Fix internet connection by reseting the IP address
+REM -------------------FIX: RESET IP ADDRESS----------------------
+REM Fix internet connection by reseting the IP address
 
 SET currently=Releasing IP Address
 SET currently2=*May take a couple minutes*
@@ -575,11 +575,11 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-::Release IP Address
+REM Release IP Address
 IF %DEBUGN%==0 IPCONFIG /RELEASE >NUL
 
 
-::Flush DNS Cache
+REM Flush DNS Cache
 SET currently=Flushing DNS Cache
 SET currently2=
 SET SpecificStatus=
@@ -589,7 +589,7 @@ CALL :STATS
 IF %DEBUGN%==0 IPCONFIG /FLUSHDNS >NUL
 
 
-::Renew IP Address
+REM Renew IP Address
 SET currently=Renewing IP Address
 SET currently2=*May take a couple minutes*
 SET SpecificStatus=
@@ -598,89 +598,89 @@ CALL :STATS
 
 IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
 
-:: CANNOT TEST HERE
-:: Checking network connection here causes unecessary recursion
+REM CANNOT TEST HERE
+REM Checking network connection here causes unecessary recursion
 GOTO :EOF
-:: -----------------END FIX: RESET IP ADDRESS--------------------
+REM -----------------END FIX: RESET IP ADDRESS--------------------
 
 
 
 :FIX_RESET_NETWORK_FAST
-:: -------------FIX: RESET NETWORK CONNECTION FAST---------------
-::Disable Network, Enable Network
+REM -------------FIX: RESET NETWORK CONNECTION FAST---------------
+REM Disable Network, Enable Network
 CALL :DISABLE_NW
 CALL :ENABLE_NW
 
-:: CANNOT TEST HERE
-:: Checking network connection here causes unwanted recursion 
+REM CANNOT TEST HERE
+REM Checking network connection here causes unwanted recursion 
 
 GOTO :EOF
-:: -----------END FIX: RESET NETWORK CONNECTION FAST-------------
+REM -----------END FIX: RESET NETWORK CONNECTION FAST-------------
 
 
 
 :FIX_RESET_NETWORK
-:: ---------------FIX: RESET NETWORK CONNECTION------------------
-::Disable Network, Wait, Enable Network
+REM ---------------FIX: RESET NETWORK CONNECTION------------------
+REM Disable Network, Wait, Enable Network
 
-::Disable network connection
+REM Disable network connection
 CALL :DISABLE_NW
 
 SET currently=Waiting to re-enable "%NETWORK%"
 SET currently2=
 SET SpecificStatus=
 
-::Wait specified time
+REM Wait specified time
 SET delaymins=%MINUTES%
 CALL :WAIT
 
-::Enable network connection
+REM Enable network connection
 CALL :ENABLE_NW
 
 
-:: CANNOT TEST HERE
-:: Checking network connection here causes unwanted recursion 
+REM CANNOT TEST HERE
+REM Checking network connection here causes unwanted recursion 
 
 GOTO :EOF
-:: -------------END FIX: RESET NETWORK CONNECTION----------------
+REM -------------END FIX: RESET NETWORK CONNECTION----------------
 
 
 :PINGER
-:: ------------------------PROGRAM SLEEP-------------------------
-:: SLEEP
-:: Program sleeps for %1 seconds
+REM ------------------------PROGRAM SLEEP-------------------------
+REM SLEEP
+REM Program sleeps for %1 seconds
 IF "%1"=="" SET pN=3
 IF NOT "%1"=="" SET pN=%1
 PING -n 2 -w 1000 127.0.0.1>NUL
 PING -n %pN% -w 1000 127.0.0.1>NUL
 GOTO :EOF
-:: ------------------------END PROGRAM SLEEP---------------------
+REM ------------------------END PROGRAM SLEEP---------------------
 
 
 :WAIT
 SETLOCAL
-:: -----------------------PROGRAM TIMER--------------------------
+REM -----------------------PROGRAM TIMER--------------------------
 
-:: ******INITIALIZE TIMER*****
+REM ******INITIALIZE TIMER*****
 
-::Calculate total time
+REM Calculate total time
 SET /A PINGS="(delaymins*60)/TIMER_REFRESH_RATE"
 SET /A TTLSCNDS="PINGS*TIMER_REFRESH_RATE"
 SET /A HOURS="(TTLSCNDS/3600)"
 SET /A MINUTES2="(TTLSCNDS-(HOURS*3600))/60"
 SET /A SECONDS="TTLSCNDS-((HOURS*3600)+(MINUTES2*60))"
 
-::Set HOURS to "" or "##:"
-::(always 2 digits or nothing)
+REM Set HOURS to "" or "##:"
+REM (always 2 digits or nothing)
 IF %HOURS%==0 (
 	SET HOURS=
 ) ELSE (
 	SET HOURS=%HOURS%:
 )
 
-::Set MINUTES2 to "","##:", "00:", or "0#:"
-::(always 2 digits or nothing)
-::(always 2 digits if HOURS>0)
+REM Set MINUTES2 to "","##:", "00:", or "0#:"
+REM (always 2 digits or nothing)
+REM (always 2 digits if HOURS>0)
 IF %MINUTES2%==0 (
 	IF "%HOURS%"=="" (
 		SET MINUTES2=
@@ -691,42 +691,42 @@ IF %MINUTES2%==0 (
 	SET MINUTES2=%MINUTES2%:
 )
 
-::Set SECONDS to "##" or "0#"
-::(always 2 digits)
+REM Set SECONDS to "##" or "0#"
+REM (always 2 digits)
 IF %SECONDS% LEQ 9 SET SECONDS=0%SECONDS%
 
-::Set Ticker to 0
+REM Set Ticker to 0
 SET ticker=0
 
-:: ****END INITIALIZE TIMER***
+REM ****END INITIALIZE TIMER***
 
 
 :WAITING
-:: *****TICKING TIMER*****
+REM *****TICKING TIMER*****
 
 
-::Calculate remaining time
+REM Calculate REM aining time
 SET /A left="PINGS-ticker"
 SET /A ttlscndslft="left*TIMER_REFRESH_RATE"
 SET /A hrs="ttlscndslft/3600"
 SET /A mins="(ttlscndslft-(hrs*3600))/60"
 SET /A scnds="(ttlscndslft-((hrs*3600)+(mins*60)))"
 
-::Bump ticker
+REM Bump ticker
 SET /A ticker+=1
 
 
-::Set hrs to "","##:", or "0#:"
-::(always 2 digits or nothing)
+REM Set hrs to "","##:", or "0#:"
+REM (always 2 digits or nothing)
 IF %hrs%==0 (
 	SET hrs=
 ) ELSE (
 	SET hrs=%hrs%:
 )
 
-::Set mins to "","##:", "00:", or "0#:"
-::(always 2 digits or nothing)
-::(always 2 digits if HOURS>0)
+REM Set mins to "","##:", "00:", or "0#:"
+REM (always 2 digits or nothing)
+REM (always 2 digits if HOURS>0)
 IF %mins%==0 (
 	IF "%hrs%"=="" (
 		SET mins=
@@ -745,32 +745,32 @@ IF %mins%==0 (
 	)
 )
 
-::Set SECONDS to "##" or "0#"
-::(always 2 digits)
+REM Set SECONDS to "##" or "0#"
+REM (always 2 digits)
 IF %scnds% LEQ 9 SET scnds=0%scnds%
 
-::Update TimeStamp
+REM Update TimeStamp
 SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
 
-::Display updated TimeStamp
+REM Display updated TimeStamp
 SET isWaiting=0
 CALL :STATS
 CALL :PINGER %TIMER_REFRESH_RATE%
 
-::Cycle through "WAITING" again if waiting time 
-::has not been reached
+REM Cycle through "WAITING" again if waiting time 
+REM has not been reached
 IF %ticker% LEQ %PINGS% GOTO :WAITING
 ENDLOCAL
 
 SET has_tested_ntwk_name_recent=0
 GOTO :EOF
-:: ---------------------END PROGRAM TIMER------------------------
+REM ---------------------END PROGRAM TIMER------------------------
 
 
 
 :DISABLE_NW
-:: -----------------DISABLE NETWORK CONNECTION-------------------
-::Determine OS and disable via a compatible method
+REM -----------------DISABLE NETWORK CONNECTION-------------------
+REM Determine OS and disable via a compatible method
 
 SET currently=Disabling "%NETWORK%"...
 SET currently2=
@@ -788,12 +788,12 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 GOTO :EOF
-:: ---------------END DISABLE NETWORK CONNECTION-----------------
+REM ---------------END DISABLE NETWORK CONNECTION-----------------
 
 
 :ENABLE_NW
-:: ------------------ENABLE NETWORK CONNECTION-------------------
-::Determine OS and enable via a compatible method
+REM ------------------ENABLE NETWORK CONNECTION-------------------
+REM Determine OS and enable via a compatible method
 
 SET currently=Enabling "%NETWORK%"
 SET currently2=
@@ -801,7 +801,7 @@ SET SpecificStatus=
 SET isWaiting=0 
 CALL :STATS
 
-:: TEST_NETWORK_NAME (EXIT || RETURN)
+REM TEST_NETWORK_NAME (EXIT || RETURN)
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :ENABLE_OLD_OS
@@ -812,14 +812,14 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 GOTO :EOF
-:: ----------------END ENABLE NETWORK CONNECTION-----------------
+REM ----------------END ENABLE NETWORK CONNECTION-----------------
 
 
 :DISABLE_OLD_OS
-:: ----------------DISABLE CONNECTION FOR WINXP------------------
-:: No known way to disable from cmd line. Instead, we must
-:: create a temp vbs file that disables it and deletes 
-:: itself when its run
+REM ----------------DISABLE CONNECTION FOR WINXP------------------
+REM No known way to disable from cmd line. Instead, we must
+REM create a temp vbs file that disables it and deletes 
+REM itself when its run
 @ECHO on
 ECHO Const ssfCONTROLS = 3 >>DisableNetwork.vbs
 ECHO sConnectionName = "%NETWORK%" >>DisableNetwork.vbs
@@ -879,14 +879,14 @@ SET isWaiting=0
 CALL :STATS
 cscript DisableNetwork.vbs
 GOTO :EOF
-:: --------------END DISABLE CONNECTION FOR WINXP----------------
+REM --------------END DISABLE CONNECTION FOR WINXP----------------
 
 
 :ENABLE_OLD_OS
-:: -----------------ENABLE CONNECTION FOR WINXP------------------
-:: No known way to enable from cmd line. Instead, we must
-:: create a temp vbs file that enables it and deletes 
-:: itself when its run
+REM -----------------ENABLE CONNECTION FOR WINXP------------------
+REM No known way to enable from cmd line. Instead, we must
+REM create a temp vbs file that enables it and deletes 
+REM itself when its run
 @ECHO on
 ECHO Const ssfCONTROLS = 3 >>EnableNetwork.vbs
 ECHO sConnectionName = "%NETWORK%" >>EnableNetwork.vbs
@@ -946,15 +946,15 @@ SET isWaiting=0
 CALL :STATS
 cscript EnableNetwork.vbs
 GOTO :EOF
-:: ---------------END ENABLE CONNECTION FOR WINXP----------------
+REM ---------------END ENABLE CONNECTION FOR WINXP----------------
 
 
 
 :DETECT_OS
-:: -------------------DETECT OPERATING SYSTEM--------------------
-:: SAFE BRANCH (EXIT || RETURN)
-:: RETURN (winVistaOrNewer (1 || 0) )
-:: Detect OS and return compatibility
+REM -------------------DETECT OPERATING SYSTEM--------------------
+REM SAFE BRANCH (EXIT || RETURN)
+REM RETURN (winVistaOrNewer (1 || 0) )
+REM Detect OS and return compatibility
 
 SET currently=Checking if Operating System is supported...
 SET currently2=
@@ -962,7 +962,7 @@ SET SpecificStatus=
 SET isWaiting=0
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
-:: Get OS name
+REM Get OS name
 VER | FIND "2003" > NUL
 IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
 VER | FIND "XP" > NUL
@@ -981,7 +981,7 @@ IF %ERRORLEVEL% == 0 GOTO :NewVer
 
 
 :UNSUPPORTED
-:: INTERNAL BRANCH (RUN_ON_SUPPORTED || SYSTEM_UNSUPPORTED)
+REM INTERNAL BRANCH (RUN_ON_SUPPORTED || SYSTEM_UNSUPPORTED)
 SET currently=Operating System is unsupported
 SET currently2=
 SET SpecificStatus=
@@ -997,7 +997,7 @@ CALL :PINGER
 GOTO :SYSTEM_UNSUPPORTED
 
 :OldVer
-:: RETURN winVistaOrNewer (0)
+REM RETURN winVistaOrNewer (0)
 SET currently=Operating System is supported
 SET currently2=(WindowsXP)
 SET SpecificStatus=
@@ -1007,7 +1007,7 @@ SET winVistaOrNewer=0
 GOTO :EOF
 
 :NewVer
-:: RETURN winVistaOrNewer (1)
+REM RETURN winVistaOrNewer (1)
 SET currently=Operating System is supported
 SET currently2= (%vers%)
 SET SpecificStatus=
@@ -1018,7 +1018,7 @@ GOTO :EOF
 
 
 :RUN_ON_UNSUPPORTED
-:: INTERNAL BRANCH (CONTINUE_RUN_ANYWAY || SYSTEM_UNSUPPORTED)
+REM INTERNAL BRANCH (CONTINUE_RUN_ANYWAY || SYSTEM_UNSUPPORTED)
 SET currently=Attempting to run on UNSUPPORTED Operating System...
 SET currently2=
 SET SpecificStatus=
@@ -1035,7 +1035,7 @@ IF "%usrInpt%"=="n" GOTO :SYSTEM_UNSUPPORTED
 GOTO :RUN_ON_UNSUPPORTED
 
 :CONTINUE_RUN_ANYWAY
-:: RETURN winVistaOrNewer (0)
+REM RETURN winVistaOrNewer (0)
 SET currently=Continuing to run program. OS is treated
 SET currently2=as though it were WindowsXP
 SET SpecificStatus=
@@ -1043,15 +1043,15 @@ SET isWaiting=0
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=0
 GOTO :EOF
-:: -----------------END DETECT OPERATING SYSTEM------------------
+REM -----------------END DETECT OPERATING SYSTEM------------------
 
 
 
 :CHECK_START_AT_LOGON
-:: --------------------CHECK START AT LOG ON---------------------
-:: Copies self to Startup Folder if START_AT_LOGON==1
-:: Else Deletes "NetworkResetterByLectrode.bat" in 
-:: Startup Folder
+REM --------------------CHECK START AT LOG ON---------------------
+REM Copies self to Startup Folder if START_AT_LOGON==1
+REM Else Deletes "NetworkResetterByLectrode.bat" in 
+REM Startup Folder
 
 SET currently=Checking if set to start at user log on...
 SET currently2=
@@ -1070,7 +1070,7 @@ GOTO :EOF
 
 :DONT_STARTUP
 SET currently=Program is not set to start at user log on.
-SET currently2=Removing copies of self in Startup folder, if any
+SET currently2=REM oving copies of self in Startup folder, if any
 SET SpecificStatus=
 SET isWaiting=0
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
@@ -1078,13 +1078,13 @@ TYPE NUL > "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\
 DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
 
 GOTO :EOF
-:: ------------------END CHECK START AT LOG ON-------------------
+REM ------------------END CHECK START AT LOG ON-------------------
 
 
 
 :TEST_NETWORK_NAME
-:: ----------------------TEST NETWORK NAME-----------------------
-:: SAFE BRANCH (EXIT || RETURN)
+REM ----------------------TEST NETWORK NAME-----------------------
+REM SAFE BRANCH (EXIT || RETURN)
 
 IF NOT "%~1"=="1" IF %has_tested_ntwk_name_recent% GEQ 1 GOTO :EOF
 SET /A has_tested_ntwk_name_recent+=1
@@ -1097,13 +1097,13 @@ IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORK%" NEWNAME="%NETWORK%"|FIND "name is not registered " >NUL
 IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
 GOTO :EOF
-:: --------------------END TEST NETWORK NAME---------------------
+REM --------------------END TEST NETWORK NAME---------------------
 
 
 :TEST_MINUTES_VAL
-:: ----------------------TEST MINUTES VALUE----------------------
-:: Makes certain MINUTES has a valid value
-:: Sets to 10 if invalid
+REM ----------------------TEST MINUTES VALUE----------------------
+REM Makes certain MINUTES has a valid value
+REM Sets to 10 if invalid
 
 SET currently=Checking if MINUTES is a valid number...
 SET currently2=
@@ -1122,13 +1122,13 @@ IF "%num%"=="0" (
 	SET MINUTES=10
 )
 GOTO :EOF
-:: --------------------END TEST MINUTES VALUE--------------------
+REM --------------------END TEST MINUTES VALUE--------------------
 
 
 :TEST_CONTINUOUS_VAL
-:: ---------------------TEST CONTINUOUS VALUE--------------------
-:: Makes certain CONTINUOUS has a valid value
-:: Sets to 0 if invalid
+REM ---------------------TEST CONTINUOUS VALUE--------------------
+REM Makes certain CONTINUOUS has a valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if CONTINUOUS has a valid value (0 or 1)...
 SET currently2=
@@ -1149,13 +1149,13 @@ SET isWaiting=0
 CALL :STATS
 SET CONTINUOUS=0
 GOTO :EOF
-:: -------------------END TEST CONTINUOUS VALUE------------------
+REM -------------------END TEST CONTINUOUS VALUE------------------
 
 
 :TEST_USENETWORKRESET
-:: -----------------TEST USE_NETWORK_RESET VALUE-----------------
-:: Makes certain USE_NETWORK_RESET has a valid value
-:: Sets to 1 if invalid
+REM -----------------TEST USE_NETWORK_RESET VALUE-----------------
+REM Makes certain USE_NETWORK_RESET has a valid value
+REM Sets to 1 if invalid
 
 SET currently=Checking if USE_NETWORK_RESET has a valid value (0 or 1)...
 SET currently2=
@@ -1176,13 +1176,13 @@ SET isWaiting=0
 CALL :STATS
 SET USE_NETWORK_RESET=1
 GOTO :EOF
-:: ---------------END TEST USE_NETWORK_RESET VALUE---------------
+REM ---------------END TEST USE_NETWORK_RESET VALUE---------------
 
 
 :TEST_USENETWORKRESETFAST
-:: ---------------TEST USE_NETWORK_RESET_FAST VALUE--------------
-:: Makes certain USE_NETWORK_RESET_FAST has a valid value
-:: Sets to 1 if invalid
+REM ---------------TEST USE_NETWORK_RESET_FAST VALUE--------------
+REM Makes certain USE_NETWORK_RESET_FAST has a valid value
+REM Sets to 1 if invalid
 
 SET currently=Checking if USE_NETWORK_RESET_FAST has a valid 
 SET currently2=value (0 or 1)...
@@ -1203,13 +1203,13 @@ SET isWaiting=0
 CALL :STATS
 SET USE_NETWORK_RESET_FAST=1
 GOTO :EOF
-:: -------------END TEST USE_NETWORK_RESET_FAST VALUE------------
+REM -------------END TEST USE_NETWORK_RESET_FAST VALUE------------
 
 
 :TEST_USEIP_VAL
-:: -------------------TEST USE_IP_RESET VALUE--------------------
-:: Makes certain USE_IP_RESET has valid value
-:: Sets to 1 if invalid
+REM -------------------TEST USE_IP_RESET VALUE--------------------
+REM Makes certain USE_IP_RESET has valid value
+REM Sets to 1 if invalid
 
 SET currently=Checking if USE_IP_RESET has a valid value (0 or 1)...
 SET currently2=
@@ -1230,13 +1230,13 @@ SET isWaiting=0
 CALL :STATS
 SET USE_IP_RESET=1
 GOTO :EOF
-:: -----------------END TEST USE_IP_RESET VALUE------------------
+REM -----------------END TEST USE_IP_RESET VALUE------------------
 
 
 :TEST_CHECKDELAY_VAL
-:: -------------------TEST CHECK_DELAY VALUE---------------------
-:: Makes certain CHECK_DELAY has valid value
-:: Sets to 3 if invalid
+REM -------------------TEST CHECK_DELAY VALUE---------------------
+REM Makes certain CHECK_DELAY has valid value
+REM Sets to 3 if invalid
 
 SET currently=Checking if CHECK_DELAY is a valid number...
 SET currently2=
@@ -1255,13 +1255,13 @@ IF "%num%"=="0" (
 	SET CHECK_DELAY=3
 )
 GOTO :EOF
-:: -----------------END TEST CHECK_DELAY VALUE-------------------
+REM -----------------END TEST CHECK_DELAY VALUE-------------------
 
 
 :TEST_DEBUGN_VAL
-:: ---------------------TEST DEBUGN VALUE------------------------
-:: Makes certain DEBUGN has valid value
-:: Sets to 0 if invalid
+REM ---------------------TEST DEBUGN VALUE------------------------
+REM Makes certain DEBUGN has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if DEBUGN is a valid value (0 or 1)...
 SET currently2=
@@ -1282,13 +1282,13 @@ SET isWaiting=0
 CALL :STATS
 SET DEBUGN=0
 GOTO :EOF
-:: -------------------END TEST DEBUGN VALUE----------------------
+REM -------------------END TEST DEBUGN VALUE----------------------
 
 
 :TEST_SLWMSG_VAL
-:: ---------------------TEST SLWMSG VALUE------------------------
-:: Makes certain SLWMSG has valid value
-:: Sets to 1 if invalid
+REM ---------------------TEST SLWMSG VALUE------------------------
+REM Makes certain SLWMSG has valid value
+REM Sets to 1 if invalid
 
 SET currently=Checking if SLWMSG has a valid value (0 or 1)...
 SET currently2=
@@ -1309,13 +1309,13 @@ SET isWaiting=0
 CALL :STATS
 SET SLWMSG=1
 GOTO :EOF
-:: -------------------END TEST SLWMSG VALUE----------------------
+REM -------------------END TEST SLWMSG VALUE----------------------
 
 
 :TEST_SHOWALLALERTS_VAL
-:: ----------------TEST SHOW_ALL_ALERTS VALUE--------------------
-:: Makes certain SHOW_ALL_ALERTS has valid value
-:: Sets to 1 if invalid
+REM ----------------TEST SHOW_ALL_ALERTS VALUE--------------------
+REM Makes certain SHOW_ALL_ALERTS has valid value
+REM Sets to 1 if invalid
 
 SET currently=Checking if SHOW_ALL_ALERTS has a valid value (0 or 1)...
 SET currently2=
@@ -1336,14 +1336,14 @@ SET isWaiting=0
 CALL :STATS
 SET SHOW_ALL_ALERTS=1
 GOTO :EOF
-:: --------------END TEST SHOW_ALL_ALERTS VALUE------------------
+REM --------------END TEST SHOW_ALL_ALERTS VALUE------------------
 
 
 
 :TEST_TIMERREFRESHRATE_VAL
-:: ---------------TEST TIMER_REFRESH_RATE VALUE------------------
-:: Makes certain TIMER_REFRESH_RATE has valid value
-:: Sets to 3 if invalid
+REM ---------------TEST TIMER_REFRESH_RATE VALUE------------------
+REM Makes certain TIMER_REFRESH_RATE has valid value
+REM Sets to 3 if invalid
 
 SET currently=Checking if TIMER_REFRESH_RATE has a valid 
 SET currently2=value (1,2,3,etc)...
@@ -1368,14 +1368,14 @@ SET isWaiting=0
 CALL :STATS
 SET TIMER_REFRESH_RATE=3
 GOTO :EOF
-:: -------------END TEST TIMER_REFRESH_RATE VALUE----------------
+REM -------------END TEST TIMER_REFRESH_RATE VALUE----------------
 
 
 
 :TEST_STARTMINIMIZED
-:: ----------------TEST START_MINIMIZED VALUE--------------------
-:: Makes certain START_MINIMIZED has valid value
-:: Sets to 0 if invalid
+REM ----------------TEST START_MINIMIZED VALUE--------------------
+REM Makes certain START_MINIMIZED has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if STARTMINIMIZED has a valid value (0 or 1)...
 SET currently2=
@@ -1396,13 +1396,13 @@ SET isWaiting=0
 CALL :STATS
 SET START_MINIMIZED=0
 GOTO :EOF
-:: --------------END TEST START_MINIMIZED VALUE------------------
+REM --------------END TEST START_MINIMIZED VALUE------------------
 
 
 :TEST_STARTATLOGON
-:: ----------------TEST START_AT_LOGON VALUE---------------------
-:: Makes certain START_AT_LOGON has valid value
-:: Sets to 0 if invalid
+REM ----------------TEST START_AT_LOGON VALUE---------------------
+REM Makes certain START_AT_LOGON has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if START_AT_LOGON has a valid value (0 or 1)...
 SET currently2=
@@ -1423,13 +1423,13 @@ SET isWaiting=0
 CALL :STATS
 SET START_AT_LOGON=0
 GOTO :EOF
-:: --------------END TEST START_AT_LOGON VALUE-------------------
+REM --------------END TEST START_AT_LOGON VALUE-------------------
 
 
 :TEST_OMITUSERINPUT
-:: ----------------TEST OMIT_USER_INPUT VALUE--------------------
-:: Makes certain OMIT_USER_INPUT has valid value
-:: Sets to 0 if invalid
+REM ----------------TEST OMIT_USER_INPUT VALUE--------------------
+REM Makes certain OMIT_USER_INPUT has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if OMIT_USER_INPUT has a valid value (0 or 1)...
 SET currently2=
@@ -1450,14 +1450,14 @@ SET isWaiting=0
 CALL :STATS
 SET OMIT_USER_INPUT=0
 GOTO :EOF
-:: --------------END TEST OMIT_USER_INPUT VALUE------------------
+REM --------------END TEST OMIT_USER_INPUT VALUE------------------
 
 
 
 :TEST_SKIPINITIALNTWKTEST_VAL
-:: ------------TEST SKIP_INITIAL_NTWK_TEST VALUE-----------------
-:: Makes certain SKIP_INITIAL_NTWK_TEST has valid value
-:: Sets to 0 if invalid
+REM ------------TEST SKIP_INITIAL_NTWK_TEST VALUE-----------------
+REM Makes certain SKIP_INITIAL_NTWK_TEST has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if SKIP_INITIAL_NTWK_TEST has a valid value (0 or 1)...
 SET currently2=
@@ -1478,14 +1478,14 @@ SET isWaiting=0
 CALL :STATS
 SET SKIP_INITIAL_NTWK_TEST=0
 GOTO :EOF
-:: ----------END TEST SKIP_INITIAL_NTWK_TEST VALUE---------------
+REM ----------END TEST SKIP_INITIAL_NTWK_TEST VALUE---------------
 
 
 
 :TEST_AUTORETRY_VAL
-:: --------------------TEST AUTO_RETRY VALUE---------------------
-:: Makes certain AUTO_RETRY has valid value
-:: Sets to 0 if invalid
+REM --------------------TEST AUTO_RETRY VALUE---------------------
+REM Makes certain AUTO_RETRY has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if AUTO_RETRY has a valid value (0 or 1)...
 SET currently2=
@@ -1506,14 +1506,14 @@ SET isWaiting=0
 CALL :STATS
 SET AUTO_RETRY=0
 GOTO :EOF
-:: ------------------END TEST AUTO_RETRY VALUE-------------------
+REM ------------------END TEST AUTO_RETRY VALUE-------------------
 
 
 
 :TEST_SHOWADVANCEDTESTING
-:: ------------TEST SHOW_ADVANCED_TESTING VALUE------------------
-:: Makes certain SHOW_ADVANCED_TESTING has valid value
-:: Sets to 0 if invalid
+REM ------------TEST SHOW_ADVANCED_TESTING VALUE------------------
+REM Makes certain SHOW_ADVANCED_TESTING has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if SHOW_ADVANCED_TESTING has 
 SET currently2=a valid value (0 or 1)...
@@ -1534,14 +1534,14 @@ SET isWaiting=0
 CALL :STATS
 SET SHOW_ADVANCED_TESTING=0
 GOTO :EOF
-:: -----------END TEST SHOW_ADVANCED_TESTING VALUE---------------
+REM -----------END TEST SHOW_ADVANCED_TESTING VALUE---------------
 
 
 
 :TEST_ONLYONENETWORKNAMETEST
-:: ----------TEST ONLY_ONE_NETWORK_NAME_TEST VALUE---------------
-:: Makes certain ONLY_ONE_NETWORK_NAME_TEST has valid value
-:: Sets to 0 if invalid
+REM ----------TEST ONLY_ONE_NETWORK_NAME_TEST VALUE---------------
+REM Makes certain ONLY_ONE_NETWORK_NAME_TEST has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if ONLY_ONE_NETWORK_NAME_TEST has 
 SET currently2=a valid value (0 or 1)...
@@ -1562,15 +1562,15 @@ SET isWaiting=0
 CALL :STATS
 SET ONLY_ONE_NETWORK_NAME_TEST=0
 GOTO :EOF
-:: ---------END TEST ONLY_ONE_NETWORK_NAME_TEST VALUE------------
+REM ---------END TEST ONLY_ONE_NETWORK_NAME_TEST VALUE------------
 
 
 
 
 :TEST_FIXES_VALS
-:: --------------------TEST FIXES VALUES-------------------------
-:: If fixes are disabled, gives option of enable both
-:: or Continue
+REM --------------------TEST FIXES VALUES-------------------------
+REM If fixes are disabled, gives option of enable both
+REM or Continue
 
 SET currently=Checking if values for Fixes are valid...
 SET currently2=
@@ -1640,14 +1640,14 @@ GOTO :EOF
 SET Using_Fixes=0
 
 GOTO :EOF
-:: ------------------END TEST FIXES VALUES-----------------------
+REM ------------------END TEST FIXES VALUES-----------------------
 
 
 
 :TEST_OSDETECTOVERRIDE_VAL
-:: --------------TEST OS_DETECT_OVERRIDE VALUE-------------------
-:: Makes certain OS_DETECT_OVERRIDE has valid value
-:: Sets to 0 if invalid
+REM --------------TEST OS_DETECT_OVERRIDE VALUE-------------------
+REM Makes certain OS_DETECT_OVERRIDE has valid value
+REM Sets to 0 if invalid
 
 SET currently=Checking if OS_DETECT_OVERRIDE has a valid value (0 or 1)...
 SET currently2=
@@ -1668,19 +1668,68 @@ SET isWaiting=0
 CALL :STATS
 SET OS_DETECT_OVERRIDE=0
 GOTO :EOF
-:: ------------END TEST OS_DETECT_OVERRIDE VALUE-----------------
+REM ------------END TEST OS_DETECT_OVERRIDE VALUE-----------------
 
 
 :NEED_NETWORK
-:: ---------------PROGRAM NEEDS NETWORK NAME---------------------
-:: GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
+REM ---------------PROGRAM NEEDS NETWORK NAME---------------------
+REM GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
+SET OverNum=9
+
+IF "%NCNUM%"=="" SET NETWORKCOMMON=Wireless Network Connection
+IF "%NCNUM%"=="" SET NCNUM=0
+IF %NCNUM%==1 SET NETWORKCOMMON=Local Area Network
+IF %NCNUM%==2 SET NETWORKCOMMON=LAN
+IF %NCNUM%==3 SET NETWORKCOMMON=Wireless Network Connection 1
+IF %NCNUM%==4 SET NETWORKCOMMON=Wireless Network Connection 2
+IF %NCNUM%==5 SET NETWORKCOMMON=Wireless Network Connection 3
+IF %NCNUM%==6 SET NETWORKCOMMON=Wireless Network Connection 4
+IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
+IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
+
 SET currently=Could not find "%NETWORK%"
-SET currently2=NOTE: This program requires admin privaleges to run!
+SET currently2=Testing Common Network Names...
+SET SpecificStatus=Checking "%NETWORKCOMMON%"
+SET isWaiting=0
+CALL :STATS
+
+IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORKCOMMON%" NEWNAME="%NETWORKCOMMON%"|FIND "name is not registered " >NUL
+IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 SET /A NCNUM+=1
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GEQ %OverNum% GOTO :COMMON_NAMES_NOT_FOUND
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
+
+
+:FOUND_CUSTOM_NAME
+SET currently=Found a Network connection match:
+SET currently2="%NETWORKCOMMON%"
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-IF %OMIT_USER_INPUT%==1 GOTO :NEED_NETWORK_AUTO
 ECHO.
+ECHO.
+IF %OMIT_USER_INPUT%==1 SET NETWORK==%NETWORKCOMMON%
+IF %OMIT_USER_INPUT%==1 GOTO :EOF
+ECHO Would you like to reset and/or monitor this network connection?
+SET /P usrInpt=[y/n]
+IF "%usrInpt%"=="n" IF %NCNUM% LSS %OverNum% GOTO :NEED_NETWORK
+IF "%usrInpt%"=="y" SET NETWORK==%NETWORKCOMMON%
+IF "%usrInpt%"=="y" GOTO :EOF
+GOTO :FOUND_CUSTOM_NAME
+
+
+:COMMON_NAMES_NOT_FOUND
+SET currently=Could not find "%NETWORK%"
+SET currently2=
+SET SpecificStatus=NOTE: This program must be run as an administrator!
+SET isWaiting=0
+CALL :STATS
+ECHO.
+ECHO.
+ECHO If the network name is correct, you may need to run this program
+ECHO by right-clicking and selecting "Run as Administrator" (Windows
+ECHO Vista and 7) or RunAs administrator (Windows XP)
+IF %OMIT_USER_INPUT%==1 GOTO :NEED_NETWORK_AUTO
 ECHO.
 ECHO Would you like to view current network connections?
 SET /P usrInpt=[y/n] 
@@ -1692,7 +1741,7 @@ SET currently2=Showing Network Connections...
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
+IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\REM {21EC2020-3AEA-1069-A2DD-08002B30309D}\REM {7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
@@ -1720,7 +1769,7 @@ ECHO (Please close file to continue)
 IF %DEBUGN%==0 notepad "%THISFILEPATH%"
 
 :PAST_SET_NETWORK_NAME
-:: Self restart
+REM Self restart
 SET currently=Restarting Program...
 SET currently2=
 SET SpecificStatus=
@@ -1750,14 +1799,14 @@ SET isWaiting=0
 SET USE_NETWORK_RESET=0
 SET USE_NETWORK_RESET_FAST=0
 GOTO :EOF
-:: -------------END PROGRAM NEEDS NETWORK NAME-------------------
+REM -------------END PROGRAM NEEDS NETWORK NAME-------------------
 
 
 
 
 :SYSTEM_UNSUPPORTED
-:: --------------UNSUPPORTED OPERATING SYSTEM--------------------
-:: EXIT
+REM --------------UNSUPPORTED OPERATING SYSTEM--------------------
+REM EXIT
 SET currently=This Operating System is not currently supported.
 SET currently2=EXITING...
 SET SpecificStatus=
@@ -1766,13 +1815,13 @@ CALL :STATS
 CALL :STATS
 SET isWaiting=0
 EXIT
-:: ------------END UNSUPPORTED OPERATING SYSTEM------------------
+REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 
 
 
 :CHECK_CONNECTION_ONLY
-:: ---------CHECK INTERNET CONNECION ONLY (NO FIXES)-------------
-:: SAFE BRANCH (GOTO ( CHECK_CONNECTION_ONLY || EXIT ) )
+REM ---------CHECK INTERNET CONNECION ONLY (NO FIXES)-------------
+REM SAFE BRANCH (GOTO ( CHECK_CONNECTION_ONLY || EXIT ) )
 SET currently=Set to check connection only
 SET currently2= (will not fix connection if not connected)
 SET SpecificStatus=
@@ -1814,12 +1863,12 @@ SET /A delaymins=CHECK_DELAY
 CALL :WAIT
 GOTO :CHECK_CONNECTION_ONLY
 
-:: -------END CHECK INTERNET CONNECION ONLY (NO FIXES)-----------
+REM -------END CHECK INTERNET CONNECION ONLY (NO FIXES)-----------
 
 
 :FAILED
-:: -------------------FIX ATTEMPT FAILED-------------------------
-:: BRANCH (FAILED_CONTINUOUS || FIX || EXIT)
+REM -------------------FIX ATTEMPT FAILED-------------------------
+REM BRANCH (FAILED_CONTINUOUS || FIX || EXIT)
 IF %CONTINUOUS%==1 GOTO :FAILED_CONTINUOUS
 SET currently=Unable to Connect to Internet.
 SET currently2=
@@ -1835,12 +1884,12 @@ IF "%usrInpt%"=="n" EXIT
 IF "%usrInpt%"=="y" GOTO :FIX
 GOTO :FAILED
 
-:: -----------------END FIX ATTEMPT FAILED-----------------------
+REM -----------------END FIX ATTEMPT FAILED-----------------------
 
 
 :FAILED_CONTINUOUS
-:: ----------------FIX ATTEMPT FAILED (RETRY)--------------------
-:: GOTO FIX
+REM ----------------FIX ATTEMPT FAILED (RETRY)--------------------
+REM GOTO FIX
 SET currently=Unable to Connect to Internet (Retrying...)
 SET currently2=
 SET SpecificStatus= 
@@ -1848,12 +1897,12 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 GOTO :FIX
-:: --------------END FIX ATTEMPT FAILED (RETRY)------------------
+REM --------------END FIX ATTEMPT FAILED (RETRY)------------------
 
 
 :SUCCESS
-:: ------------------FIX ATTEMPT SUCCEEDED-----------------------
-:: BRANCH (SUCCESS_CONTINUOUS || EXIT)
+REM ------------------FIX ATTEMPT SUCCEEDED-----------------------
+REM BRANCH (SUCCESS_CONTINUOUS || EXIT)
 
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
@@ -1869,12 +1918,12 @@ CALL :PINGER
 CALL :PINGER
 IF %DEBUGN%==1 PAUSE
 EXIT
-:: ----------------END FIX ATTEMPT SUCCEEDED---------------------
+REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
 
 
 :SUCCESS_CONTINUOUS
-:: -------------FIX ATTEMPT SUCCEEDED (RECHECK)------------------
-:: BRANCH (SUCCESS || FIX)
+REM -------------FIX ATTEMPT SUCCEEDED (RECHECK)------------------
+REM BRANCH (SUCCESS || FIX)
 SET currently=Successfully Connected to Internet.
 SET currently2=
 SET SpecificStatus= 
@@ -1888,4 +1937,4 @@ CALL :WAIT
 CALL :TEST isConnected
 IF %isConnected%==1 GOTO :SUCCESS
 GOTO :FIX
-:: -----------END FIX ATTEMPT SUCCEEDED (RECHECK)----------------
+REM -----------END FIX ATTEMPT SUCCEEDED (RECHECK)----------------
