@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		10.2.732
+:: Verson:		10.4.745
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -297,8 +297,8 @@ IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
 :: BRANCH (SUCCESS || FIX)
 :: Determine if connection needs to be fixed
 
-CALL :TEST
-IF %TEST_Results%==1 GOTO :SUCCESS
+CALL :TEST isConnected
+IF %isConnected%==1 GOTO :SUCCESS
 GOTO :FIX
 :: -----------END INITIAL NETWORK CONNECTION TEST-----------
 
@@ -326,7 +326,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v10.2.732  ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v10.4.745  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -352,8 +352,9 @@ GOTO :EOF
 
 
 :TEST
+SETLOCAL
 :: ------------------TEST INTERNET CONNECTION-------------------
-:: RETURN (TEST_Results= (1 || 0) )
+:: RETURN (isConnected= (1 || 0) )
 
 SET currently=Testing Internet Connection...
 SET currently2=
@@ -375,24 +376,26 @@ SET times=0
 SET nots=0
 SET totalTests=0
 SET fluke_test_eliminator=5
-SET fluke_test__total_eliminator=1
-SET testCycle=0
+SET maxTestLimit=15
 
 IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate www.google.com...
 :TEST_TESTING
-SET testCycle+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Cycle %testCycle%
-PING -n 1 www.google.com|FIND "Reply from " >NUL
-IF NOT ERRORLEVEL 1 GOTO :TEST_FOUND
-PING -n 1 www.google.com|FIND "Request timed" >NUL
-IF NOT ERRORLEVEL 1 GOTO :TEST_TIMED_OUT
-PING -n 1 www.google.com|FIND "request could " >NUL
+FOR /F "delims=" %%a IN ('PING -n 1 www.google.com') DO @SET ping_test=%%a
+
+ECHO %ping_test% |FINDSTR "request could not find" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
-GOTO :TEST_TESTING
+
+ECHO %ping_test% |FINDSTR "Minimum " >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_CONNECTED
+
+GOTO :TEST_TIMED_OUT
 
 
-:TEST_FOUND
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Found
+
+
+
+:TEST_CONNECTED
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Found Connection
 SET /A totalTests+=1
 SET /A founds+=1
 SET times=0
@@ -402,7 +405,7 @@ GOTO :TEST_TESTING
 
 
 :TEST_NOT_CONNECTED
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Not Found
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Did not find Connection
 SET /A totalTests+=1
 SET /A nots+=1
 SET founds=0
@@ -412,13 +415,13 @@ GOTO :TEST_TESTING
 
 
 :TEST_TIMED_OUT
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Timed Out
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Request Timed Out
 SET /A totalTests+=1
 SET /A times+=1
 SET founds=0
 SET nots=0
 IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_EXCEEDED_TEST_LIMIT
-IF %totalTests% GEQ 15 GOTO :TEST_EXCEEDED_TEST_LIMIT
+IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
 
 
@@ -433,27 +436,31 @@ IF %SLWMSG%==1 CALL :PINGER
 SET currently=Internet Connection not detected
 SET currently2=
 SET SpecificStatus=
-
 SET isWaiting=0
 CALL :STATS
 
-SET TEST_Results=0
+ENDLOCAL&SET %~1=0
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
 IF %SLWMSG%==1 CALL :PINGER
-SET TEST_Results=1
-SET currently=Internet Connection detected. However, this is a poor 
-SET currently2=quality connection. Internet browsing may be slow.
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 2
+
+SET currently=Unable to varify internet connectivity. This is a
+SET currently2=poor quality connection. Internet browsing may be slow.
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
+
+ENDLOCAL&SET %~1=1
 GOTO :EOF
 
 :TEST_SUCCEEDED
 IF %SLWMSG%==1 CALL :PINGER
-SET TEST_Results=1
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER
+
+ENDLOCAL&SET %~1=1
 GOTO :EOF
 :: ----------------END TEST INTERNET CONNECTION-----------------
 
@@ -470,8 +477,8 @@ GOTO :EOF
 :: *****RESET IP ADDRESS*****
 IF %USE_IP_RESET%==1 (
 	CALL :FIX_RESET_IP
-	CALL :TEST
-	IF %TEST_Results%==1 GOTO :SUCCESS
+	CALL :TEST isConnected
+	IF %isConnected%==1 GOTO :SUCCESS
 	
 	::FIX FAILED
 	SET currently=Resetting IP did not fix the problem
@@ -487,8 +494,8 @@ IF %USE_IP_RESET%==1 (
 
 IF %USE_NETWORK_RESET_FAST%==1 (
 	CALL :FIX_RESET_NETWORK_FAST
-	CALL :TEST
-	IF %TEST_Results%==1 GOTO :SUCCESS
+	CALL :TEST isConnected
+	IF %isConnected%==1 GOTO :SUCCESS
 
 	::FIX FAILED
 	SET currently=Quickly reseting the Network Connection
@@ -504,8 +511,8 @@ IF %USE_NETWORK_RESET_FAST%==1 (
 
 IF %USE_NETWORK_RESET%==1 (
 	CALL :FIX_RESET_NETWORK
-	CALL :TEST
-	IF %TEST_Results%==1 GOTO :SUCCESS
+	CALL :TEST isConnected
+	IF %isConnected%==1 GOTO :SUCCESS
 
 	::FIX FAILED
 	SET /A mins="TTLSCNDS/60"
@@ -1650,8 +1657,8 @@ SET currently2= (will not fix connection if not connected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-CALL :TEST
-IF %TEST_Results%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
+CALL :TEST isConnected
+IF %isConnected%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
 GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
@@ -1757,7 +1764,7 @@ SET currently2=
 SET SpecificStatus=
 SET /A delaymins=CHECK_DELAY
 CALL :WAIT
-CALL :TEST
-IF %TEST_Results%==1 GOTO :SUCCESS
+CALL :TEST isConnected
+IF %isConnected%==1 GOTO :SUCCESS
 GOTO :FIX
 :: -----------END FIX ATTEMPT SUCCEEDED (RECHECK)----------------
