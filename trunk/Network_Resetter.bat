@@ -1,18 +1,18 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
-REM Version:
-	SET Version=12.1.975
+REM Revision:
+	SET rvsn=26
 REM 
 REM Description:	Fixes network connection by trying each of the following:
 REM 				1) Reset Network Connection (Quick Reset)
 REM 				2) Reset IP Address
 REM 				3) Reset Network Connection (Slow Reset)
 REM 
-REM Author:		Lectrode 
+REM Author:			Lectrode 
 REM 				Website:	http://electrodexs.net
 REM 				Email: 		stevenspchelp@gmail.com
 REM 
-REM Notes:		This is easiest read in a program such as Notepad++
+REM Notes:			This is easiest read in a program such as Notepad++
 REM 				and using the font "Curier New" size 10.
 REM 				
 REM 				Make sure the settings below are correct BEFORE
@@ -45,15 +45,8 @@ REM 				"Could not find <network> | This program requires a valid
 REM 				network connection | please open with notepad for more information"
 REM 				-To fix this please correct the NETWORK setting below.
 REM 				
-REM 				Regardless of what the "Disclaimer" says, this program
-REM 				does not change or modify anything "system threatening"
-REM 				(aka it's perfectly safe)
-REM 				Of course, this cannot be guaranteed if you get this from
-REM 				anyone other than Lectrode.
-REM 
-REM Disclaimer:	This program is provided "AS-IS" and the author has no
-REM 				responsibility for what may happen to your computer.
-REM 				Use at your own risk.
+REM 				This program is protected under the GPLv3 License. 
+REM 				http://www.gnu.org/licenses/gpl.html
 
 
 
@@ -260,15 +253,15 @@ IF "%restartingProgram%"=="" (
 )
 
 
-REM Set CMD window size
+REM Set CMD window size & title
 MODE CON COLS=81 LINES=30
+TITLE Lectrode's Network Connection Resetter v%version%
 
 REM Set initial variables
 SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
-SET S=*
 
 REM Display program introduction
 REM Call it twice to last longer
@@ -368,7 +361,7 @@ IF "%SpecificStatus%"=="" SET SHOWSpecificStatus=                               
 IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SpecificStatus%                                                                            
 IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SHOWSpecificStatus:~0,75%*
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v%Version%  ******     *
+						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -424,10 +417,13 @@ IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate www.google.com...
 :TEST_TESTING
 FOR /F "delims=" %%a IN ('PING -n 1 www.google.com') DO @SET ping_test=%%a
 
-ECHO %ping_test% |FINDSTR "request could not find" >NUL
+ECHO %ping_test% |FIND "request could not find" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
 
-ECHO %ping_test% |FINDSTR "Minimum " >NUL
+ECHO %ping_test% |FIND "Unreachable" >NUL
+IF NOT ERRORLEVEL 1 GOTO :TEST_CONNECTED
+
+ECHO %ping_test% |FIND "Minimum " >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_CONNECTED
 
 GOTO :TEST_TIMED_OUT
