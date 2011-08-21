@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=26
+	SET rvsn=27
 REM 
 REM Description:	Fixes network connection by trying each of the following:
 REM 				1) Reset Network Connection (Quick Reset)
@@ -323,7 +323,8 @@ REM BRANCH (SUCCESS || FIX)
 REM Determine if connection needs to be fixed
 
 IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :FIX
-
+REM Enable adapter if not already enabled
+CALL :ENABLE_NW
 CALL :TEST isConnected
 IF %isConnected%==1 GOTO :SUCCESS
 GOTO :FIX
@@ -390,6 +391,21 @@ REM ---------------------END PROGRAM STATUS----------------------
 SETLOCAL
 REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
+SET conchks=0
+:CHECK_CONNECTED
+SET currently=Checking for connectivity...
+SET currently2=(Currently Disconnected) (Checks: %conchks%)
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET connectcheckgood=0
+FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
+ECHO %connect_test% |FIND "Disconnected" >NUL
+IF ERRORLEVEL 1 SET /A connectcheckgood+=1
+ECHO %connect_test% |FIND "Disabled" >NUL
+IF ERRORLEVEL 1 SET /A connectcheckgood+=1
+SET /A conchks+=1
+IF NOT %connectcheckgood% GEQ 2 GOTO :CHECK_CONNECTED
 
 SET currently=Testing Internet Connection...
 SET currently2=
