@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=27
+	SET rvsn=28
 REM 
 REM Description:	Fixes network connection by trying each of the following:
 REM 				1) Reset Network Connection (Quick Reset)
@@ -262,6 +262,7 @@ SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
+SET NCNUM=0
 
 REM Display program introduction
 REM Call it twice to last longer
@@ -353,7 +354,7 @@ REM ---------------------END PROGRAM INTRO--------------------
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
 CLS
-SET SHOWNETWORK=%NETWORK%                                                      
+SET SHOWNETWORK=%NETWORK%                                                                           
 SET SHOWcurrently=%currently%                                                  
 IF "%currently2%"=="" SET SHOWcurrently2=                                                            *
 IF NOT "%currently2%"=="" SET SHOWcurrently2=%currently2%                                                                            
@@ -1695,10 +1696,10 @@ REM ------------END TEST OS_DETECT_OVERRIDE VALUE-----------------
 :NEED_NETWORK
 REM ---------------PROGRAM NEEDS NETWORK NAME---------------------
 REM GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
-SET OverNum=9
+SET OverNum=8
 
-IF "%NCNUM%"=="" SET NETWORKCOMMON=Wireless Network Connection
-IF "%NCNUM%"=="" SET NCNUM=0
+
+IF %NCNUM%==0 SET NETWORKCOMMON=Wireless Network Connection
 IF %NCNUM%==1 SET NETWORKCOMMON=Local Area Network
 IF %NCNUM%==2 SET NETWORKCOMMON=LAN
 IF %NCNUM%==3 SET NETWORKCOMMON=Wireless Network Connection 1
@@ -1708,22 +1709,22 @@ IF %NCNUM%==6 SET NETWORKCOMMON=Wireless Network Connection 4
 IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
 IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
 
-SET currently=Could not find "%NETWORK%"
+SET currently=Could not find '%NETWORK%'
 SET currently2=Testing Common Network Names...
-SET SpecificStatus=Checking "%NETWORKCOMMON%"
+SET SpecificStatus=Checking '%NETWORKCOMMON%'
 SET isWaiting=0
 CALL :STATS
 
 IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORKCOMMON%" NEWNAME="%NETWORKCOMMON%"|FIND "name is not registered " >NUL
+SET /A NCNUM+=1
 IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 SET /A NCNUM+=1
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GEQ %OverNum% GOTO :COMMON_NAMES_NOT_FOUND
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GTR %OverNum% GOTO :COMMON_NAMES_NOT_FOUND
 IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 
 :FOUND_CUSTOM_NAME
 SET currently=Found a Network connection match:
-SET currently2="%NETWORKCOMMON%"
+SET currently2='%NETWORKCOMMON%'
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -1762,7 +1763,7 @@ SET currently2=Showing Network Connections...
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,REM {20D04FE0-3AEA-1069-A2D8-08002B30309D}\REM {21EC2020-3AEA-1069-A2DD-08002B30309D}\REM {7007ACC7-3202-11D1-AAD2-00805FC1270E}
+IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
