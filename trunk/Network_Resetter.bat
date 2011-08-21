@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=31
+	SET rvsn=32
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -276,36 +276,36 @@ SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-CALL :TEST_SLWMSG_VAL
-CALL :TEST_SHOWALLALERTS_VAL
-CALL :TEST_DEBUGN_VAL
-CALL :TEST_CONTINUOUS_VAL
-CALL :TEST_OSDETECTOVERRIDE_VAL
-CALL :TEST_USENETWORKRESET
-CALL :TEST_USENETWORKRESETFAST
-CALL :TEST_USEIP_VAL
-CALL :TEST_OMITUSERINPUT
+CALL :TEST01VAR SLWMSG 0 %SLWMSG%
+CALL :TEST01VAR SHOW_ALL_ALERTS 1 %SHOW_ALL_ALERTS%
+CALL :TEST01VAR DEBUGN 0 %DEBUGN%
+CALL :TEST01VAR CONTINUOUS 0 %CONTINUOUS%
+CALL :TEST01VAR OS_DETECT_OVERRIDE 0 %OS_DETECT_OVERRIDE%
+CALL :TEST01VAR USE_NETWORK_RESET 1 %USE_NETWORK_RESET%
+CALL :TEST01VAR USE_NETWORK_RESET_FAST 1 %USE_NETWORK_RESET_FAST%
+CALL :TEST01VAR USE_IP_RESET 1 %USE_IP_RESET%
+CALL :TEST01VAR OMIT_USER_INPUT 0 %OMIT_USER_INPUT%
 CALL :TEST_FIXES_VALS
 
 IF %USE_NETWORK_RESET%==1 (
 	CALL :DETECT_OS
 	CALL :TEST_NETWORK_NAME 1
-	CALL :TEST_MINUTES_VAL
+	CALL :TESTIntVAR MINUTES 10 x x %MINUTES%
 ) ELSE (
 	IF %USE_NETWORK_RESET_FAST%==1 (
 		CALL :DETECT_OS
 		CALL :TEST_NETWORK_NAME 1
-		CALL :TEST_MINUTES_VAL
+		CALL :TESTIntVAR MINUTES 10 x x %MINUTES%
 	)
 )
-CALL :TEST_TIMERREFRESHRATE_VAL
-CALL :TEST_CHECKDELAY_VAL
-CALL :TEST_STARTATLOGON
-CALL :TEST_STARTMINIMIZED
-CALL :TEST_AUTORETRY_VAL
-CALL :TEST_SHOWADVANCEDTESTING
-CALL :TEST_SKIPINITIALNTWKTEST_VAL
-CALL :TEST_ONLYONENETWORKNAMETEST
+CALL :TESTIntVAR TIMER_REFRESH_RATE 1 0 99999999 %TIMER_REFRESH_RATE%
+CALL :TESTIntVAR CHECK_DELAY 1 0 99999999 %CHECK_DELAY%
+CALL :TEST01VAR START_AT_LOGON 0 %START_AT_LOGON%
+CALL :TEST01VAR START_MINIMIZED 0 %START_MINIMIZED%
+CALL :TEST01VAR AUTO_RETRY 0 %AUTO_RETRY%
+CALL :TEST01VAR SHOW_ADVANCED_TESTING 0 %SHOW_ADVANCED_TESTING%
+CALL :TEST01VAR SKIP_INITIAL_NTWK_TEST 0 %SKIP_INITIAL_NTWK_TEST%
+CALL :TEST01VAR ONLY_ONE_NETWORK_NAME_TEST 1 %ONLY_ONE_NETWORK_NAME_TEST%
 
 
 REM Copy to startup folder if set to start when 
@@ -1152,469 +1152,74 @@ GOTO :EOF
 REM --------------------END TEST NETWORK NAME---------------------
 
 
-:TEST_MINUTES_VAL
-REM ----------------------TEST MINUTES VALUE----------------------
-REM Makes certain MINUTES has a valid value
-REM Sets to 10 if invalid
 
-SET currently=Checking if MINUTES is a valid number...
-SET currently2=
+:TESTIntVAR
+REM ----------------------TEST INTEGAR VALUE----------------------
+REM %1=varname
+REM %2=default value
+REM %3=min value
+REM %4=max value
+REM %5=current value
+IF %3==%4 SET IntNoLimit=1
+IF NOT %3==%4 SET IntNoLimit=0
+SET currently=Checking if %1 has a valid 
+SET currently2=value (Integar between %3 and %4)...
+IF IntNoLimit==1 SET currently2=value (an Integar)...
 SET SpecificStatus=
 SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%MINUTES%"=="0" GOTO :EOF
+IF NOT "%SHOW_ALL_ALERTS%"=="0" CALL :STATS
 
-SET /a num=MINUTES
-IF "%num%"=="0" (
-	SET currently="%MINUTES%" is not a valid answer.
-	SET currently2=Setting MINUTES to 10...
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	SET MINUTES=10
-)
+IF "0"=="%5" GOTO :TESTIntVAR_ISNUM
+
+SET /a num=%5
+IF NOT "%num%"=="0" GOTO :TESTIntVAR_ISNUM
+
+GOTO :TESTIntVAR_NOTVALID
+
+:TESTIntVAR_ISNUM
+IF %IntNoLimit%==1 SET %1=%num%
+IF %IntNoLimit%==1 GOTO :EOF
+IF %num% GEQ %3 IF %num% LEQ %4 SET %1=%num%
+IF %num% GEQ %3 IF %num% LEQ %4 GOTO :EOF
+
+
+:TESTIntVAR_NOTVALID
+SET currently=%1 does not have a valid value.
+SET currently2=Setting %1 to %2...
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET %1=%2
 GOTO :EOF
-REM --------------------END TEST MINUTES VALUE--------------------
-
-
-:TEST_CONTINUOUS_VAL
-REM ---------------------TEST CONTINUOUS VALUE--------------------
-REM Makes certain CONTINUOUS has a valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if CONTINUOUS has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%CONTINUOUS%"=="0" GOTO :EOF
-IF "%CONTINUOUS%"=="1" GOTO :EOF
-SET currently=CONTINUOUS does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting CONTINUOUS to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET CONTINUOUS=0
-GOTO :EOF
-REM -------------------END TEST CONTINUOUS VALUE------------------
-
-
-:TEST_USENETWORKRESET
-REM -----------------TEST USE_NETWORK_RESET VALUE-----------------
-REM Makes certain USE_NETWORK_RESET has a valid value
-REM Sets to 1 if invalid
-
-SET currently=Checking if USE_NETWORK_RESET has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%USE_NETWORK_RESET%"=="0" GOTO :EOF
-IF "%USE_NETWORK_RESET%"=="1" GOTO :EOF
-SET currently=USE_NETWORK_RESET does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting USE_NETWORK_RESET to "1"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET USE_NETWORK_RESET=1
-GOTO :EOF
-REM ---------------END TEST USE_NETWORK_RESET VALUE---------------
-
-
-:TEST_USENETWORKRESETFAST
-REM ---------------TEST USE_NETWORK_RESET_FAST VALUE--------------
-REM Makes certain USE_NETWORK_RESET_FAST has a valid value
-REM Sets to 1 if invalid
-
-SET currently=Checking if USE_NETWORK_RESET_FAST has a valid 
-SET currently2=value (0 or 1)...
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%USE_NETWORK_RESET_FAST%"=="0" GOTO :EOF
-IF "%USE_NETWORK_RESET_FAST%"=="1" GOTO :EOF
-SET currently=USE_NETWORK_RESET_FAST does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting USE_NETWORK_RESET_FAST to "1"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET USE_NETWORK_RESET_FAST=1
-GOTO :EOF
-REM -------------END TEST USE_NETWORK_RESET_FAST VALUE------------
-
-
-:TEST_USEIP_VAL
-REM -------------------TEST USE_IP_RESET VALUE--------------------
-REM Makes certain USE_IP_RESET has valid value
-REM Sets to 1 if invalid
-
-SET currently=Checking if USE_IP_RESET has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%USE_IP_RESET%"=="0" GOTO :EOF
-IF "%USE_IP_RESET%"=="1" GOTO :EOF
-SET currently=USE_IP_RESET does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting USE_IP_RESET to "1"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET USE_IP_RESET=1
-GOTO :EOF
-REM -----------------END TEST USE_IP_RESET VALUE------------------
-
-
-:TEST_CHECKDELAY_VAL
-REM -------------------TEST CHECK_DELAY VALUE---------------------
-REM Makes certain CHECK_DELAY has valid value
-REM Sets to 3 if invalid
-
-SET currently=Checking if CHECK_DELAY is a valid number...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%CHECK_DELAY%"=="0" GOTO :EOF
-
-SET /a num=CHECK_DELAY
-IF "%num%"=="0" (
-	SET currently="%CHECK_DELAY%" is not a valid value.
-	SET currently2=Setting CHECK_DELAY to 3...
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	SET CHECK_DELAY=3
-)
-GOTO :EOF
-REM -----------------END TEST CHECK_DELAY VALUE-------------------
-
-
-:TEST_DEBUGN_VAL
-REM ---------------------TEST DEBUGN VALUE------------------------
-REM Makes certain DEBUGN has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if DEBUGN is a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%DEBUGN%"=="0" GOTO :EOF
-IF "%DEBUGN%"=="1" GOTO :EOF
-SET currently=DEBUGN does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting DEBUGN to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET DEBUGN=0
-GOTO :EOF
-REM -------------------END TEST DEBUGN VALUE----------------------
-
-
-:TEST_SLWMSG_VAL
-REM ---------------------TEST SLWMSG VALUE------------------------
-REM Makes certain SLWMSG has valid value
-REM Sets to 1 if invalid
-
-SET currently=Checking if SLWMSG has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%SLWMSG%"=="0" GOTO :EOF
-IF "%SLWMSG%"=="1" GOTO :EOF
-SET currently=SLWMSG does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting SLWMSG to "1"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET SLWMSG=1
-GOTO :EOF
-REM -------------------END TEST SLWMSG VALUE----------------------
-
-
-:TEST_SHOWALLALERTS_VAL
-REM ----------------TEST SHOW_ALL_ALERTS VALUE--------------------
-REM Makes certain SHOW_ALL_ALERTS has valid value
-REM Sets to 1 if invalid
-
-SET currently=Checking if SHOW_ALL_ALERTS has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%SHOW_ALL_ALERTS%"=="0" GOTO :EOF
-IF "%SHOW_ALL_ALERTS%"=="1" GOTO :EOF
-SET currently=SHOW_ALL_ALERTS does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting SHOW_ALL_ALERTS to "1"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET SHOW_ALL_ALERTS=1
-GOTO :EOF
-REM --------------END TEST SHOW_ALL_ALERTS VALUE------------------
+REM --------------------END TEST INTEGAR VALUE--------------------
 
 
 
-:TEST_TIMERREFRESHRATE_VAL
-REM ---------------TEST TIMER_REFRESH_RATE VALUE------------------
-REM Makes certain TIMER_REFRESH_RATE has valid value
-REM Sets to 3 if invalid
-
-SET currently=Checking if TIMER_REFRESH_RATE has a valid 
-SET currently2=value (1,2,3,etc)...
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-
-SET /a num=TIMER_REFRESH_RATE
-IF "%num%"=="0" (
-	SET currently="%TIMER_REFRESH_RATE%" is not a valid value.
-	SET currently2=Setting TIMER_REFRESH_RATE to 3...
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	SET TIMER_REFRESH_RATE=3
-)
-IF %TIMER_REFRESH_RATE% GTR 0 GOTO :EOF
-SET currently="%TIMER_REFRESH_RATE%" is not a valid value.
-SET currently2=Setting TIMER_REFRESH_RATE to 3...
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET TIMER_REFRESH_RATE=3
-GOTO :EOF
-REM -------------END TEST TIMER_REFRESH_RATE VALUE----------------
-
-
-
-:TEST_STARTMINIMIZED
-REM ----------------TEST START_MINIMIZED VALUE--------------------
-REM Makes certain START_MINIMIZED has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if STARTMINIMIZED has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%START_MINIMIZED%"=="0" GOTO :EOF
-IF "%START_MINIMIZED%"=="1" GOTO :EOF
-SET currently=START_MINIMIZED does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting START_MINIMIZED to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET START_MINIMIZED=0
-GOTO :EOF
-REM --------------END TEST START_MINIMIZED VALUE------------------
-
-
-:TEST_STARTATLOGON
-REM ----------------TEST START_AT_LOGON VALUE---------------------
-REM Makes certain START_AT_LOGON has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if START_AT_LOGON has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%START_AT_LOGON%"=="0" GOTO :EOF
-IF "%START_AT_LOGON%"=="1" GOTO :EOF
-SET currently=START_AT_LOGON does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting START_AT_LOGON to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET START_AT_LOGON=0
-GOTO :EOF
-REM --------------END TEST START_AT_LOGON VALUE-------------------
-
-
-:TEST_OMITUSERINPUT
-REM ----------------TEST OMIT_USER_INPUT VALUE--------------------
-REM Makes certain OMIT_USER_INPUT has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if OMIT_USER_INPUT has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%OMIT_USER_INPUT%"=="0" GOTO :EOF
-IF "%OMIT_USER_INPUT%"=="1" GOTO :EOF
-SET currently=OMIT_USER_INPUT does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting OMIT_USER_INPUT to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET OMIT_USER_INPUT=0
-GOTO :EOF
-REM --------------END TEST OMIT_USER_INPUT VALUE------------------
-
-
-
-:TEST_SKIPINITIALNTWKTEST_VAL
-REM ------------TEST SKIP_INITIAL_NTWK_TEST VALUE-----------------
-REM Makes certain SKIP_INITIAL_NTWK_TEST has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if SKIP_INITIAL_NTWK_TEST has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%SKIP_INITIAL_NTWK_TEST%"=="0" GOTO :EOF
-IF "%SKIP_INITIAL_NTWK_TEST%"=="1" GOTO :EOF
-SET currently=SKIP_INITIAL_NTWK_TEST does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting SKIP_INITIAL_NTWK_TEST to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET SKIP_INITIAL_NTWK_TEST=0
-GOTO :EOF
-REM ----------END TEST SKIP_INITIAL_NTWK_TEST VALUE---------------
-
-
-
-:TEST_AUTORETRY_VAL
-REM --------------------TEST AUTO_RETRY VALUE---------------------
-REM Makes certain AUTO_RETRY has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if AUTO_RETRY has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%AUTO_RETRY%"=="0" GOTO :EOF
-IF "%AUTO_RETRY%"=="1" GOTO :EOF
-SET currently=AUTO_RETRY does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting AUTO_RETRY to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET AUTO_RETRY=0
-GOTO :EOF
-REM ------------------END TEST AUTO_RETRY VALUE-------------------
-
-
-
-:TEST_SHOWADVANCEDTESTING
-REM ------------TEST SHOW_ADVANCED_TESTING VALUE------------------
-REM Makes certain SHOW_ADVANCED_TESTING has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if SHOW_ADVANCED_TESTING has 
+:TEST01VAR
+REM ----------------------TEST 0 or 1 VALUE-----------------------
+REM %1=varname
+REM %2=default value
+REM %3=current value
+SET currently=Checking if %1 has 
 SET currently2=a valid value (0 or 1)...
 SET SpecificStatus=
 SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%SHOW_ADVANCED_TESTING%"=="0" GOTO :EOF
-IF "%SHOW_ADVANCED_TESTING%"=="1" GOTO :EOF
-SET currently=SHOW_ADVANCED_TESTING does not equal "1" or "0"
+IF NOT "%SHOW_ALL_ALERTS%"=="0" CALL :STATS
+IF "%3"=="0" GOTO :EOF
+IF "%3"=="1" GOTO :EOF
+SET currently=%1 does not equal "1" or "0"
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-SET currently=Setting SHOW_ADVANCED_TESTING to "0"...
+SET currently=Setting %1 to "%2"...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-SET SHOW_ADVANCED_TESTING=0
+SET %1=%2
 GOTO :EOF
-REM -----------END TEST SHOW_ADVANCED_TESTING VALUE---------------
-
-
-
-:TEST_ONLYONENETWORKNAMETEST
-REM ----------TEST ONLY_ONE_NETWORK_NAME_TEST VALUE---------------
-REM Makes certain ONLY_ONE_NETWORK_NAME_TEST has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if ONLY_ONE_NETWORK_NAME_TEST has 
-SET currently2=a valid value (0 or 1)...
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%ONLY_ONE_NETWORK_NAME_TEST%"=="0" GOTO :EOF
-IF "%ONLY_ONE_NETWORK_NAME_TEST%"=="1" GOTO :EOF
-SET currently=ONLY_ONE_NETWORK_NAME_TEST does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting ONLY_ONE_NETWORK_NAME_TEST to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET ONLY_ONE_NETWORK_NAME_TEST=0
-GOTO :EOF
-REM ---------END TEST ONLY_ONE_NETWORK_NAME_TEST VALUE------------
+REM --------------------END TEST 0 or 1 VALUE---------------------
 
 
 
@@ -1695,32 +1300,6 @@ GOTO :EOF
 REM ------------------END TEST FIXES VALUES-----------------------
 
 
-
-:TEST_OSDETECTOVERRIDE_VAL
-REM --------------TEST OS_DETECT_OVERRIDE VALUE-------------------
-REM Makes certain OS_DETECT_OVERRIDE has valid value
-REM Sets to 0 if invalid
-
-SET currently=Checking if OS_DETECT_OVERRIDE has a valid value (0 or 1)...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF "%OS_DETECT_OVERRIDE%"=="0" GOTO :EOF
-IF "%OS_DETECT_OVERRIDE%"=="1" GOTO :EOF
-SET currently=OS_DETECT_OVERRIDE does not equal "1" or "0"
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET currently=Setting OS_DETECT_OVERRIDE to "0"...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-SET OS_DETECT_OVERRIDE=0
-GOTO :EOF
-REM ------------END TEST OS_DETECT_OVERRIDE VALUE-----------------
 
 
 :NEED_NETWORK
