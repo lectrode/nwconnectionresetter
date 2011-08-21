@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Version:
-	SET Version=12.0.964
+	SET Version=12.1.975
 REM 
 REM Description:	Fixes network connection by trying each of the following:
 REM 				1) Reset Network Connection (Quick Reset)
@@ -268,6 +268,7 @@ SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
+SET S=*
 
 REM Display program introduction
 REM Call it twice to last longer
@@ -358,6 +359,14 @@ REM ---------------------END PROGRAM INTRO--------------------
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
 CLS
+SET SHOWNETWORK=%NETWORK%                                                      
+SET SHOWcurrently=%currently%                                                  
+IF "%currently2%"=="" SET SHOWcurrently2=                                                            *
+IF NOT "%currently2%"=="" SET SHOWcurrently2=%currently2%                                                                            
+IF NOT "%currently2%"=="" SET SHOWcurrently2=%SHOWcurrently2:~0,60%*
+IF "%SpecificStatus%"=="" SET SHOWSpecificStatus=                                                                           *
+IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SpecificStatus%                                                                            
+IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SHOWSpecificStatus:~0,75%*
 						ECHO  ******************************************************************************
 						ECHO  *      ******   Lectrode's Network Connection Resetter v%Version%  ******     *
 						ECHO  ******************************************************************************
@@ -365,12 +374,12 @@ IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset c
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
 IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*                             *
 						ECHO  *                                                                            *
-						ECHO  * Connection:    "%NETWORK%"
+						ECHO  * Connection: %SHOWNETWORK:~0,63%*
 						ECHO  *                                                                            *
-						ECHO  * Current State: %currently%
-						ECHO  *                %currently2%
+						ECHO  * Current State: %SHOWcurrently:~0,60%*
+						ECHO  *                %SHOWcurrently2%
 						ECHO  *                                                                            *
-						ECHO  * %SpecificStatus%
+						ECHO  * %SHOWSpecificStatus%
 						ECHO  *                                                                            *
 						ECHO  ******************************************************************************
 
@@ -453,7 +462,7 @@ IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out
 SET /A times+=1
 SET founds=0
 SET nots=0
-IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_EXCEEDED_TEST_LIMIT
+IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
 IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
 
@@ -1741,7 +1750,7 @@ SET currently2=Showing Network Connections...
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\REM {21EC2020-3AEA-1069-A2DD-08002B30309D}\REM {7007ACC7-3202-11D1-AAD2-00805FC1270E}
+IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,REM {20D04FE0-3AEA-1069-A2D8-08002B30309D}\REM {21EC2020-3AEA-1069-A2DD-08002B30309D}\REM {7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
