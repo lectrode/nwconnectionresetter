@@ -1,7 +1,8 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=28
+	SET rvsn=29
+
 REM 
 REM Description:	Fixes network connection by trying each of the following:
 REM 				1) Reset Network Connection (Quick Reset)
@@ -260,6 +261,7 @@ TITLE Lectrode's Network Connection Resetter v%version%
 REM Set initial variables
 SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
+SET THISFILENAMEPATH=%~dpnx0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
 SET NCNUM=0
@@ -393,9 +395,13 @@ SETLOCAL
 REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
+SET maxconchks=101
+CALL :CHECK_CONNECTED
+CALL :CHECK_INTERNET
+
 :CHECK_CONNECTED
 SET currently=Checking for connectivity...
-SET currently2=(Currently Disconnected) (Checks: %conchks%)
+SET currently2=(Currently Disconnected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -406,8 +412,33 @@ IF ERRORLEVEL 1 SET /A connectcheckgood+=1
 ECHO %connect_test% |FIND "Disabled" >NUL
 IF ERRORLEVEL 1 SET /A connectcheckgood+=1
 SET /A conchks+=1
+IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
+IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
 IF NOT %connectcheckgood% GEQ 2 GOTO :CHECK_CONNECTED
+GOTO :EOF
 
+:CHECK_CONNECTED_FAILED
+SET currently=Connectivity test failed
+SET currently2=(Currently Disconnected)
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
+SET /A chknwcn+=1
+IF NOT %chknwcn% GEQ 3 CALL :ENABLE_NW
+IF NOT %chknwcn% GEQ 3 GOTO :CHECK_CONNECTED
+ECHO If you are trying to connect to a wireless network, please make
+ECHO sure you are in range.
+
+ECHO If you are connecting via LAN/Ethernet cable, please make sure it
+ECHO is plugged in.
+ECHO.
+IF %CONTINUOUS%==1 GOTO :RESTART_PROGRAM
+ECHO Press any key to re-test connectivity
+PAUSE>NUL
+GOTO :CHECK_CONNECTED
+
+
+:CHECK_INTERNET
 SET currently=Testing Internet Connection...
 SET currently2=
 SET SpecificStatus=
@@ -1789,17 +1820,8 @@ ECHO.
 ECHO.
 ECHO (Please close file to continue)
 IF %DEBUGN%==0 notepad "%THISFILEPATH%"
+GOTO :RESTART_PROGRAM
 
-:PAST_SET_NETWORK_NAME
-REM Self restart
-SET currently=Restarting Program...
-SET currently2=
-SET SpecificStatus=
-SET isWaiting=1
-CALL :STATS
-SET restartingProgram=1
-START CMD /C "%THISFILEPATH%"
-EXIT
 
 :DONT_SET_NETWORK_NAME
 SET currently=The network was not found. This program requires 
@@ -1839,6 +1861,19 @@ SET isWaiting=0
 EXIT
 REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 
+
+REM ---------------------RESTART PROGRAM--------------------------
+:RESTART_PROGRAM
+REM Self restart
+SET currently=Restarting Program...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET restartingProgram=1
+START CMD /C "%THISFILEPATH%"
+EXIT
+REM -----------------END RESTART PROGRAM--------------------------
 
 
 :CHECK_CONNECTION_ONLY
