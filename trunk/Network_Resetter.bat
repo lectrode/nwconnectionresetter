@@ -1,7 +1,7 @@
 :: -----Program Info-----
 :: Name: 		Network Resetter
 ::
-:: Verson:		10.4.745
+:: Verson:		11.0.816
 ::
 :: Description:	Fixes network connection by trying each of the following:
 ::				1) Reset IP Address
@@ -177,7 +177,7 @@ SET USE_NETWORK_RESET_FAST=1
 :: Try to reset the Network Connection (Slow Reset)
 ::  "1" for True, "0" for False
 :: Slow Reset works more often than Quick Reset.
-:: Quick reset it tried first if it is enabled.
+:: Quick reset is tried first if it is enabled.
 :: In most cases this should be left enabled.
 SET USE_NETWORK_RESET=1
 
@@ -326,7 +326,7 @@ GOTO :EOF
 :: ---------------------PROGRAM STATUS-----------------------
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *      ******   Lectrode's Network Connection Resetter v10.4.745  ******     *
+						ECHO  *      ******   Lectrode's Network Connection Resetter v11.0.816  ******     *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -428,8 +428,6 @@ GOTO :TEST_TESTING
 :TEST_FAILED
 :: DEBUGGING || FAILED A TEST
 SET /A main_tests=main_tests+1
-SET /A ttlTestsPlus1=totalTests+1
-IF %main_tests%==1 IF %ttlTestsPlus1% GTR %fluke_test_eliminator% GOTO :TEST_INIT
 
 IF %SLWMSG%==1 CALL :PINGER
 
@@ -475,7 +473,7 @@ GOTO :EOF
 
 
 :: *****RESET IP ADDRESS*****
-IF %USE_IP_RESET%==1 (
+IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
 	CALL :FIX_RESET_IP
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
@@ -486,13 +484,14 @@ IF %USE_IP_RESET%==1 (
 	SET SpecificStatus=
 	SET isWaiting=0
 	CALL :STATS
-)
+	
+:END_RESET_IP_MAIN
 :: ***END RESET IP ADDRESS***
 
 
 :: *****RESET NETWORK CONNECTION FAST*****
 
-IF %USE_NETWORK_RESET_FAST%==1 (
+IF %USE_NETWORK_RESET_FAST%==0 GOTO :END_RESET_NETORK_FAST_MAIN
 	CALL :FIX_RESET_NETWORK_FAST
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
@@ -503,13 +502,13 @@ IF %USE_NETWORK_RESET_FAST%==1 (
 	SET SpecificStatus=
 	SET isWaiting=0
 	CALL :STATS
-)
-:: ***END RESET NETWORK CONNECTION***
+:END_RESET_NETORK_FAST_MAIN
+:: ***END RESET NETWORK CONNECTION FAST***
 
 
 :: *****RESET NETWORK CONNECTION*****
 
-IF %USE_NETWORK_RESET%==1 (
+IF %USE_NETWORK_RESET%==0 GOTO :END_RESET_NETORK_MAIN
 	CALL :FIX_RESET_NETWORK
 	CALL :TEST isConnected
 	IF %isConnected%==1 GOTO :SUCCESS
@@ -521,7 +520,7 @@ IF %USE_NETWORK_RESET%==1 (
 	SET SpecificStatus=
 	SET isWaiting=0
 	CALL :STATS
-)
+:END_RESET_NETORK_MAIN
 :: ***END RESET NETWORK CONNECTION***
 
 
@@ -626,6 +625,7 @@ GOTO :EOF
 
 
 :WAIT
+SETLOCAL
 :: -----------------------PROGRAM TIMER--------------------------
 
 :: ******INITIALIZE TIMER*****
@@ -727,6 +727,7 @@ SET isWaiting=0
 ::Cycle through "WAITING" again if waiting time 
 ::has not been reached
 IF %ticker% LEQ %PINGS% GOTO :WAITING
+ENDLOCAL
 GOTO :EOF
 :: ---------------------END PROGRAM TIMER------------------------
 
