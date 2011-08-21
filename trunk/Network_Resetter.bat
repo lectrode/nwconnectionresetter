@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=29
+	SET rvsn=30
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -398,6 +398,8 @@ SET conchks=0
 SET maxconchks=101
 CALL :CHECK_CONNECTED
 CALL :CHECK_INTERNET
+ENDLOCAL
+GOTO :EOF
 
 :CHECK_CONNECTED
 SET currently=Checking for connectivity...
@@ -523,7 +525,7 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-ENDLOCAL&SET %~1=0
+SET %~1=0
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
