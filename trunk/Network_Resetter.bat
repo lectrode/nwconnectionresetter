@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=32
+	SET rvsn=34
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
