@@ -832,7 +832,7 @@ CALL :STATS
 
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
-IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :DISABLE_OLD_OS
+IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS DIS
 
 SET currently="%NETWORK%" Disabled
 SET currently2=
@@ -856,7 +856,7 @@ CALL :STATS
 REM TEST_NETWORK_NAME (EXIT || RETURN)
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
-IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :ENABLE_OLD_OS
+IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS EN
 
 SET currently="%NETWORK%" Enabled
 SET currently2=
@@ -867,138 +867,80 @@ GOTO :EOF
 REM ----------------END ENABLE NETWORK CONNECTION-----------------
 
 
-:DISABLE_OLD_OS
-REM ----------------DISABLE CONNECTION FOR WINXP------------------
-REM No known way to disable from cmd line. Instead, we must
-REM create a temp vbs file that disables it and deletes 
-REM itself when its run
+
+
+:TOGGLECONNECTION_OLD_OS
+REM ----------------DISABLE/ENABLE CONNECTION FOR WINXP------------------
+REM No known way to disable/enable from cmd line. Instead, we must
+REM create a temp vbs file that disables it and deletes itself when 
+REM its run
+IF %1==EN SET disOrEn=Enable
+IF %1==EN SET trufalse=false
+IF %1==DIS SET disOrEn=Disable
+IF %1==DIS SET trufalse=true
+ECHO disoren: %disOrEn%
+ECHO trufalse: %trufalse%
+PAUSE
 @ECHO on
-ECHO Const ssfCONTROLS = 3 >>DisableNetwork.vbs
-ECHO sConnectionName = "%NETWORK%" >>DisableNetwork.vbs
-ECHO sEnableVerb = "En&able" >>DisableNetwork.vbs
-ECHO sDisableVerb = "Disa&ble" >>DisableNetwork.vbs
-ECHO set shellApp = createobject("shell.application") >>DisableNetwork.vbs
-ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>DisableNetwork.vbs
-ECHO set oNetConnections = nothing >>DisableNetwork.vbs
-ECHO for each folderitem in oControlPanel.items >>DisableNetwork.vbs
-ECHO   if folderitem.name = "Network Connections" then >>DisableNetwork.vbs
-ECHO         set oNetConnections = folderitem.getfolder: exit for >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO next >>DisableNetwork.vbs
-ECHO if oNetConnections is nothing then >>DisableNetwork.vbs
-ECHO msgbox "Couldn't find 'Network Connections' folder" >>DisableNetwork.vbs
-ECHO wscript.quit >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO set oLanConnection = nothing >>DisableNetwork.vbs
-ECHO for each folderitem in oNetConnections.items >>DisableNetwork.vbs
-ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>DisableNetwork.vbs
-ECHO set oLanConnection = folderitem: exit for >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO next >>DisableNetwork.vbs
-ECHO Dim objFSO >>DisableNetwork.vbs
-ECHO if oLanConnection is nothing then >>DisableNetwork.vbs
-ECHO msgbox "Couldn't find %NETWORK%" >>DisableNetwork.vbs
-ECHO msgbox "This program requires a valid Network Connection name to work properly" >>DisableNetwork.vbs
-ECHO msgbox "Please close the program and open it with notepad for more information" >>DisableNetwork.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>DisableNetwork.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>DisableNetwork.vbs
-ECHO Set objFSO = Nothing >>DisableNetwork.vbs
-ECHO wscript.quit >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO bEnabled = true >>DisableNetwork.vbs
-ECHO set oEnableVerb = nothing >>DisableNetwork.vbs
-ECHO set oDisableVerb = nothing >>DisableNetwork.vbs
-ECHO s = "Verbs: " & vbcrlf >>DisableNetwork.vbs
-ECHO for each verb in oLanConnection.verbs >>DisableNetwork.vbs
-ECHO s = s & vbcrlf & verb.name >>DisableNetwork.vbs
-ECHO if verb.name = sEnableVerb then >>DisableNetwork.vbs
-ECHO set oEnableVerb = verb >>DisableNetwork.vbs
-ECHO bEnabled = false >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO if verb.name = sDisableVerb then >>DisableNetwork.vbs
-ECHO set oDisableVerb = verb >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO next >>DisableNetwork.vbs
-ECHO if bEnabled then >>DisableNetwork.vbs
-ECHO oDisableVerb.DoIt >>DisableNetwork.vbs
-ECHO end if >>DisableNetwork.vbs
-ECHO wscript.sleep 2000 >>DisableNetwork.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>DisableNetwork.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>DisableNetwork.vbs
-ECHO Set objFSO = Nothing >>DisableNetwork.vbs
+ECHO Const ssfCONTROLS = 3 >>%disOrEn%Network.vbs
+ECHO sConnectionName = "%NETWORK%" >>%disOrEn%Network.vbs
+ECHO sEnableVerb = "En&able" >>%disOrEn%Network.vbs
+ECHO sDisableVerb = "Disa&ble" >>%disOrEn%Network.vbs
+ECHO set shellApp = createobject("shell.application") >>%disOrEn%Network.vbs
+ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>%disOrEn%Network.vbs
+ECHO set oNetConnections = nothing >>%disOrEn%Network.vbs
+ECHO for each folderitem in oControlPanel.items >>%disOrEn%Network.vbs
+ECHO   if folderitem.name = "Network Connections" then >>%disOrEn%Network.vbs
+ECHO         set oNetConnections = folderitem.getfolder: exit for >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO next >>%disOrEn%Network.vbs
+ECHO if oNetConnections is nothing then >>%disOrEn%Network.vbs
+ECHO msgbox "Couldn't find 'Network Connections' folder" >>%disOrEn%Network.vbs
+ECHO wscript.quit >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO set oLanConnection = nothing >>%disOrEn%Network.vbs
+ECHO for each folderitem in oNetConnections.items >>%disOrEn%Network.vbs
+ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>%disOrEn%Network.vbs
+ECHO set oLanConnection = folderitem: exit for >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO next >>%disOrEn%Network.vbs
+ECHO Dim objFSO >>%disOrEn%Network.vbs
+ECHO if oLanConnection is nothing then >>%disOrEn%Network.vbs
+ECHO msgbox "Couldn't find %NETWORK%" >>%disOrEn%Network.vbs
+ECHO msgbox "This program requires a valid Network Connection name to work properly" >>%disOrEn%Network.vbs
+ECHO msgbox "Please close the program and open it with notepad for more information" >>%disOrEn%Network.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>%disOrEn%Network.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>%disOrEn%Network.vbs
+ECHO Set objFSO = Nothing >>%disOrEn%Network.vbs
+ECHO wscript.quit >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO bEnabled = true >>%disOrEn%Network.vbs
+ECHO set oEnableVerb = nothing >>%disOrEn%Network.vbs
+ECHO set oDisableVerb = nothing >>%disOrEn%Network.vbs
+ECHO s = "Verbs: " & vbcrlf >>%disOrEn%Network.vbs
+ECHO for each verb in oLanConnection.verbs >>%disOrEn%Network.vbs
+ECHO s = s & vbcrlf & verb.name >>%disOrEn%Network.vbs
+ECHO if verb.name = sEnableVerb then >>%disOrEn%Network.vbs
+ECHO set oEnableVerb = verb >>%disOrEn%Network.vbs
+ECHO bEnabled = false >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO if verb.name = sDisableVerb then >>%disOrEn%Network.vbs
+ECHO set oDisableVerb = verb >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO next >>%disOrEn%Network.vbs
+ECHO if bEnabled = %trufalse% then >>%disOrEn%Network.vbs
+ECHO o%disOrEn%Verb.DoIt >>%disOrEn%Network.vbs
+ECHO end if >>%disOrEn%Network.vbs
+ECHO wscript.sleep 2000 >>%disOrEn%Network.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>%disOrEn%Network.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName >>%disOrEn%Network.vbs
+ECHO Set objFSO = Nothing >>%disOrEn%Network.vbs
 @ECHO off
 SET isWaiting=0
 CALL :STATS
-cscript DisableNetwork.vbs
+cscript %disOrEn%Network.vbs
 GOTO :EOF
-REM --------------END DISABLE CONNECTION FOR WINXP----------------
-
-
-:ENABLE_OLD_OS
-REM -----------------ENABLE CONNECTION FOR WINXP------------------
-REM No known way to enable from cmd line. Instead, we must
-REM create a temp vbs file that enables it and deletes 
-REM itself when its run
-@ECHO on
-ECHO Const ssfCONTROLS = 3 >>EnableNetwork.vbs
-ECHO sConnectionName = "%NETWORK%" >>EnableNetwork.vbs
-ECHO sEnableVerb = "En&able" >>EnableNetwork.vbs
-ECHO sDisableVerb = "Disa&ble" >>EnableNetwork.vbs
-ECHO set shellApp = createobject("shell.application") >>EnableNetwork.vbs
-ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>EnableNetwork.vbs
-ECHO set oNetConnections = nothing >>EnableNetwork.vbs
-ECHO for each folderitem in oControlPanel.items >>EnableNetwork.vbs
-ECHO   if folderitem.name = "Network Connections" then >>EnableNetwork.vbs
-ECHO         set oNetConnections = folderitem.getfolder: exit for >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO next >>EnableNetwork.vbs
-ECHO if oNetConnections is nothing then >>EnableNetwork.vbs
-ECHO msgbox "Couldn't find 'Network Connections' folder" >>EnableNetwork.vbs
-ECHO wscript.quit >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO set oLanConnection = nothing >>EnableNetwork.vbs
-ECHO for each folderitem in oNetConnections.items >>EnableNetwork.vbs
-ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>EnableNetwork.vbs
-ECHO set oLanConnection = folderitem: exit for >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO next >>EnableNetwork.vbs
-ECHO Dim objFSO >>EnableNetwork.vbs
-ECHO if oLanConnection is nothing then >>EnableNetwork.vbs
-ECHO msgbox "Couldn't find %NETWORK%" >>EnableNetwork.vbs
-ECHO msgbox "This program requires a valid Network Connection name to work properly" >>EnableNetwork.vbs
-ECHO msgbox "Please close the program and open it with notepad for more information" >>EnableNetwork.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>EnableNetwork.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>EnableNetwork.vbs
-ECHO Set objFSO = Nothing >>EnableNetwork.vbs
-ECHO wscript.quit >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO bEnabled = true >>EnableNetwork.vbs
-ECHO set oEnableVerb = nothing >>EnableNetwork.vbs
-ECHO set oDisableVerb = nothing >>EnableNetwork.vbs
-ECHO s = "Verbs: " & vbcrlf >>EnableNetwork.vbs
-ECHO for each verb in oLanConnection.verbs >>EnableNetwork.vbs
-ECHO s = s & vbcrlf & verb.name >>EnableNetwork.vbs
-ECHO if verb.name = sEnableVerb then >>EnableNetwork.vbs
-ECHO set oEnableVerb = verb >>EnableNetwork.vbs
-ECHO bEnabled = false >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO if verb.name = sDisableVerb then >>EnableNetwork.vbs
-ECHO set oDisableVerb = verb >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO next >>EnableNetwork.vbs
-ECHO if bEnabled = false then >>EnableNetwork.vbs
-ECHO oEnableVerb.DoIt >>EnableNetwork.vbs
-ECHO end if >>EnableNetwork.vbs
-ECHO wscript.sleep 2000 >>EnableNetwork.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>EnableNetwork.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>EnableNetwork.vbs
-ECHO Set objFSO = Nothing >>EnableNetwork.vbs
-@ECHO off
-SET isWaiting=0
-CALL :STATS
-cscript EnableNetwork.vbs
-GOTO :EOF
-REM ---------------END ENABLE CONNECTION FOR WINXP----------------
+REM --------------END DISABLE/ENABLE CONNECTION FOR WINXP----------------
 
 
 
@@ -1344,7 +1286,7 @@ IF %OMIT_USER_INPUT%==1 GOTO :EOF
 ECHO Would you like to reset and/or monitor this network connection?
 SET /P usrInpt=[y/n]
 IF "%usrInpt%"=="n" IF %NCNUM% LSS %OverNum% GOTO :NEED_NETWORK
-IF "%usrInpt%"=="y" SET NETWORK==%NETWORKCOMMON%
+IF "%usrInpt%"=="y" SET NETWORK=%NETWORKCOMMON%
 IF "%usrInpt%"=="y" GOTO :EOF
 GOTO :FOUND_CUSTOM_NAME
 
