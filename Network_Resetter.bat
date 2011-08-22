@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=34
+	SET rvsn=35
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -428,12 +428,12 @@ CALL :STATS
 SET /A chknwcn+=1
 IF NOT %chknwcn% GEQ 3 CALL :ENABLE_NW
 IF NOT %chknwcn% GEQ 3 GOTO :CHECK_CONNECTED
-ECHO If you are trying to connect to a wireless network, please make
-ECHO sure you are in range.
-
-ECHO If you are connecting via LAN/Ethernet cable, please make sure it
-ECHO is plugged in.
+ECHO Unable to connect to any networks with this connection.
 ECHO.
+ECHO It may be physically disabled or disconnected, or there 
+ECHO are no wireless networks in range.
+ECHO.
+CALL :SLEEP 2
 IF %CONTINUOUS%==1 GOTO :RESTART_PROGRAM
 ECHO Press any key to re-test connectivity
 PAUSE>NUL
@@ -1368,18 +1368,6 @@ REM -------------END PROGRAM NEEDS NETWORK NAME-------------------
 
 
 
-:SYSTEM_UNSUPPORTED
-REM --------------UNSUPPORTED OPERATING SYSTEM--------------------
-REM EXIT
-SET currently=This Operating System is not currently supported.
-SET currently2=EXITING...
-SET SpecificStatus=
-SET isWaiting=1
-CALL :STATS
-CALL :STATS
-SET isWaiting=0
-EXIT
-REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 
 
 REM ---------------------RESTART PROGRAM--------------------------
@@ -1394,6 +1382,37 @@ SET restartingProgram=1
 START CMD /C "%THISFILEPATH%"
 EXIT
 REM -----------------END RESTART PROGRAM--------------------------
+
+
+
+
+
+
+
+
+
+
+
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+REM --------------------------RESULTS-----------------------------
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+
+
+
+:SYSTEM_UNSUPPORTED
+REM --------------UNSUPPORTED OPERATING SYSTEM--------------------
+REM EXIT
+SET currently=This Operating System is not currently supported.
+SET currently2=EXITING...
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+CALL :STATS
+SET isWaiting=0
+EXIT
+REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 
 
 :CHECK_CONNECTION_ONLY
