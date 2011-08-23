@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=35
+	SET rvsn=36
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -234,14 +234,6 @@ REM -------------------Initialize Program--------------------
 
 @ECHO OFF
 
-REM Restart as administrator
-REM DOES NOT CURRENTLY WORK!!!
-IF "%HasBeenRunAsAdmin%"=="" (
-	SET HasBeenRunAsAdmin=1
-	REM RUNAS /user;admin "%~dpnx0"
-	REM EXIT
-)
-
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" (
 	IF "%START_MINIMIZED%"=="1" (
@@ -258,12 +250,17 @@ REM Set CMD window size & title
 MODE CON COLS=81 LINES=30
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
-REM Set initial variables
+REM Set Global Variables
 SET THISFILEPATH=%~0
 SET THISFILENAME=%~n0.bat
 SET THISFILENAMEPATH=%~dpnx0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
+SET currently=
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+SET delaymins=
 SET NCNUM=0
 
 REM Display program introduction
@@ -348,22 +345,19 @@ ECHO  *                                                                         
 ECHO  ******************************************************************************
 ECHO.
 ECHO.
-CALL :PINGER
+CALL :SLEEP
 GOTO :EOF
 REM ---------------------END PROGRAM INTRO--------------------
 
 
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
+SET STATSSpacer=                                                                                   !
+SET SHOWNETWORK=%NETWORK%%STATSSpacer%
+SET SHOWcurrently=%currently%%STATSSpacer%
+SET SHOWcurrently2=%currently2%%STATSSpacer%
+SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 CLS
-SET SHOWNETWORK=%NETWORK%                                                                           
-SET SHOWcurrently=%currently%                                                  
-IF "%currently2%"=="" SET SHOWcurrently2=                                                            *
-IF NOT "%currently2%"=="" SET SHOWcurrently2=%currently2%                                                                            
-IF NOT "%currently2%"=="" SET SHOWcurrently2=%SHOWcurrently2:~0,60%*
-IF "%SpecificStatus%"=="" SET SHOWSpecificStatus=                                                                           *
-IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SpecificStatus%                                                                            
-IF NOT "%SpecificStatus%"=="" SET SHOWSpecificStatus=%SHOWSpecificStatus:~0,75%*
 						ECHO  ******************************************************************************
 						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
 						ECHO  ******************************************************************************
@@ -374,16 +368,16 @@ IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*   
 						ECHO  * Connection: %SHOWNETWORK:~0,63%*
 						ECHO  *                                                                            *
 						ECHO  * Current State: %SHOWcurrently:~0,60%*
-						ECHO  *                %SHOWcurrently2%
+						ECHO  *                %SHOWcurrently2:~0,60%*
 						ECHO  *                                                                            *
-						ECHO  * %SHOWSpecificStatus%
+						ECHO  * %SHOWSpecificStatus:~0,75%*
 						ECHO  *                                                                            *
 						ECHO  ******************************************************************************
 
 IF "%SLWMSG%"=="1" (
-	CALL :PINGER
+	CALL :SLEEP
 ) ELSE (
-	IF "%isWaiting%"=="1" CALL :PINGER
+	IF "%isWaiting%"=="1" CALL :SLEEP
 )
 GOTO :EOF
 REM ---------------------END PROGRAM STATUS----------------------
@@ -514,7 +508,7 @@ GOTO :TEST_TESTING
 REM DEBUGGING || FAILED A TEST
 SET /A main_tests=main_tests+1
 
-IF %SLWMSG%==1 CALL :PINGER
+IF %SLWMSG%==1 CALL :SLEEP
 
 SET currently=Internet Connection not detected
 SET currently2=
@@ -526,8 +520,8 @@ SET %~1=0
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
-IF %SLWMSG%==1 CALL :PINGER
-IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
+IF %SLWMSG%==1 CALL :SLEEP
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
 SET currently=Unable to varify internet connectivity. This is a
 SET currently2=poor quality connection. Internet browsing may be slow.
@@ -540,8 +534,8 @@ SET %~1=1
 GOTO :EOF
 
 :TEST_SUCCEEDED
-IF %SLWMSG%==1 CALL :PINGER
-IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :PINGER 1
+IF %SLWMSG%==1 CALL :SLEEP
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
 SET %~1=1
 GOTO :EOF
@@ -651,7 +645,7 @@ CALL :STATS
 IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
 
 REM CANNOT TEST HERE
-REM Checking network connection here causes unecessary recursion
+REM Checking network connection here causes unwanted recursion
 GOTO :EOF
 REM -----------------END FIX: RESET IP ADDRESS--------------------
 
@@ -697,9 +691,8 @@ GOTO :EOF
 REM -------------END FIX: RESET NETWORK CONNECTION----------------
 
 
-:PINGER
+:SLEEP
 REM ------------------------PROGRAM SLEEP-------------------------
-REM SLEEP
 REM Program sleeps for %1 seconds
 IF "%1"=="" SET pN=3
 IF NOT "%1"=="" SET pN=%1
@@ -807,7 +800,7 @@ SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
 REM Display updated TimeStamp
 SET isWaiting=0
 CALL :STATS
-CALL :PINGER %TIMER_REFRESH_RATE%
+CALL :SLEEP %TIMER_REFRESH_RATE%
 
 REM Cycle through "WAITING" again if waiting time 
 REM has not been reached
@@ -985,9 +978,9 @@ ECHO.
 ECHO.
 ECHO This OS is unsupported:
 VER
-CALL :PINGER
+CALL :SLEEP
 IF %OS_DETECT_OVERRIDE%==1 GOTO :RUN_ON_UNSUPPORTED
-CALL :PINGER
+CALL :SLEEP
 GOTO :SYSTEM_UNSUPPORTED
 
 :OldVer
@@ -1510,8 +1503,8 @@ ECHO.
 ECHO.
 ECHO If you still cannot access the internet, you may need
 ECHO to log into the network via Cisco or a similar program.
-CALL :PINGER
-CALL :PINGER
+CALL :SLEEP
+CALL :SLEEP
 IF %DEBUGN%==1 PAUSE
 EXIT
 REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
