@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=36
+	SET rvsn=38
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -357,6 +357,7 @@ SET SHOWNETWORK=%NETWORK%%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
+SET SHOWconfixed=%confixed% times.%STATSSpacer%
 CLS
 						ECHO  ******************************************************************************
 						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
@@ -367,6 +368,8 @@ IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*   
 						ECHO  *                                                                            *
 						ECHO  * Connection: %SHOWNETWORK:~0,63%*
 						ECHO  *                                                                            *
+IF NOT "%confixed%"==""	ECHO  * Connection Fixed %SHOWconfixed:~0,58%*
+IF NOT "%confixed%"==""	ECHO  *                                                                            *
 						ECHO  * Current State: %SHOWcurrently:~0,60%*
 						ECHO  *                %SHOWcurrently2:~0,60%*
 						ECHO  *                                                                            *
