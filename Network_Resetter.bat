@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=36
+	SET vsn=13.0
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -248,7 +248,7 @@ IF "%restartingProgram%"=="" (
 
 REM Set CMD window size & title
 MODE CON COLS=81 LINES=30
-TITLE Lectrode's Network Connection Resetter r%rvsn%
+TITLE Lectrode's Network Connection Resetter v%vsn%
 
 REM Set Global Variables
 SET THISFILEPATH=%~0
@@ -359,7 +359,7 @@ SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 CLS
 						ECHO  ******************************************************************************
-						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+						ECHO  *        ******   Lectrode's Network Connection Resetter v%vsn%  ******       *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
