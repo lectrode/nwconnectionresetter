@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=38
+	SET rvsn=41
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -261,6 +261,7 @@ SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 SET delaymins=
+IF "%ProgramMustFix%"=="" SET /A ProgramMustFix=0
 SET NCNUM=0
 
 REM Display program introduction
@@ -388,17 +389,17 @@ REM ---------------------END PROGRAM STATUS----------------------
 
 
 :TEST
-SETLOCAL
 REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
 SET maxconchks=101
 CALL :CHECK_CONNECTED
 CALL :CHECK_INTERNET intresult
-ENDLOCAL&SET %1=%intresult%
+SET %1=%intresult%
 GOTO :EOF
 
 :CHECK_CONNECTED
+IF NOT "%connectcheckgood%"=="" SET ProgramMustFix=1
 SET currently=Checking for connectivity...
 SET currently2=(Currently Disconnected)
 SET SpecificStatus=
@@ -553,6 +554,9 @@ REM BRANCH (SUCCESS || FAILED)
 REM Call the different methods of fixing
 REM This allows for different fixes to be added later
 
+REM Declare that connection needs to be fixed and that this program
+REM is attempting that fix
+SET ProgramMustFix=1
 
 REM *****RESET NETWORK CONNECTION FAST*****
 
@@ -1495,6 +1499,14 @@ REM --------------END FIX ATTEMPT FAILED (RETRY)------------------
 :SUCCESS
 REM ------------------FIX ATTEMPT SUCCEEDED-----------------------
 REM BRANCH (SUCCESS_CONTINUOUS || EXIT)
+
+REM Declare that connection has been fixed
+ECHO ProgramMustFix: %ProgramMustFix%
+IF %ProgramMustFix%==1 (
+SET ProgramMustFix=0
+IF "%confixed%"=="" SET confixed=0
+SET /A confixed+=1
+)
 
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
