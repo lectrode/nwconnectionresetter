@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=41
+	SET rvsn=45
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -101,7 +101,6 @@ REM NOTE: Regardless of what you set this too, this program will
 REM always display important messages.
 REM This option is mainly for people who like to follow along and
 REM see exactly what the program is doing.
-REM This is really only useful if SLWMSG is true.
 SET SHOW_ALL_ALERTS=1
 
 
