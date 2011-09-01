@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=47
+	SET rvsn=48
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -361,6 +361,7 @@ SET SHOWconfixed=%confixed% times.%STATSSpacer%
 CLS
 						ECHO  ******************************************************************************
 						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+						ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
@@ -368,7 +369,7 @@ IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*   
 						ECHO  *                                                                            *
 						ECHO  * Connection: %SHOWNETWORK:~0,63%*
 						ECHO  *                                                                            *
-IF NOT "%confixed%"==""	ECHO  * Connection Fixed %SHOWconfixed:~0,58%*
+IF NOT "%confixed%"==""	ECHO  * Connection fixed %SHOWconfixed:~0,58%*
 IF NOT "%confixed%"==""	ECHO  *                                                                            *
 						ECHO  * Current State: %SHOWcurrently:~0,60%*
 						ECHO  *                %SHOWcurrently2:~0,60%*
@@ -392,14 +393,13 @@ REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
 SET maxconchks=101
-SET connectcheckgood=
 CALL :CHECK_CONNECTED
 CALL :CHECK_INTERNET intresult
 SET %1=%intresult%
 GOTO :EOF
 
 :CHECK_CONNECTED
-IF NOT "%connectcheckgood%"=="" SET ProgramMustFix=1
+IF NOT "%conchks%"=="0" SET ProgramMustFix=1
 SET currently=Checking for connectivity...
 SET currently2=(Currently Disconnected)
 SET SpecificStatus=
