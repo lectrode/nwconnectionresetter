@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=49
+	SET rvsn=50
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -452,7 +452,7 @@ SET main_tests=0
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
 IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
-SET testwesite=www.google.com
+SET testwebsite=www.google.com
 SET founds=0
 SET times=0
 SET nots=0
@@ -461,9 +461,9 @@ SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
 
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate %testwesite%...
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate %testwebsite%...
 :TEST_TESTING
-FOR /F "delims=" %%a IN ('PING -n 1 %testwesite%') DO @SET ping_test=%%a
+FOR /F "delims=" %%a IN ('PING -n 1 %testwebsite%') DO @SET ping_test=%%a
 
 ECHO %ping_test% |FIND "request could not find" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
@@ -504,12 +504,12 @@ GOTO :TEST_TESTING
 
 :TEST_UNREACHABLE
 SET /A totalTests+=1
-IF "%testwesite%"=="www.google.com" (
-SET testwesite=www.yahoo.com
+IF "%testwebsite%"=="www.google.com" (
+SET testwebsite=www.yahoo.com
 ) ELSE (
-SET testwesite=www.google.com
+SET testwebsite=www.google.com
 )
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (changed testwebsite to %testwesite%)
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (changed testwebsite to %testwebsite%)
 SET /A unreaches+=1
 SET founds=0
 SET nots=0
