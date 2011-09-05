@@ -1,7 +1,7 @@
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=48
+	SET rvsn=49
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -353,14 +353,15 @@ REM ---------------------END PROGRAM INTRO--------------------
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
 SET STATSSpacer=                                                                                   !
-SET SHOWNETWORK=%NETWORK%%STATSSpacer%
+SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
-SET SHOWconfixed=%confixed% times.%STATSSpacer%
+SET SHOWconfixed=%confixed% time(s).%STATSSpacer%
 CLS
 						ECHO  ******************************************************************************
 						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+						ECHO  *                                                                            *
 						ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
 						ECHO  ******************************************************************************
 IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
@@ -451,22 +452,24 @@ SET main_tests=0
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
 IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
+SET testwesite=www.google.com
 SET founds=0
 SET times=0
 SET nots=0
+SET unreaches=0
 SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
 
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate www.google.com...
+IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate %testwesite%...
 :TEST_TESTING
-FOR /F "delims=" %%a IN ('PING -n 1 www.google.com') DO @SET ping_test=%%a
+FOR /F "delims=" %%a IN ('PING -n 1 %testwesite%') DO @SET ping_test=%%a
 
 ECHO %ping_test% |FIND "request could not find" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
 
 ECHO %ping_test% |FIND "Unreachable" >NUL
-IF NOT ERRORLEVEL 1 GOTO :TEST_CONNECTED
+IF NOT ERRORLEVEL 1 GOTO :TEST_UNREACHABLE
 
 ECHO %ping_test% |FIND "Minimum " >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_CONNECTED
@@ -479,8 +482,9 @@ GOTO :TEST_TIMED_OUT
 
 :TEST_CONNECTED
 SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Found Connection
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Connected
 SET /A founds+=1
+SET unreaches=0
 SET times=0
 SET nots=0
 IF %founds% GEQ %fluke_test_eliminator% GOTO :TEST_SUCCEEDED
@@ -489,11 +493,28 @@ GOTO :TEST_TESTING
 
 :TEST_NOT_CONNECTED
 SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Did not find Connection
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Could not connect
 SET /A nots+=1
+SET unreaches=0
 SET founds=0
 SET times=0
 IF %nots% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
+GOTO :TEST_TESTING
+
+
+:TEST_UNREACHABLE
+SET /A totalTests+=1
+IF "%testwesite%"=="www.google.com" (
+SET testwesite=www.yahoo.com
+) ELSE (
+SET testwesite=www.google.com
+)
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (changed testwebsite to %testwesite%)
+SET /A unreaches+=1
+SET founds=0
+SET nots=0
+SET times=0
+IF %nots% GEQ %fluke_test_eliminator% GOTO :TEST_UNREACHED
 GOTO :TEST_TESTING
 
 
@@ -501,6 +522,7 @@ GOTO :TEST_TESTING
 SET /A totalTests+=1
 IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out
 SET /A times+=1
+SET unreaches=0
 SET founds=0
 SET nots=0
 IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
@@ -521,6 +543,20 @@ SET isWaiting=0
 CALL :STATS
 
 SET %~1=0
+GOTO :EOF
+
+:TEST_UNREACHED
+IF %SLWMSG%==1 CALL :SLEEP
+IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
+
+SET currently=Unable to varify internet connectivity.
+SET currently2=Internet browsing may be slow or unavailable.
+SET SpecificStatus=
+SET isWaiting=1
+CALL :STATS
+SET isWaiting=0
+
+SET %~1=1
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
