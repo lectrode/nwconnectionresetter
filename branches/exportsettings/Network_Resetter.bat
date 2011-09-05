@@ -1,7 +1,11 @@
+REM *****************************************************************
+REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
+REM *****************************************************************
+
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=51
+	SET rvsn=52
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -51,174 +55,6 @@ REM 				http://www.gnu.org/licenses/gpl.html
 
 
 
-REM -----Main Settings------
-
-REM Number of minutes to wait before re-enabling
-REM the network adapter (5-15 reccomended)
-REM Integers Only! (aka 0,1,2,etc)
-REM (anything else will be evaluated as "0")
-SET MINUTES=10
-
-REM Name of the Network to be reset
-REM Network connections on your computer can be found at
-REM Windows 7:	Control Panel (Large or Small icons) -> Network and Sharing Center -> Change Adapter Settings
-REM Vista:		Control Panel (Classic view) -> Network and Sharing Center -> Manage Network Connections
-REM Windows XP:	Control Panel (Classic view) -> Network Connections
-SET NETWORK=Wireless Network Connection
-
-
-REM CONTINUOUS MODE - Constant check and run
-REM  "1" for On, "0" for Off
-REM Program will constantly run and will check your connection
-REM every few minutes to ensure you are connected. If it 
-REM detects that you have been disconected, it will automatically
-REM attempt to repair your connection. If attempt fails, it will
-REM keep retrying until it succeeds.
-SET CONTINUOUS=0
-
-
-
-REM ------------Misc Settings------------
-
-REM Auto-Retry
-REM  "1" for On, "0" for Off
-REM If the connection fixes fail in regular mode (not
-REM CONTINUOUS), this makes the program continue to attempt
-REM to fix the connection until it either succeeds or the 
-REM program is closed
-SET AUTO_RETRY=0
-
-REM If CONTINUOUS is set to 1, this is how many minutes between
-REM connection tests.
-REM Integers Only! (aka 0,1,2,etc)
-REM (anything else will be evaluated as "0")
-SET CHECK_DELAY=1
-
-
-REM Show ALL messages, even if they're unimportant
-REM  "1" for True, "0" for False
-REM NOTE: Regardless of what you set this too, this program will 
-REM always display important messages.
-REM This option is mainly for people who like to follow along and
-REM see exactly what the program is doing.
-SET SHOW_ALL_ALERTS=1
-
-
-REM Show Advanced Testing Output
-REM  "1" for True, "0" for False
-REM When true, will show more details reguarding testing 
-REM the internet
-SET SHOW_ADVANCED_TESTING=0
-
-
-REM Slow Messages
-REM  "1" for True, "0" for False
-REM When true, program will pause for every message it displays to 
-REM allow the user to read them (run time will be longer)
-SET SLWMSG=0
-
-
-REM Timer Refresh Rate (Update every # seconds)
-REM Integers greater than 0 Only! (aka 1,2,3,etc)
-REM (anything else will be evaluated as "1")
-REM (1-10 recommended)
-SET TIMER_REFRESH_RATE=1
-
-
-REM Start Program at user log on
-REM  "1" for True, "0" for False
-REM When true, the program will start when you log on.
-REM Especially usefull when running in CONTINUOUS Mode.
-REM In order for this setting to take effect, you have
-REM to run this program at least up to the point where
-REM it tests your internet connection.
-SET START_AT_LOGON=0
-
-
-REM Start Minimized
-REM  "1" for True, "0" for False
-REM When true, program will minimize itself when it is run
-REM This is especially usefull if you have the program running 
-REM continuously and set to start at user log on.
-SET START_MINIMIZED=0
-
-
-
-
-REM ---------Advanced Settings-----------
-
-REM Omit ALL user input
-REM  "1" for True, "0" for False
-REM Instead of asking the user (you) for varification or to
-REM adjust a setting, this program will assume that all settings
-REM are intentional and will continue with whatever settings are
-REM available.
-REM Situations this effects:
-REM -Failed first connection attempt: Continues with either exit
-REM  or retry, depending on what AUTO_RETRY is set to.
-REM -Invalid Network Name: Continues without the NETWORK_RESET fixes
-REM -All fixes disabled: Continues without any fixes. Check 
-REM  internet connection only
-REM -About to run on unsupported OS: Continue running without
-REM  user varification
-SET OMIT_USER_INPUT=0
-
-REM Skip Initial Network Connection Test
-REM "1" for True, "0" for False
-REM Select this if you want the program to immediately attempt to 
-REM fix your connection without testing the connection first
-SET SKIP_INITIAL_NTWK_TEST=0
-
-REM Try to reset the IP Address
-REM  "1" for True, "0" for False
-REM Unless you frequently get stuck on "Reseting IP address" you
-REM should leave this enabled.
-SET USE_IP_RESET=1
-
-REM Try to reset the Network Connection (Quick Reset)
-REM  "1" for True, "0" for False
-REM In most cases this should be left enabled.
-SET USE_NETWORK_RESET_FAST=1
-
-REM Try to reset the Network Connection (Slow Reset)
-REM  "1" for True, "0" for False
-REM Slow Reset works more often than Quick Reset.
-REM Quick reset is tried first if it is enabled.
-REM In most cases this should be left enabled.
-SET USE_NETWORK_RESET=1
-
-
-REM Don't test Network Name more than once
-REM "1" for True, "0" for False
-REM Setting to True is ideal on most computers as long as the 
-REM Network Connection name does not change
-SET ONLY_ONE_NETWORK_NAME_TEST=1
-
-
-REM Override OS Detection
-REM  "1" for True, "0" for False
-REM The only time you would use this is if you are getting a 
-REM "This Operating System is not currently supported" message.
-REM This will force the program to continue running.
-REM WARNING: Running this program on an unsupported OS may cause
-REM this program to exhibit unusual behavior. 
-SET OS_DETECT_OVERRIDE=0
-
-
-REM Programmer Tool - Debugging
-REM  "1" for On, "0" for Off
-REM Debugging mode disables actual functionality of this 
-REM program (aka it won't fix your connection when debugging)
-SET DEBUGN=0
-
-
-
-
-
-
-REM *****************************************************************
-REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
-REM *****************************************************************
 
 
 
@@ -244,13 +80,13 @@ IF "%restartingProgram%"=="" (
 	)
 )
 
-
 REM Set CMD window size & title
 MODE CON COLS=81 LINES=30
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 REM Set Global Variables
-SET THISFILEPATH=%~0
+SET SettingsFileName=NWRSettings
+SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
 SET THISFILENAMEPATH=%~dpnx0
 SET restartingProgram=
@@ -263,6 +99,482 @@ SET delaymins=
 IF "%ProgramMustFix%"=="" SET /A ProgramMustFix=0
 SET NCNUM=0
 
+CALL :SETTINGS_SETDEFAULT
+IF "%1"=="RESET" CALL :SETTINGS_RESET
+CALL :SETTINGS_CHECKFILE
+IF "%1"=="SETTINGS" CALL :SETTINGS_SET
+
+
+GOTO :TOP
+
+
+:SETTINGS_CHECKFILE
+SET SETNFILECHK=0
+IF EXIST "C:\NWResetter\%SettingsFileName%.BAT" (
+CALL "C:\NWResetter\%SettingsFileName%.BAT" LOAD
+SET /A SETNFILECHK+=1
+)
+IF EXIST "%SETTINGSLOCALLOC%%SettingsFileName%.BAT" (
+CALL "%SETTINGSLOCALLOC%%SettingsFileName%.BAT" LOAD
+SET /A SETNFILECHK+=1
+)
+IF %SETNFILECHK%==1 GOTO :EOF
+IF %SETNFILECHK%==0 (
+CALL :SETTINGS_RESET
+)
+IF %SETNFILECHK%==2 (
+REM Multiple settings files
+REM Prolly need to do something for this like
+REM letting user know which settings are being used
+REM or give user option of which to use
+)
+GOTO :EOF
+
+
+
+:SETTINGS_RESET
+CLS
+CALL :HEADER
+ECHO Reset Function Initiated...
+CALL :SETTINGS_RESET2DEFAULT
+CALL :SETTINGS_EXPORT
+GOTO :EOF
+
+:SETTINGS_SET
+CLS
+CALL :HEADER
+ECHO What would you like to do?
+ECHO -Review all settings                        (1)
+ECHO -Choose setting to change from list         (2)
+ECHO -Reset all settings to their default values (3)
+ECHO -Don't change anything and Run program      (R)
+ECHO -Don't change anything and Exit             (X)
+ECHO.
+SET usrInput=
+SET /P usrInput=[1/2/3/R/X] 
+IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
+IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
+IF "%usrInput%"=="3" CALL :SETTINGS_RESET
+IF /I "%usrInput%"=="R" GOTO :EOF
+IF /I "%usrInput%"=="X" EXIT
+GOTO :SETTINGS_SET
+
+
+:SETTINGS_SET_ALL
+CALL :HEADER
+CALL :SETTINGS_SETONE B1
+CALL :SETTINGS_SETONE B2
+CALL :SETTINGS_SETONE B3
+CALL :SETTINGS_SETONE M1
+CALL :SETTINGS_SETONE M2
+CALL :SETTINGS_SETONE M3
+CALL :SETTINGS_SETONE M4
+CALL :SETTINGS_SETONE M5
+CALL :SETTINGS_SETONE M6
+CALL :SETTINGS_SETONE M7
+CALL :SETTINGS_SETONE M8
+CALL :SETTINGS_SETONE A1
+CALL :SETTINGS_SETONE A2
+CALL :SETTINGS_SETONE A3
+CALL :SETTINGS_SETONE A4
+CALL :SETTINGS_SETONE A5
+CALL :SETTINGS_SETONE A6
+CALL :SETTINGS_SETONE A7
+CALL :SETTINGS_SETONE A8
+GOTO :EOF
+
+
+:SETTINGS_SET_LIST_MAIN
+CALL :HEADER
+IF "%CONTINUOUS%"=="1" SET MODE=Continuous
+IF "%CONTINUOUS%"=="0" SET MODE=Run Once
+ECHO Navigation:
+ECHO -View Misc. Settings    (M)
+ECHO -View Advanced Settings (A)
+ECHO -Cancel                 (X)
+ECHO.
+ECHO What settings would you like to set?
+ECHO Setting                 #   Current Value
+ECHO.
+ECHO -Connection Name       (1)  "%NETWORK%"
+ECHO -Network Reset Stall   (2)   %MINUTES% Minutes
+ECHO -Mode                  (3)   %MODE%
+ECHO.
+SET usrInput=
+SET /P usrInput=[M/A/X/1/2/3] 
+IF "%usrInput%"=="1" CALL :SETTINGS_SETONE B1
+IF "%usrInput%"=="2" CALL :SETTINGS_SETONE B2
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B3
+IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
+IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" GOTO :EOF
+GOTO :SETTINGS_SET_LIST_MAIN
+
+:SETTINGS_SET_LIST_MISC
+CLS
+CALL :HEADER
+ECHO Navigation:
+ECHO -View Basic Settings    (B)
+ECHO -View Advanced Settings (A)
+ECHO -Cancel                 (X)
+ECHO.
+ECHO What settings would you like to set?
+ECHO Setting                 #   Current Value
+ECHO.
+ECHO -AutoRetry             (1)   %AUTO_RETRY%
+ECHO -Check Delay           (2)   %CHECK_DELAY% (Minutes)
+ECHO -Show All Alerts       (3)   %SHOW_ALL_ALERTS%
+ECHO -Show Advanced Testing (4)   %SHOW_ADVANCED_TESTING%
+ECHO -Slow Messages         (5)   %SLWMSG%
+ECHO -Timer Refresh Rate    (6)   %TIMER_REFRESH_RATE% (Second(s))
+ECHO -Start at Logon        (7)   %START_AT_LOGON%
+ECHO -Start Minimized       (8)   %START_MINIMIZED%
+ECHO.
+SET usrInput=
+SET /P usrInput=[B/A/X/1/2/3/4/5/6/7/8] 
+IF "%usrInput%"=="1" CALL :SETTINGS_SETONE M1
+IF "%usrInput%"=="2" CALL :SETTINGS_SETONE M2
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE M3
+IF "%usrInput%"=="4" CALL :SETTINGS_SETONE M4
+IF "%usrInput%"=="5" CALL :SETTINGS_SETONE M5
+IF "%usrInput%"=="6" CALL :SETTINGS_SETONE M6
+IF "%usrInput%"=="7" CALL :SETTINGS_SETONE M7
+IF "%usrInput%"=="8" CALL :SETTINGS_SETONE M8
+IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" GOTO :EOF
+GOTO :SETTINGS_SET_LIST_MISC
+
+
+:SETTINGS_SET_LIST_ADV
+CLS
+CALL :HEADER
+ECHO Navigation:
+ECHO -View Basic Settings    (B)
+ECHO -View Misc. Settings    (M)
+ECHO -Cancel                 (X)
+ECHO.
+ECHO What settings would you like to set?
+ECHO Setting                    #   Current Value
+ECHO.
+ECHO -Omit User Input          (1)  %OMIT_USER_INPUT%
+ECHO -Skip Initial Ntwk Test   (2)  %SKIP_INITIAL_NTWK_TEST%
+ECHO -Enable FIX: Reset IP     (3)  %USE_IP_RESET%
+ECHO -Enable FIX: FastNWReset  (4)  %USE_NETWORK_RESET_FAST%
+ECHO -Enable FIX: SlowNWReset  (5)  %USE_NETWORK_RESET%
+ECHO -One Connection name test (6)  %ONLY_ONE_NAME_TEST%
+ECHO -OS Detection Override    (7)  %OS_DETECT_OVERRIDE%
+ECHO -DEBUGN                   (8)  %DEBUGN%
+ECHO.
+SET usrInput=
+SET /P usrInput=[B/M/X/1/2/3/4] 
+IF "%usrInput%"=="1" CALL :SETTINGS_SETONE A1
+IF "%usrInput%"=="2" CALL :SETTINGS_SETONE A2
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE A3
+IF "%usrInput%"=="4" CALL :SETTINGS_SETONE A4
+IF "%usrInput%"=="5" CALL :SETTINGS_SETONE A5
+IF "%usrInput%"=="6" CALL :SETTINGS_SETONE A6
+IF "%usrInput%"=="7" CALL :SETTINGS_SETONE A7
+IF "%usrInput%"=="8" CALL :SETTINGS_SETONE A8
+IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
+IF /I "%usrInput%"=="X" GOTO :EOF
+GOTO :SETTINGS_SET_LIST_ADV
+
+:SETTINGS_SETONE
+CLS
+CALL :SETTINGS_GETINFO %1
+CALL :HEADER
+ECHO. *%SETTINGTITLE%*
+ECHO. %SETTINGOPT%
+ECHO.
+ECHO. %SETTINGINFO1%
+ECHO. %SETTINGINFO2%
+ECHO. %SETTINGINFO3%
+ECHO.
+ECHO Please enter the new setting value:
+ECHO (Enter "D" for default)
+ECHO (Enter nothing to keep current setting)
+ECHO.
+SET usrInput=
+SET /P usrInput=[] 
+IF /I "%usrInput%"=="D" (
+IF "%SETNVAR%"=="" SET %SETTINGTITLE%=%SETTINGDEFAULT%
+IF NOT "%SETNVAR%"=="" SET %SETNVAR%=%SETTINGDEFAULT%
+CALL :SETTINGS_EXPORT
+GOTO :EOF
+)
+IF "%usrInput%"=="" GOTO :EOF
+IF "%SETNVAR%"=="" SET %SETTINGTITLE%=%usrInput%
+IF NOT "%SETNVAR%"=="" SET %SETNVAR%=%usrInput%
+CALL :SETTINGS_EXPORT
+GOTO :EOF
+
+
+:SETTINGS_GETINFO
+SET SETTINGTITLE=
+SET SETTINGOPT=
+SET SETTINGINFO1=
+SET SETTINGINFO2=
+SET SETTINGINFO3=
+SET SETNVAR=
+SET SETTINGDEFAULT=
+
+IF %1==B1 (
+SET SETTINGTITLE=NETWORK
+SET SETTINGOPT=
+SET SETTINGINFO1=Name of the Network to be reset
+REM SET SETTINGINFO2=*enter "n!" to view network connections*
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%NETWORK_D%
+)
+IF %1==B2 (
+SET SETTINGTITLE=MINUTES
+SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
+SET SETTINGINFO1=Number of minutes to wait before re-enabling
+SET SETTINGINFO2=the network adapter (5-15 reccomended)
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%MINUTES_D%
+)
+IF %1==B3 (
+SET SETTINGTITLE=MODE
+SET SETTINGOPT=
+SET SETTINGINFO1=Enter 0 for Run Once
+SET SETTINGINFO2=Enter 1 for Continuous [checks every %CHECK_DELAY% minute[s]]
+SET SETTINGINFO3=
+SET SETNVAR=CONTINUOUS
+SET SETTINGDEFAULT=%CONTINUOUS_D%
+)
+IF %1==M1 (
+SET SETTINGTITLE=AUTO_RETRY
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=
+SET SETTINGINFO2=If fix fails the first time, automatically keep
+SET SETTINGINFO3=retrying. [Applies to Mode:Run Once only!]
+SET SETTINGDEFAULT=%AUTO_RETRY_D%
+)
+IF %1==M2 (
+SET SETTINGTITLE=CHECK_DELAY
+SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
+SET SETTINGINFO1=
+SET SETTINGINFO2=In MODE:Continuous, this is how many minutes between
+SET SETTINGINFO3=connection tests.
+SET SETTINGDEFAULT=%CHECK_DELAY_D%
+)
+IF %1==M3 (
+SET SETTINGTITLE=SHOW_ALL_ALERTS
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=When On, shows more detailed messages.
+SET SETTINGINFO2=NOTE: Regardless of what you set this too, this
+SET SETTINGINFO3=program will always display important messages.
+SET SETTINGDEFAULT=%SHOW_ALL_ALERTS_D%
+)
+IF %1==M4 (
+SET SETTINGTITLE=SHOW_ADVANCED_TESTING
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Show Advanced Testing Output
+SET SETTINGINFO2=When true, more details will be shown reguarding
+SET SETTINGINFO3=testing the internet
+SET SETTINGDEFAULT=%SHOW_ADVANCED_TESTING_D%
+)
+IF %1==M5 (
+SET SETTINGTITLE=SLOW MESSAGES
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=
+SET SETTINGINFO2=When true, program will pause for every message it displays 
+SET SETTINGINFO3=to allow the user to read them [run time will be longer]
+SET SETNVAR=SLWMSG
+SET SETTINGDEFAULT=%SLWMSG_D%
+)
+IF %1==M6 (
+SET SETTINGTITLE=TIMER_REFRESH_RATE
+SET SETTINGOPT=Integers greater than 0 Only! [aka 1,2,3,etc]
+SET SETTINGINFO1=Timer Refresh Rate [Update every # seconds]
+SET SETTINGINFO2=[1-10 recommended]
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%TIMER_REFRESH_RATE_D%
+)
+IF %1==M7 (
+SET SETTINGTITLE=START_AT_LOGON
+SET SETTINGOPT=1:True/0:False
+SET SETTINGINFO1=Start Program at user log on
+SET SETTINGINFO2=When true, the program will start when you log on.
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%START_AT_LOGON_D%
+)
+IF %1==M8 (
+SET SETTINGTITLE=START_MINIMIZED
+SET SETTINGOPT=1:True/0:False
+SET SETTINGINFO1=Start Minimized
+SET SETTINGINFO2=When true, program will minimize itself when it is run
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%START_MINIMIZED_D%
+)
+IF %1==A1 (
+SET SETTINGTITLE=OMIT_USER_INPUT
+SET SETTINGOPT=1:True/0:False
+SET SETTINGINFO1=Omit ALL user input
+SET SETTINGINFO2=Assumes all settings are intentional and will not
+SET SETTINGINFO3=prompt the user to enter additional/correct information
+SET SETTINGDEFAULT=%OMIT_USER_INPUT_D%
+)
+IF %1==A2 (
+SET SETTINGTITLE=SKIP_INITIAL_NTWK_TEST
+SET SETTINGOPT=1:True/0:False
+SET SETTINGINFO1=Skip Initial Network Connection Test
+SET SETTINGINFO2=Select this if you want the program to immediately attempt 
+SET SETTINGINFO3=to fix your connection without testing the connection first
+SET SETTINGDEFAULT=%SKIP_INITIAL_NTWK_TEST_D%
+)
+IF %1==A3 (
+SET SETTINGTITLE=USE_IP_RESET
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Enable FIX: Reset the IP Address
+SET SETTINGINFO2=Unless you frequently get stuck on "Reseting IP address"
+SET SETTINGINFO3=you should leave this enabled.
+SET SETTINGDEFAULT=%USE_IP_RESET_D%
+)
+IF %1==A4 (
+SET SETTINGTITLE=USE_NETWORK_RESET_FAST
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Enable FIX: Quick Connection Reset
+SET SETTINGINFO2=If enabled, this is tried first to fix your connection
+SET SETTINGINFO3=In most cases this should be left enabled.
+SET SETTINGDEFAULT=%USE_NETWORK_RESET_FAST_D%
+)
+IF %1==A5 (
+SET SETTINGTITLE=USE_NETWORK_RESET [Slow]
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Enable FIX: Slow Connection Reset
+SET SETTINGINFO2=Slow Reset works more often than Quick Reset.
+SET SETTINGINFO3=In most cases this should be left enabled.
+SET SETNVAR=USE_NETWORK_RESET
+SET SETTINGDEFAULT=%USE_NETWORK_RESET_D%
+)
+IF %1==A6 (
+SET SETTINGTITLE=ONLY_ONE_NAME_TEST
+SET SETTINGOPT=1:True/0:False
+SET SETTINGINFO1=Don't test Network Name more than once
+SET SETTINGINFO2=Setting to True is ideal on most computers as long as the 
+SET SETTINGINFO3=Network Connection name does not change
+SET SETTINGDEFAULT=%ONLY_ONE_NAME_TEST_D%
+)
+IF %1==A7 (
+SET SETTINGTITLE=OS_DETECT_OVERRIDE
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Override OS Detection
+SET SETTINGINFO2=This will force the program to continue running on an unsupported OS.
+SET SETTINGINFO3=Doing so may cause the program to exibit unusual behavior.
+SET SETTINGDEFAULT=%OS_DETECT_OVERRIDE_D%
+)
+IF %1==A8 (
+SET SETTINGTITLE=DEBUGGING
+SET SETTINGOPT=1:On/0:Off
+SET SETTINGINFO1=Programmer Tool - Debugging
+SET SETTINGINFO2=Debugging mode disables actual functionality of this program
+SET SETTINGINFO3=
+SET SETNVAR=DEBUGN
+SET SETTINGDEFAULT=%DEBUGN_D%
+)
+GOTO :EOF
+
+
+:SETTINGS_SETDEFAULT
+REM Sets variables holding default settings values
+ECHO Getting default values...
+SET MINUTES_D=10
+SET NETWORK_D=Wireless Network Connection
+SET CONTINUOUS_D=0
+SET AUTO_RETRY_D=0
+SET CHECK_DELAY_D=1
+SET SHOW_ALL_ALERTS_D=1
+SET SHOW_ADVANCED_TESTING_D=0
+SET SLWMSG_D=0
+SET TIMER_REFRESH_RATE_D=1
+SET START_AT_LOGON_D=0
+SET START_MINIMIZED_D=0
+SET OMIT_USER_INPUT_D=0
+SET SKIP_INITIAL_NTWK_TEST_D=0
+SET USE_IP_RESET_D=1
+SET USE_NETWORK_RESET_FAST_D=1
+SET USE_NETWORK_RESET_D=1
+SET ONLY_ONE_NETWORK_NAME_TEST_D=1
+SET OS_DETECT_OVERRIDE_D=0
+SET DEBUGN_D=0
+GOTO :EOF
+
+:SETTINGS_RESET2DEFAULT
+ECHO Resetting settings to their default values...
+SET MINUTES=%MINUTES_D%
+SET NETWORK=%NETWORK_D%
+SET CONTINUOUS=%CONTINUOUS_D%
+SET AUTO_RETRY=%AUTO_RETRY_D%
+SET CHECK_DELAY=%CHECK_DELAY_D%
+SET SHOW_ALL_ALERTS=%SHOW_ALL_ALERTS_D%
+SET SHOW_ADVANCED_TESTING=%SHOW_ADVANCED_TESTING_D%
+SET SLWMSG=%SLWMSG_D%
+SET TIMER_REFRESH_RATE=%TIMER_REFRESH_RATE_D%
+SET START_AT_LOGON=%START_AT_LOGON_D%
+SET START_MINIMIZED=%START_MINIMIZED_D%
+SET OMIT_USER_INPUT=%OMIT_USER_INPUT_D%
+SET SKIP_INITIAL_NTWK_TEST=%SKIP_INITIAL_NTWK_TEST_D%
+SET USE_IP_RESET=%USE_IP_RESET_D%
+SET USE_NETWORK_RESET_FAST=%USE_NETWORK_RESET_FAST_D%
+SET USE_NETWORK_RESET=%USE_NETWORK_RESET_D%
+SET ONLY_ONE_NETWORK_NAME_TEST=%ONLY_ONE_NETWORK_NAME_TEST_D%
+SET OS_DETECT_OVERRIDE=%OS_DETECT_OVERRIDE_D%
+SET DEBUGN=%DEBUGN_D%
+GOTO :EOF
+
+:SETTINGS_EXPORT
+ECHO Exporting Settings...
+@ECHO ON
+IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
+TYPE NUL>%SettingsFileName%.BAT
+DEL /F %SettingsFileName%.BAT
+ECHO IF "%%1"=="" START CMD /C "%THISFILENAMEPATH%" SETTINGS>>%SettingsFileName%.BAT
+ECHO SET MINUTES=^%MINUTES%>>%SettingsFileName%.BAT
+ECHO SET NETWORK=^%NETWORK%>>%SettingsFileName%.BAT
+ECHO SET CONTINUOUS=^%CONTINUOUS%>>%SettingsFileName%.BAT
+ECHO SET AUTO_RETRY=^%AUTO_RETRY%>>%SettingsFileName%.BAT
+ECHO SET CHECK_DELAY=^%CHECK_DELAY%>>%SettingsFileName%.BAT
+ECHO SET SHOW_ALL_ALERTS=^%SHOW_ALL_ALERTS%>>%SettingsFileName%.BAT
+ECHO SET SHOW_ADVANCED_TESTING=^%SHOW_ADVANCED_TESTING%>>%SettingsFileName%.BAT
+ECHO SET SLWMSG=^%SLWMSG%>>%SettingsFileName%.BAT
+ECHO SET TIMER_REFRESH_RATE=^%TIMER_REFRESH_RATE%>>%SettingsFileName%.BAT
+ECHO SET START_AT_LOGON=^%START_AT_LOGON%>>%SettingsFileName%.BAT
+ECHO SET START_MINIMIZED=^%START_MINIMIZED%>>%SettingsFileName%.BAT
+ECHO SET OMIT_USER_INPUT=^%OMIT_USER_INPUT%>>%SettingsFileName%.BAT
+ECHO SET SKIP_INITIAL_NTWK_TEST=^%SKIP_INITIAL_NTWK_TEST%>>%SettingsFileName%.BAT
+ECHO SET USE_IP_RESET=^%USE_IP_RESET%>>%SettingsFileName%.BAT
+ECHO SET USE_NETWORK_RESET_FAST=^%USE_NETWORK_RESET_FAST%>>%SettingsFileName%.BAT
+ECHO SET USE_NETWORK_RESET=^%USE_NETWORK_RESET%>>%SettingsFileName%.BAT
+ECHO SET ONLY_ONE_NETWORK_NAME_TEST=^%ONLY_ONE_NETWORK_NAME_TEST%>>%SettingsFileName%.BAT
+ECHO SET OS_DETECT_OVERRIDE=^%OS_DETECT_OVERRIDE%>>%SettingsFileName%.BAT
+ECHO SET DEBUGN=^%DEBUGN%>>%SettingsFileName%.BAT
+ECHO GOTO :EOF
+@ECHO OFF
+:SETTINGS_EXPORT_SKIP
+ECHO Done Exporting Settings.
+GOTO :EOF
+
+
+:SETTINGS_LOAD
+CALL %SETTINGSLOCALLOC%%SettingsFileName%.BAT LOAD
+GOTO :EOF
+
+
+:HEADER
+@ECHO OFF
+CLS
+ECHO  ******************************************************************************
+ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+ECHO  ******************************************************************************
+ECHO.
+GOTO :EOF
+
+
+:TOP
 REM Display program introduction
 REM Call it twice to last longer
 CALL :PROGRAM_INTRO
@@ -1375,7 +1687,7 @@ CALL :STATS
 ECHO.
 ECHO.
 ECHO (Please close file to continue)
-IF %DEBUGN%==0 notepad "%THISFILEPATH%"
+IF %DEBUGN%==0 notepad "%THISFILENAMEPATH%"
 GOTO :RESTART_PROGRAM
 
 
@@ -1415,7 +1727,7 @@ SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET restartingProgram=1
-START CMD /C "%THISFILEPATH%"
+START CMD /C "%THISFILENAMEPATH%"
 EXIT
 REM -----------------END RESTART PROGRAM--------------------------
 
