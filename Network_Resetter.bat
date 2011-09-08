@@ -232,8 +232,8 @@ ECHO What would you like to do?
 ECHO -Review all settings                        (1)
 ECHO -Choose setting to change from list         (2)
 ECHO -Reset all settings to their default values (3)
-ECHO -Don't change anything and Run program      (R)
-ECHO -Don't change anything and Exit             (X)
+ECHO -Run program                                (R)
+ECHO -Exit                                       (X)
 ECHO.
 SET usrInput=
 SET /P usrInput=[1/2/3/R/X] 
@@ -1801,15 +1801,8 @@ IF "%usrInpt%"=="y" GOTO :SET_NETWORK_NAME
 GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
 
 :SET_NETWORK_NAME
-SET currently2=Opening file to edit Settings...
-SET SpecificStatus=
-SET isWaiting=0
-CALL :STATS
-ECHO.
-ECHO.
-ECHO (Please close file to continue)
-IF %DEBUGN%==0 notepad "%THISFILENAMEPATH%"
-GOTO :RESTART_PROGRAM
+CALL :SETTINGS_SETONE B1
+GOTO :TEST_NETWORK_NAME
 
 
 :DONT_SET_NETWORK_NAME
