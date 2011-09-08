@@ -5,7 +5,7 @@ REM *****************************************************************
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=55
+	SET rvsn=57
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1716,11 +1716,11 @@ REM ------------------END TEST FIXES VALUES-----------------------
 :NEED_NETWORK
 REM ---------------PROGRAM NEEDS NETWORK NAME---------------------
 REM GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
-SET OverNum=8
+SET NETWORK_NAMES_NUM=9
 
 
 IF %NCNUM%==0 SET NETWORKCOMMON=Wireless Network Connection
-IF %NCNUM%==1 SET NETWORKCOMMON=Local Area Network
+IF %NCNUM%==1 SET NETWORKCOMMON=Local Area Connection
 IF %NCNUM%==2 SET NETWORKCOMMON=LAN
 IF %NCNUM%==3 SET NETWORKCOMMON=Wireless Network Connection 1
 IF %NCNUM%==4 SET NETWORKCOMMON=Wireless Network Connection 2
@@ -1728,6 +1728,7 @@ IF %NCNUM%==5 SET NETWORKCOMMON=Wireless Network Connection 3
 IF %NCNUM%==6 SET NETWORKCOMMON=Wireless Network Connection 4
 IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
 IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
+IF %NCNUM%==9 SET NETWORKCOMMON=Local Area Network
 
 SET currently=Could not find '%NETWORK%'
 SET currently2=Testing Common Network Names...
@@ -1738,7 +1739,7 @@ CALL :STATS
 IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORKCOMMON%" NEWNAME="%NETWORKCOMMON%"|FIND "name is not registered " >NUL
 SET /A NCNUM+=1
 IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GTR %OverNum% GOTO :COMMON_NAMES_NOT_FOUND
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
 IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 
@@ -1754,8 +1755,9 @@ IF %OMIT_USER_INPUT%==1 SET NETWORK==%NETWORKCOMMON%
 IF %OMIT_USER_INPUT%==1 GOTO :EOF
 ECHO Would you like to reset and/or monitor this network connection?
 SET /P usrInpt=[y/n]
-IF "%usrInpt%"=="n" IF %NCNUM% LSS %OverNum% GOTO :NEED_NETWORK
+IF "%usrInpt%"=="n" IF %NCNUM% LSS %NETWORK_NAMES_NUM% GOTO :NEED_NETWORK
 IF "%usrInpt%"=="y" SET NETWORK=%NETWORKCOMMON%
+IF "%usrInpt%"=="y" CALL :SETTINGS_EXPORT
 IF "%usrInpt%"=="y" GOTO :EOF
 GOTO :FOUND_CUSTOM_NAME
 
