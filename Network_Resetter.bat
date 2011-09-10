@@ -5,7 +5,7 @@ REM *****************************************************************
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=57
+	SET rvsn=59
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -695,7 +695,6 @@ GOTO :EOF
 
 :TOP
 REM Display program introduction
-REM Call it twice to last longer
 CALL :PROGRAM_INTRO
 
 REM Initial CHECKS
@@ -788,7 +787,8 @@ SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
-SET SHOWconfixed=%confixed% time(s).%STATSSpacer%
+IF %confixed%0 GTR 10 SET SHOWconfixed=%confixed% times.%STATSSpacer%
+IF NOT %confixed%0 GTR 10 SET SHOWconfixed=%confixed% time.%STATSSpacer%
 CLS
 						ECHO  ******************************************************************************
 						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
