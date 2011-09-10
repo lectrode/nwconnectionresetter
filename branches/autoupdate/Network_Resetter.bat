@@ -5,7 +5,7 @@ REM *****************************************************************
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=55
+	SET rvsn=58
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1847,6 +1847,44 @@ REM -----------------END RESTART PROGRAM--------------------------
 
 
 
+
+REM ------------------------AUTO UPDATE---------------------------
+:SelfUpdate
+IF NOT %DEBUGN%==0 GOTO :EOF
+@ECHO on
+SET file=http://electrodexs.net/data/Network_Resetter.txt
+DEL webdown.vbs
+ECHO 'Download Update  >webdown.vbs
+ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
+ECHO xpost.open "HEAD", "%file%", False '>>webdown.vbs
+ECHO xpost.send '>>webdown.vbs
+ECHO Select Case Cint(xpost.status) '>>webdown.vbs
+ECHO    Case 200, 202, 302 '>>webdown.vbs
+ECHO      Set xpost = Nothing '>>webdown.vbs
+ECHO      CheckPath = True '>>webdown.vbs
+ECHO    Case Else '>>webdown.vbs
+ECHO    Set xpost = Nothing '>>webdown.vbs
+ECHO      CheckPath = False '>>webdown.vbs
+ECHO End Select '>>webdown.vbs
+ECHO If (CheckPath) Then '>>webdown.vbs
+ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
+ECHO xPost.Open "GET","%file%",0 '>>webdown.vbs
+ECHO xPost.Send() '>>webdown.vbs
+ECHO Set sGet = CreateObject("ADODB.Stream") '>>webdown.vbs
+ECHO sGet.Mode = 3 '>>webdown.vbs
+ECHO sGet.Type = 1 '>>webdown.vbs
+ECHO sGet.Open() '>>webdown.vbs
+ECHO sGet.Write(xPost.responseBody) '>>webdown.vbs
+ECHO sGet.SaveToFile "Network_Resetter.bat",2 '>>webdown.vbs
+ECHO END IF '>>webdown.vbs
+ECHO Dim objFSO '>>webdown.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>webdown.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName '>>webdown.vbs
+ECHO Set objFSO = Nothing '>>webdown.vbs
+cscript webdown.vbs
+@ECHO off
+GOTO :EOF
+REM ----------------------END AUTO UPDATE-------------------------
 
 
 
