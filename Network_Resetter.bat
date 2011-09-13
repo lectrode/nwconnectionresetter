@@ -5,7 +5,7 @@ REM *****************************************************************
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=59
+	SET rvsn=61
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -790,25 +790,25 @@ SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 IF %confixed%0 GTR 10 SET SHOWconfixed=%confixed% times.%STATSSpacer%
 IF NOT %confixed%0 GTR 10 SET SHOWconfixed=%confixed% time.%STATSSpacer%
 CLS
-						ECHO  ******************************************************************************
-						ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
-						ECHO  *                                                                            *
-						ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
-						ECHO  ******************************************************************************
-IF "%DEBUGN%"=="1"		ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF "%CONTINUOUS%"=="1"	ECHO  *                                                                            *
-IF "%CONTINUOUS%"=="1"	ECHO  *                              *Continuous Mode*                             *
-						ECHO  *                                                                            *
-						ECHO  * Connection: %SHOWNETWORK:~0,63%*
-						ECHO  *                                                                            *
-IF NOT "%confixed%"==""	ECHO  * Connection fixed %SHOWconfixed:~0,58%*
-IF NOT "%confixed%"==""	ECHO  *                                                                            *
-						ECHO  * Current State: %SHOWcurrently:~0,60%*
-						ECHO  *                %SHOWcurrently2:~0,60%*
-						ECHO  *                                                                            *
-						ECHO  * %SHOWSpecificStatus:~0,75%*
-						ECHO  *                                                                            *
-						ECHO  ******************************************************************************
+								ECHO  ******************************************************************************
+								ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+								ECHO  *                                                                            *
+								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
+								ECHO  ******************************************************************************
+IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+IF "%CONTINUOUS%"=="1"			ECHO  *                                                                            *
+IF "%CONTINUOUS%"=="1"			ECHO  *                              *Continuous Mode*                             *
+								ECHO  *                                                                            *
+IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
+IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
+IF NOT "%confixed%"==""			ECHO  * Connection fixed %SHOWconfixed:~0,58%*
+IF NOT "%confixed%"==""			ECHO  *                                                                            *
+IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
+IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
+IF NOT "%currently%"==""		ECHO  *                                                                            *
+IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
+IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
+								ECHO  ******************************************************************************
 
 IF "%SLWMSG%"=="1" (
 	CALL :SLEEP
@@ -1146,7 +1146,7 @@ REM Disable Network, Wait, Enable Network
 REM Disable network connection
 CALL :DISABLE_NW
 
-SET currently=Waiting to re-enable "%NETWORK%"
+SET currently=Waiting to re-enable [%NETWORK%]
 SET currently2=
 SET SpecificStatus=
 
@@ -1291,7 +1291,7 @@ REM ---------------------END PROGRAM TIMER------------------------
 REM -----------------DISABLE NETWORK CONNECTION-------------------
 REM Determine OS and disable via a compatible method
 
-SET currently=Disabling "%NETWORK%"...
+SET currently=Disabling [%NETWORK%]...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1301,7 +1301,7 @@ IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS DIS
 
-SET currently="%NETWORK%" Disabled
+SET currently=[%NETWORK%] Disabled
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1314,7 +1314,7 @@ REM ---------------END DISABLE NETWORK CONNECTION-----------------
 REM ------------------ENABLE NETWORK CONNECTION-------------------
 REM Determine OS and enable via a compatible method
 
-SET currently=Enabling "%NETWORK%"
+SET currently=Enabling [%NETWORK%]
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0 
@@ -1325,7 +1325,7 @@ IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS EN
 
-SET currently="%NETWORK%" Enabled
+SET currently=[%NETWORK%] Enabled
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1552,7 +1552,7 @@ REM SAFE BRANCH (EXIT || RETURN)
 IF NOT "%~1"=="1" IF %has_tested_ntwk_name_recent% GEQ 1 GOTO :EOF
 SET /A has_tested_ntwk_name_recent+=1
 
-SET currently=Checking if "%NETWORK%"
+SET currently=Checking if [%NETWORK%]
 SET currently2=is a valid network connection name...
 SET SpecificStatus=
 SET isWaiting=0
@@ -1618,12 +1618,12 @@ SET isWaiting=0
 IF NOT "%SHOW_ALL_ALERTS%"=="0" CALL :STATS
 IF "%3"=="0" GOTO :EOF
 IF "%3"=="1" GOTO :EOF
-SET currently=%1 does not equal "1" or "0"
+SET currently=%1 does not equal 1 or 0
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-SET currently=Setting %1 to "%2"...
+SET currently=Setting %1 to %2...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -1730,9 +1730,9 @@ IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
 IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
 IF %NCNUM%==9 SET NETWORKCOMMON=Local Area Network
 
-SET currently=Could not find '%NETWORK%'
+SET currently=Could not find [%NETWORK%]
 SET currently2=Testing Common Network Names...
-SET SpecificStatus=Checking '%NETWORKCOMMON%'
+SET SpecificStatus=Checking [%NETWORKCOMMON%]
 SET isWaiting=0
 CALL :STATS
 
@@ -1745,7 +1745,7 @@ IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 :FOUND_CUSTOM_NAME
 SET currently=Found a Network connection match:
-SET currently2='%NETWORKCOMMON%'
+SET currently2=[%NETWORKCOMMON%]
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -1763,7 +1763,7 @@ GOTO :FOUND_CUSTOM_NAME
 
 
 :COMMON_NAMES_NOT_FOUND
-SET currently=Could not find "%NETWORK%"
+SET currently=Could not find [%NETWORK%]
 SET currently2=
 SET SpecificStatus=NOTE: This program must be run as an administrator!
 SET isWaiting=0
@@ -1789,7 +1789,7 @@ IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B303
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
-SET currently=Could not find "%NETWORK%"
+SET currently=Could not find [%NETWORK%]
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
