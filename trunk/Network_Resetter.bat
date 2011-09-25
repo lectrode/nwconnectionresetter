@@ -1,11 +1,13 @@
 REM *****************************************************************
 REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
 REM *****************************************************************
+@ECHO OFF
+ECHO Initializing program...
 
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=61
+	SET rvsn=62
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -65,8 +67,6 @@ REM *************Main Code**************
 
 
 REM -------------------Initialize Program--------------------
-
-
 @ECHO OFF
 
 REM Restart itself minimized if set to do so
@@ -89,6 +89,10 @@ SET SettingsFileName=NWRSettings
 SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
 SET THISFILENAMEPATH=%~dpnx0
+SET NUMCONNFIXES=2
+SET NUMNETFIXES=3
+SET NETFIX=0
+SET CONNFIX=0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
 SET currently=
@@ -741,7 +745,7 @@ CALL :CHECK_START_AT_LOGON
 
 REM -----------------END INITIALIZE PROGRAM------------------
 
-
+:MAIN_START
 
 REM ------------------TO FIX OR NOT TO FIX-------------------
 IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
@@ -752,12 +756,33 @@ REM -------------INITIAL NETWORK CONNECTION TEST-------------
 REM BRANCH (SUCCESS || FIX)
 REM Determine if connection needs to be fixed
 
-IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :FIX
-REM Enable adapter if not already enabled
-CALL :ENABLE_NW
-CALL :TEST isConnected
+IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :MAINNETTEST_FAIL
+
+REM TEST CONNECTION AND INTERNET ACCESS
+CALL :TEST_CONNECTION isConnected
+IF %isConnected%==1 GOTO :MAINCONNTEST_SUCCESS
+IF %isConnected%==0 GOTO :MAINCONNTEST_FAIL
+
+:MAINCONNTEST_SUCCESS
+CALL :TEST_INTERNET isConnected
 IF %isConnected%==1 GOTO :SUCCESS
-GOTO :FIX
+IF %isConnected%==0 GOTO :MAINNETTEST_FAIL
+
+
+:MAINCONNTEST_FAIL
+SET ProgramMustFix=1
+SET /A CONNFIX+=1
+IF %CONNFIX% GTR %NUMCONNFIXES% GOTO :FAILED
+CALL :CONNFIX%CONNFIX%
+GOTO :MAIN_START
+
+:MAINNETTEST_FAIL
+SET ProgramMustFix=1
+SET /A NETFIX+=1
+IF %NETFIX% GTR %NUMNETFIXES% GOTO :FAILED
+CALL :NETFIX%NETFIX%
+GOTO :MAIN_START
+
 REM -----------END INITIAL NETWORK CONNECTION TEST-----------
 
 
@@ -820,23 +845,20 @@ REM ---------------------END PROGRAM STATUS----------------------
 
 
 
-:TEST
+:TEST_CONNECTION
 REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
-SET maxconchks=101
-CALL :CHECK_CONNECTED
-CALL :CHECK_INTERNET intresult
-SET %1=%intresult%
-GOTO :EOF
+SET maxconchks=51
+
 
 :CHECK_CONNECTED
-IF NOT "%conchks%"=="0" SET ProgramMustFix=1
 SET currently=Checking for connectivity...
 SET currently2=(Currently Disconnected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
+IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
 SET connectcheckgood=0
 FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
 ECHO %connect_test% |FIND "Disconnected" >NUL
@@ -845,8 +867,8 @@ ECHO %connect_test% |FIND "Disabled" >NUL
 IF ERRORLEVEL 1 SET /A connectcheckgood+=1
 SET /A conchks+=1
 IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
-IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
 IF NOT %connectcheckgood% GEQ 2 GOTO :CHECK_CONNECTED
+SET %1=1
 GOTO :EOF
 
 :CHECK_CONNECTED_FAILED
@@ -855,21 +877,10 @@ SET currently2=(Currently Disconnected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-SET /A chknwcn+=1
-IF NOT %chknwcn% GEQ 3 CALL :ENABLE_NW
-IF NOT %chknwcn% GEQ 3 GOTO :CHECK_CONNECTED
-ECHO Unable to connect to any networks with this connection.
-ECHO.
-ECHO It may be physically disabled or disconnected, or there 
-ECHO are no wireless networks in range.
-ECHO.
-CALL :SLEEP 2
-IF %CONTINUOUS%==1 GOTO :RESTART_PROGRAM
-ECHO Press any key to re-test connectivity
-PAUSE>NUL
-GOTO :CHECK_CONNECTED
+SET %1=0
+GOTO :EOF
 
-:CHECK_INTERNET
+:TEST_INTERNET
 SET currently=Testing Internet Connection...
 SET currently2=
 SET SpecificStatus=
@@ -1015,71 +1026,37 @@ REM ----------------END TEST INTERNET CONNECTION-----------------
 
 
 
-:FIX
+
 REM ------------------FIX INTERNET CONNECTION--------------------
 REM BRANCH (SUCCESS || FAILED)
 REM Call the different methods of fixing
 REM This allows for different fixes to be added later
 
-REM Declare that connection needs to be fixed and that this program
-REM is attempting that fix
-SET ProgramMustFix=1
+REM In order to add more fixes, NUMCONNFIXES and NUMNETFIXES must
+REM be raised (if the fix partains to them).
 
-REM *****RESET NETWORK CONNECTION FAST*****
 
-IF %USE_NETWORK_RESET_FAST%==0 GOTO :END_RESET_NETORK_FAST_MAIN
-	CALL :FIX_RESET_NETWORK_FAST
-	CALL :TEST isConnected
-	IF %isConnected%==1 GOTO :SUCCESS
-
-	REM FIX FAILED
-	SET currently=Quickly reseting the Network Connection
-	SET currently2=did not fix the problem
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-:END_RESET_NETORK_FAST_MAIN
-REM ***END RESET NETWORK CONNECTION FAST***
+REM *****RESET NETWORK ADAPTER FAST*****
+:CONNFIX1
+:NETFIX1
+CALL :FIX_RESET_NETWORK_FAST
+GOTO :EOF
 
 
 REM *****RESET IP ADDRESS*****
-IF %USE_IP_RESET%==0 GOTO :END_RESET_IP_MAIN
-	CALL :FIX_RESET_IP
-	CALL :TEST isConnected
-	IF %isConnected%==1 GOTO :SUCCESS
-	
-	REM FIX FAILED
-	SET currently=Resetting IP did not fix the problem
-	SET currently2=
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-	
-:END_RESET_IP_MAIN
-REM ***END RESET IP ADDRESS***
+:CONNFIX2
+:NETFIX2
+CALL :FIX_RESET_IP
+GOTO :EOF
 
 
-REM *****RESET NETWORK CONNECTION*****
-
-IF %USE_NETWORK_RESET%==0 GOTO :END_RESET_NETORK_MAIN
-	CALL :FIX_RESET_NETWORK
-	CALL :TEST isConnected
-	IF %isConnected%==1 GOTO :SUCCESS
-
-	REM FIX FAILED
-	SET /A mins="TTLSCNDS/60"
-	SET currently=Disabling Network for %mins% minutes
-	SET currently2=did not fix the problem
-	SET SpecificStatus=
-	SET isWaiting=0
-	CALL :STATS
-:END_RESET_NETORK_MAIN
-REM ***END RESET NETWORK CONNECTION***
+REM *****RESET NETWORK ADAPTER SLOW*****
+:NETFIX3
+CALL :FIX_RESET_NETWORK
+GOTO :EOF
 
 
 
-REM FIXES FAILED
-GOTO :FAILED
 REM -----------------END FIX INTERNET CONNECTION------------------
 
 
@@ -1936,6 +1913,8 @@ SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
+SET CONNFIX=0
+SET NETFIX=0
 IF %AUTO_RETRY%==1 GOTO :FIX
 IF %OMIT_USER_INPUT%==1 EXIT
 ECHO Retry?
@@ -1971,6 +1950,8 @@ SET ProgramMustFix=0
 IF "%confixed%"=="" SET confixed=0
 SET /A confixed+=1
 )
+SET CONNFIX=0
+SET NETFIX=0
 
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
