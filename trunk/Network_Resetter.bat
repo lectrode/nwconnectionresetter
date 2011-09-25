@@ -7,7 +7,7 @@ ECHO Initializing program...
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=62
+	SET rvsn=63
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1864,7 +1864,7 @@ SET currently2= (will not fix connection if not connected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-CALL :TEST isConnected
+CALL :TEST_INTERNET isConnected
 IF %isConnected%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
 GOTO :CHECK_CONNECTION_ONLY_FAIL
 
@@ -1983,7 +1983,5 @@ SET currently2=
 SET SpecificStatus=
 SET /A delaymins=CHECK_DELAY
 CALL :WAIT
-CALL :TEST isConnected
-IF %isConnected%==1 GOTO :SUCCESS
-GOTO :FIX
+GOTO :START
 REM -----------END FIX ATTEMPT SUCCEEDED (RECHECK)----------------
