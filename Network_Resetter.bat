@@ -9,7 +9,7 @@ ECHO                             Initializing program...
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=66
+	SET rvsn=67
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -52,7 +52,7 @@ REM 				Settings, but the program may exhibit unusual behavior.
 REM 
 REM 				"Could not find <network> | This program requires a valid
 REM 				network connection | please open with notepad for more information"
-REM 				-To fix this please correct the NETWORK setting below.
+REM 				-To fix this please correct the NETWORK setting.
 REM 				
 REM 				This program is protected under the GPLv3 License. 
 REM 				http://www.gnu.org/licenses/gpl.html
@@ -105,6 +105,11 @@ SET delaymins=
 IF "%ProgramMustFix%"=="" SET /A ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
+
+
+IF "%MyDate%"=="" (
+SET MyDate=%DATE% %TIME%
+)
 
 CALL :SETTINGS_SETDEFAULT
 IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
@@ -257,20 +262,41 @@ IF "%SETNFileDir%"=="TEMP" ECHO.
 ECHO What would you like to do?
 ECHO -Review all settings                        (1)
 ECHO -Choose setting to change from list         (2)
-ECHO -Reset all settings to their default values (3)
-ECHO -Change where settings are stored           (4)
+ECHO -Select a Settings Preset                   (3)
+ECHO -Reset all settings to their default values (4)
+ECHO -Change where settings are stored           (5)
 ECHO -Run program                                (R)
 ECHO -Exit                                       (X)
 ECHO.
 SET usrInput=
-SET /P usrInput=[1/2/3/R/X] 
+SET /P usrInput=[1/2/3/4/5/R/X] 
 IF /I "%usrInput%"=="R" GOTO :EOF
 IF /I "%usrInput%"=="X" EXIT
 IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
 IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
-IF "%usrInput%"=="3" CALL :SETTINGS_RESET
-IF "%usrInput%"=="4" CALL :SETTINGS_FIRSTRUN
+IF "%usrInput%"=="3" CALL :SETTINGS_SELECT_PRESET
+IF "%usrInput%"=="4" CALL :SETTINGS_RESET
+IF "%usrInput%"=="5" CALL :SETTINGS_FIRSTRUN
 GOTO :SETTINGS_SET
+
+
+:SETTINGS_SELECT_PRESET
+CALL :HEADER
+ECHO Select a Preset to view details:
+ECHO -Normal Run to Fix                          (1)
+ECHO -Advanced Run to Fix                        (2)
+ECHO -Connection Monitoring                      (3)
+ECHO -Advanced Connection Monitoring             (4)
+ECHO -Cancel                                     (X)
+ECHO.
+SET usrInput=
+SET /P usrInput=[1/2/3/4/X] 
+IF /I "%usrInput%"=="X" GOTO :EOF
+IF "%usrInput%"=="1" GOTO :SETTINGS_VIEW_PRESET01
+IF "%usrInput%"=="2" GOTO :SETTINGS_VIEW_PRESET02
+IF "%usrInput%"=="3" GOTO :SETTINGS_VIEW_PRESET03
+IF "%usrInput%"=="4" GOTO :SETTINGS_VIEW_PRESET04
+GOTO :SETTINGS_SELECT_PRESET
 
 
 :SETTINGS_SET_ALL
@@ -666,6 +692,192 @@ SET OS_DETECT_OVERRIDE=%OS_DETECT_OVERRIDE_D%
 SET DEBUGN=%DEBUGN_D%
 GOTO :EOF
 
+:SETTINGS_VIEW_PRESET01
+CALL :HEADER
+ECHO  *Normal Run to Fix*
+ECHO.
+ECHO Assumes the user only wishes to run this program when
+ECHO the network connection needs to be fixed 
+ECHO -no connection monitoring
+ECHO -tests connection to make sure it needs to be fixed
+ECHO.
+ECHO.
+ECHO What would you like to do?
+ECHO -Use this preset       [1]
+ECHO -View next preset      [N]
+ECHO -Cancel                [X]
+SET usrInput=
+SET /P usrInput=[1/N/X] 
+IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET02
+IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET01
+IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET01
+GOTO :SETTINGS_VIEW_PRESET01
+
+:SETTINGS_VIEW_PRESET02
+CALL :HEADER
+ECHO  *Advanced Run to Fix*
+ECHO.
+ECHO Assumes the user only wishes to run this program when
+ECHO the network connection needs to be fixed 
+ECHO -no connection monitoring
+ECHO -Does NOT check connection before fixing
+ECHO -Shows advanced output
+ECHO.
+ECHO.
+ECHO What would you like to do?
+ECHO -Use this preset       [1]
+ECHO -View next preset      [N]
+ECHO -Cancel                [X]
+SET usrInput=
+SET /P usrInput=[1/N/X] 
+IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET03
+IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET02
+IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET02
+GOTO :SETTINGS_VIEW_PRESET02
+
+:SETTINGS_VIEW_PRESET03
+CALL :HEADER
+ECHO  *Normal Connection Monitoring*
+ECHO.
+ECHO Assumes user wants connection fixed if connection is
+ECHO disrupted anytime while this is running
+ECHO -Connection monitoring
+ECHO -Attempts to fix connection automatically
+ECHO.
+ECHO.
+ECHO What would you like to do?
+ECHO -Use this preset       [1]
+ECHO -View next preset      [N]
+ECHO -Cancel                [X]
+SET usrInput=
+SET /P usrInput=[1/N/X] 
+IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET04
+IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET03
+IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET03
+GOTO :SETTINGS_VIEW_PRESET03
+
+:SETTINGS_VIEW_PRESET04
+CALL :HEADER
+ECHO  *Advanced Connection Monitoring*
+ECHO.
+ECHO Assumes user wants connection fixed if connection is
+ECHO disrupted anytime while this is running
+ECHO -Connection monitoring
+ECHO -Attempts to fix connection automatically
+ECHO -Shows advanced output
+ECHO.
+ECHO.
+ECHO What would you like to do?
+ECHO -Use this preset       [1]
+ECHO -View next preset      [N]
+ECHO -Cancel                [X]
+SET usrInput=
+SET /P usrInput=[1/N/X] 
+IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET01
+IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET04
+IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET04
+GOTO :SETTINGS_VIEW_PRESET04
+
+:SETTINGS_PRESET01
+REM Normal Run to Fix
+ECHO Resetting all settings to "Normal Run to Fix"
+SET MINUTES=10
+SET NETWORK=Wireless Network Connection
+SET CONTINUOUS=0
+SET AUTO_RETRY=1
+SET CHECK_DELAY=1
+SET SHOW_ALL_ALERTS=1
+SET SHOW_ADVANCED_TESTING=0
+SET SLWMSG=0
+SET TIMER_REFRESH_RATE=1
+SET START_AT_LOGON=1
+SET START_MINIMIZED=1
+SET OMIT_USER_INPUT=0
+SET SKIP_INITIAL_NTWK_TEST=0
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET_FAST=1
+SET USE_NETWORK_RESET=1
+SET ONLY_ONE_NETWORK_NAME_TEST=1
+SET OS_DETECT_OVERRIDE=0
+SET DEBUGN=0
+GOTO :EOF
+
+:SETTINGS_PRESET02
+REM Advanced Run to Fix
+ECHO Resetting all settings to "Advanced Run to Fix"
+SET MINUTES=10
+SET NETWORK=Wireless Network Connection
+SET CONTINUOUS=0
+SET AUTO_RETRY=1
+SET CHECK_DELAY=1
+SET SHOW_ALL_ALERTS=1
+SET SHOW_ADVANCED_TESTING=1
+SET SLWMSG=0
+SET TIMER_REFRESH_RATE=1
+SET START_AT_LOGON=1
+SET START_MINIMIZED=1
+SET OMIT_USER_INPUT=0
+SET SKIP_INITIAL_NTWK_TEST=1
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET_FAST=1
+SET USE_NETWORK_RESET=1
+SET ONLY_ONE_NETWORK_NAME_TEST=1
+SET OS_DETECT_OVERRIDE=0
+SET DEBUGN=0
+GOTO :EOF
+
+:SETTINGS_PRESET03
+REM Normal Connection Monitoring
+ECHO Resetting all settings to "Normal Connection Monitoring"
+SET MINUTES=10
+SET NETWORK=Wireless Network Connection
+SET CONTINUOUS=1
+SET AUTO_RETRY=1
+SET CHECK_DELAY=1
+SET SHOW_ALL_ALERTS=1
+SET SHOW_ADVANCED_TESTING=0
+SET SLWMSG=0
+SET TIMER_REFRESH_RATE=1
+SET START_AT_LOGON=1
+SET START_MINIMIZED=1
+SET OMIT_USER_INPUT=0
+SET SKIP_INITIAL_NTWK_TEST=0
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET_FAST=1
+SET USE_NETWORK_RESET=1
+SET ONLY_ONE_NETWORK_NAME_TEST=1
+SET OS_DETECT_OVERRIDE=0
+SET DEBUGN=0
+GOTO :EOF
+
+:SETTINGS_PRESET04
+REM Advanced Connection Monitoring
+ECHO Resetting all settings to "Advanced Connection Monitoring"
+SET MINUTES=10
+SET NETWORK=Wireless Network Connection
+SET CONTINUOUS=1
+SET AUTO_RETRY=1
+SET CHECK_DELAY=1
+SET SHOW_ALL_ALERTS=1
+SET SHOW_ADVANCED_TESTING=1
+SET SLWMSG=0
+SET TIMER_REFRESH_RATE=1
+SET START_AT_LOGON=1
+SET START_MINIMIZED=1
+SET OMIT_USER_INPUT=0
+SET SKIP_INITIAL_NTWK_TEST=0
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET_FAST=1
+SET USE_NETWORK_RESET=1
+SET ONLY_ONE_NETWORK_NAME_TEST=1
+SET OS_DETECT_OVERRIDE=0
+SET DEBUGN=0
+GOTO :EOF
+
 :SETTINGS_EXPORT
 IF "%SETNFileDir%"=="TEMP" GOTO :EOF
 CALL :HEADER
@@ -831,27 +1043,32 @@ REM ---------------------END PROGRAM INTRO--------------------
 
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
+REM %MyDate% = %234567890123456789012345%
 SET STATSSpacer=                                                                                   !
 SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
-IF %confixed%0 GTR 10 SET SHOWconfixed=%confixed% times.%STATSSpacer%
-IF NOT %confixed%0 GTR 10 SET SHOWconfixed=%confixed% time.%STATSSpacer%
+IF "%confixed%"=="" SET confixed=0
+SET SHOWconfixed=                %confixed%
+SET SHOWconfixed=%SHOWconfixed:~-13%
+SET SHOWconfixed=%SHOWconfixed%                       !
 CLS
 								ECHO  ******************************************************************************
+								ECHO  *                                                                            *
 								ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
 								ECHO  *                                                                            *
 								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
-								ECHO  ******************************************************************************
+								ECHO  *                                                                            *
+								ECHO  *----------------------------------------------------------------------------*
 IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF "%CONTINUOUS%"=="1"			ECHO  *                                                                            *
-IF "%CONTINUOUS%"=="1"			ECHO  *                              *Continuous Mode*                             *
+IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
+IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
+IF "%CONTINUOUS%"=="1"			ECHO  * %MyDate% ^|                   ^|%SHOWconfixed:~0,27%*
+IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
 								ECHO  *                                                                            *
 IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
 IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
-IF NOT "%confixed%"==""			ECHO  * Connection fixed %SHOWconfixed:~0,58%*
-IF NOT "%confixed%"==""			ECHO  *                                                                            *
 IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
 IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
 IF NOT "%currently%"==""		ECHO  *                                                                            *
