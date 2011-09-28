@@ -2,12 +2,14 @@ REM *****************************************************************
 REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
 REM *****************************************************************
 @ECHO OFF
-ECHO Initializing program...
+CLS
+ECHO.
+ECHO                             Initializing program...
 
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=65
+	SET rvsn=66
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -81,7 +83,7 @@ IF "%restartingProgram%"=="" (
 )
 
 REM Set CMD window size & title
-MODE CON COLS=81 LINES=30
+MODE CON COLS=81 LINES=25
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 REM Set Global Variables
@@ -102,12 +104,15 @@ SET isWaiting=0
 SET delaymins=
 IF "%ProgramMustFix%"=="" SET /A ProgramMustFix=0
 SET NCNUM=0
+SET INITPARAMS=%1
 
 CALL :SETTINGS_SETDEFAULT
-IF "%1"=="RESET" CALL :SETTINGS_RESET
+IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
 CALL :SETTINGS_CHECKFILE
-IF "%1"=="SETTINGS" CALL :SETTINGS_SET
+IF "%INITPARAMS%"=="" IF NOT "%SetnBeenSet%"=="1" IF "%CONTINUOUS%"=="0" CALL :SETTINGS_OPTION
+IF "%INITPARAMS%"=="SETTINGS" CALL :SETTINGS_SET
 
+CALL :SETTINGS_EXPORT
 
 GOTO :TOP
 
@@ -137,7 +142,7 @@ SET SETNFileDir=%THISFILEDIR%
 )
 
 IF %SETNFILECHK%==0 (
-CALL :SETTINGS_FIRSTRUN
+CALL :SETTINGS_FIRSTRUN 1st
 )
 
 IF %SETNFILECHK%==1 GOTO :EOF
@@ -161,14 +166,30 @@ IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" GOTO :EOF
 GOTO :SETTINGS_CHECKFILE_MULTIPLE
 
 :SETTINGS_CHECKFILE_END
+IF "%INITPARAMS%"=="SETTINGS" SET INITPARAMS=
 GOTO :EOF
+
+
+:SETTINGS_OPTION
+CALL :HEADER
+ECHO What would you like to do?
+ECHO -Run program           [1]
+ECHO -Edit Configuration    [2]
+ECHO.
+SET usrInput=
+SET /P usrInput=[1/2] 
+IF "%usrInput%"=="" GOTO :EOF
+IF "%usrInput%"=="1" GOTO :EOF
+IF "%usrInput%"=="2" GOTO :SETTINGS_SET
+GOTO :SETTINGS_OPTION
 
 
 
 :SETTINGS_FIRSTRUN
 CALL :HEADER
-ECHO No setting files were found. 
-ECHO.
+SET SetnBeenSet=1
+IF "%1"=="1st" ECHO No setting files were found. 
+IF "%1"=="1st" ECHO.
 ECHO What would you like to do?
 ECHO -Run program with temporary settings    [1]
 ECHO -Make settings for this user only       [2] [Recommended]
@@ -225,6 +246,7 @@ CALL :SETTINGS_EXPORT
 GOTO :EOF
 
 :SETTINGS_SET
+SET SetnBeenSet=1
 CLS
 CALL :HEADER
 IF "%SETNFileDir%"=="TEMP" ECHO You have selected Temporary Settings
@@ -236,6 +258,7 @@ ECHO What would you like to do?
 ECHO -Review all settings                        (1)
 ECHO -Choose setting to change from list         (2)
 ECHO -Reset all settings to their default values (3)
+ECHO -Change where settings are stored           (4)
 ECHO -Run program                                (R)
 ECHO -Exit                                       (X)
 ECHO.
@@ -246,6 +269,7 @@ IF /I "%usrInput%"=="X" EXIT
 IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
 IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
 IF "%usrInput%"=="3" CALL :SETTINGS_RESET
+IF "%usrInput%"=="4" CALL :SETTINGS_FIRSTRUN
 GOTO :SETTINGS_SET
 
 
@@ -655,7 +679,7 @@ ECHO Exporting Settings...
 IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
 TYPE NUL>"%SETNFileDir%%SettingsFileName%.BAT"
 DEL /F %SettingsFileName%.BAT
-ECHO IF "%%1"=="" START CMD /C "%THISFILENAMEPATH%" SETTINGS>>"%SETNFileDir%%SettingsFileName%.BAT"
+ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET MINUTES=^%MINUTES%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET NETWORK=^%NETWORK%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET CONTINUOUS=^%CONTINUOUS%>>"%SETNFileDir%%SettingsFileName%.BAT"
