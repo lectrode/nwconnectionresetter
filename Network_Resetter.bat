@@ -1,7 +1,8 @@
 REM *****************************************************************
 REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
 REM *****************************************************************
-@ECHO OFF
+SET ECHONESS=
+%ECHONESS%@ECHO OFF
 CLS
 ECHO.
 ECHO                             Initializing program...
@@ -9,7 +10,7 @@ ECHO                             Initializing program...
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=68
+	SET rvsn=69
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -69,7 +70,7 @@ REM *************Main Code**************
 
 
 REM -------------------Initialize Program--------------------
-@ECHO OFF
+REM @ECHO OFF
 
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" (
@@ -95,6 +96,7 @@ SET NUMCONNFIXES=2
 SET NUMNETFIXES=3
 SET NETFIX=0
 SET CONNFIX=0
+SET ROUTEFIX=0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
 SET currently=
@@ -102,7 +104,7 @@ SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 SET delaymins=
-IF "%ProgramMustFix%"=="" SET /A ProgramMustFix=0
+IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
 
@@ -401,12 +403,13 @@ ECHO -Skip Initial Ntwk Test   (2)   %SKIP_INITIAL_NTWK_TEST%
 ECHO -Enable FIX: Reset IP     (3)   %USE_IP_RESET%
 ECHO -Enable FIX: FastNWReset  (4)   %USE_NETWORK_RESET_FAST%
 ECHO -Enable FIX: SlowNWReset  (5)   %USE_NETWORK_RESET%
-ECHO -One Connection name test (6)   %ONLY_ONE_NETWORK_NAME_TEST%
-ECHO -OS Detection Override    (7)   %OS_DETECT_OVERRIDE%
-ECHO -DEBUGN                   (8)   %DEBUGN%
+ECHO -Enable FIX: ResetRoutes  (6)   %USE_RESET_ROUTE_TABLE%
+ECHO -One Connection name test (7)   %ONLY_ONE_NETWORK_NAME_TEST%
+ECHO -OS Detection Override    (8)   %OS_DETECT_OVERRIDE%
+ECHO -DEBUGN                   (9)   %DEBUGN%
 ECHO.
 SET usrInput=
-SET /P usrInput=[B/M/X/1/2/3/4/5/6/7/8] 
+SET /P usrInput=[B/M/X/1/2/3/4/5/6/7/8/9] 
 IF "%usrInput%"=="1" CALL :SETTINGS_SETONE A1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE A2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE A3
@@ -415,6 +418,7 @@ IF "%usrInput%"=="5" CALL :SETTINGS_SETONE A5
 IF "%usrInput%"=="6" CALL :SETTINGS_SETONE A6
 IF "%usrInput%"=="7" CALL :SETTINGS_SETONE A7
 IF "%usrInput%"=="8" CALL :SETTINGS_SETONE A8
+IF "%usrInput%"=="9" CALL :SETTINGS_SETONE A9
 IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
 IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
 IF /I "%usrInput%"=="X" GOTO :EOF
@@ -614,6 +618,15 @@ SET SETTINGDEFAULT=%USE_NETWORK_RESET_D%
 SET SETTINGCUR=%USE_NETWORK_RESET%
 )
 IF %1==A6 (
+SET SETTINGTITLE=USE_RESET_ROUTE_TABLE
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Reset Route Table
+SET SETTINGINFO2=This seems to fix 'Host Unreachable' errors, but
+SET SETTINGINFO3=it may have unforseen negative effects.
+SET SETTINGDEFAULT=%USE_RESET_ROUTE_TABLE_D%
+SET SETTINGCUR=%USE_RESET_ROUTE_TABLE%
+)
+IF %1==A7 (
 SET SETTINGTITLE=ONLY_ONE_NETWORK_NAME_TEST
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Don't test Network Name more than once
@@ -622,7 +635,7 @@ SET SETTINGINFO3=Network Connection name does not change
 SET SETTINGDEFAULT=%ONLY_ONE_NETWORK_NAME_TEST_D%
 SET SETTINGCUR=%ONLY_ONE_NETWORK_NAME_TEST%
 )
-IF %1==A7 (
+IF %1==A8 (
 SET SETTINGTITLE=OS_DETECT_OVERRIDE
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Override OS Detection
@@ -631,7 +644,7 @@ SET SETTINGINFO3=Doing so may cause the program to exibit unusual behavior.
 SET SETTINGDEFAULT=%OS_DETECT_OVERRIDE_D%
 SET SETTINGCUR=%OS_DETECT_OVERRIDE%
 )
-IF %1==A8 (
+IF %1==A9 (
 SET SETTINGTITLE=DEBUGGING
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Programmer Tool - Debugging
@@ -664,6 +677,7 @@ SET SKIP_INITIAL_NTWK_TEST_D=0
 SET USE_IP_RESET_D=1
 SET USE_NETWORK_RESET_FAST_D=1
 SET USE_NETWORK_RESET_D=1
+SET USE_RESET_ROUTE_TABLE_D=0
 SET ONLY_ONE_NETWORK_NAME_TEST_D=1
 SET OS_DETECT_OVERRIDE_D=0
 SET DEBUGN_D=0
@@ -687,6 +701,7 @@ SET SKIP_INITIAL_NTWK_TEST=%SKIP_INITIAL_NTWK_TEST_D%
 SET USE_IP_RESET=%USE_IP_RESET_D%
 SET USE_NETWORK_RESET_FAST=%USE_NETWORK_RESET_FAST_D%
 SET USE_NETWORK_RESET=%USE_NETWORK_RESET_D%
+SET USE_RESET_ROUTE_TABLE=%USE_RESET_ROUTE_TABLE_D%
 SET ONLY_ONE_NETWORK_NAME_TEST=%ONLY_ONE_NETWORK_NAME_TEST_D%
 SET OS_DETECT_OVERRIDE=%OS_DETECT_OVERRIDE_D%
 SET DEBUGN=%DEBUGN_D%
@@ -801,6 +816,7 @@ SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET_FAST=1
 SET USE_NETWORK_RESET=1
+SET USE_RESET_ROUTE_TABLE=0
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
 SET DEBUGN=0
@@ -825,6 +841,7 @@ SET SKIP_INITIAL_NTWK_TEST=1
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET_FAST=1
 SET USE_NETWORK_RESET=1
+SET USE_RESET_ROUTE_TABLE=0
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
 SET DEBUGN=0
@@ -849,6 +866,7 @@ SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET_FAST=1
 SET USE_NETWORK_RESET=1
+SET USE_RESET_ROUTE_TABLE=0
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
 SET DEBUGN=0
@@ -873,12 +891,14 @@ SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET_FAST=1
 SET USE_NETWORK_RESET=1
+SET USE_RESET_ROUTE_TABLE=0
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
 SET DEBUGN=0
 GOTO :EOF
 
 :SETTINGS_EXPORT
+CALL :SETTINGS_CHECKALL
 IF "%SETNFileDir%"=="TEMP" GOTO :EOF
 CALL :HEADER
 IF "%SETNFileDir%"=="" ECHO ERROR: No Setting file location selected.
@@ -890,7 +910,7 @@ ECHO Exporting Settings...
 @ECHO ON
 IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
 TYPE NUL>"%SETNFileDir%%SettingsFileName%.BAT"
-DEL /F %SettingsFileName%.BAT
+DEL /F "%SETNFileDir%%SettingsFileName%.BAT"
 ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET MINUTES=^%MINUTES%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET NETWORK=^%NETWORK%>>"%SETNFileDir%%SettingsFileName%.BAT"
@@ -908,11 +928,12 @@ ECHO SET SKIP_INITIAL_NTWK_TEST=^%SKIP_INITIAL_NTWK_TEST%>>"%SETNFileDir%%Settin
 ECHO SET USE_IP_RESET=^%USE_IP_RESET%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET USE_NETWORK_RESET_FAST=^%USE_NETWORK_RESET_FAST%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET USE_NETWORK_RESET=^%USE_NETWORK_RESET%>>"%SETNFileDir%%SettingsFileName%.BAT"
+ECHO SET USE_RESET_ROUTE_TABLE=^%USE_RESET_ROUTE_TABLE%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET ONLY_ONE_NETWORK_NAME_TEST=^%ONLY_ONE_NETWORK_NAME_TEST%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET OS_DETECT_OVERRIDE=^%OS_DETECT_OVERRIDE%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO SET DEBUGN=^%DEBUGN%>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO GOTO :EOF
-@ECHO OFF
+%ECHONESS%@ECHO OFF
 :SETTINGS_EXPORT_SKIP
 ECHO Done Exporting Settings.
 GOTO :EOF
@@ -924,7 +945,7 @@ GOTO :EOF
 
 
 :HEADER
-@ECHO OFF
+%ECHONESS%@ECHO OFF
 CLS
 ECHO  ******************************************************************************
 ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
@@ -932,11 +953,7 @@ ECHO  **************************************************************************
 ECHO.
 GOTO :EOF
 
-
-:TOP
-REM Display program introduction
-CALL :PROGRAM_INTRO
-
+:SETTINGS_CHECKALL
 REM Initial CHECKS
 SET currently=Checking validity of Settings...
 SET currently2=
@@ -950,6 +967,7 @@ CALL :TEST01VAR CONTINUOUS 0 %CONTINUOUS%
 CALL :TEST01VAR OS_DETECT_OVERRIDE 0 %OS_DETECT_OVERRIDE%
 CALL :TEST01VAR USE_NETWORK_RESET 1 %USE_NETWORK_RESET%
 CALL :TEST01VAR USE_NETWORK_RESET_FAST 1 %USE_NETWORK_RESET_FAST%
+CALL :TEST01VAR USE_RESET_ROUTE_TABLE 0 %USE_RESET_ROUTE_TABLE%
 CALL :TEST01VAR USE_IP_RESET 1 %USE_IP_RESET%
 CALL :TEST01VAR OMIT_USER_INPUT 0 %OMIT_USER_INPUT%
 CALL :TEST_FIXES_VALS
@@ -973,6 +991,13 @@ CALL :TEST01VAR AUTO_RETRY 0 %AUTO_RETRY%
 CALL :TEST01VAR SHOW_ADVANCED_TESTING 0 %SHOW_ADVANCED_TESTING%
 CALL :TEST01VAR SKIP_INITIAL_NTWK_TEST 0 %SKIP_INITIAL_NTWK_TEST%
 CALL :TEST01VAR ONLY_ONE_NETWORK_NAME_TEST 1 %ONLY_ONE_NETWORK_NAME_TEST%
+GOTO :EOF
+
+
+:TOP
+REM Display program introduction
+CALL :PROGRAM_INTRO
+
 
 
 REM Copy to startup folder if set to start when 
@@ -1003,6 +1028,7 @@ IF %isConnected%==0 GOTO :MAINCONNTEST_FAIL
 CALL :TEST_INTERNET isConnected
 IF %isConnected%==1 GOTO :SUCCESS
 IF %isConnected%==0 GOTO :MAINNETTEST_FAIL
+IF %isConnected%==2 GOTO :MAINNETTEST_UNREACH
 
 
 :MAINCONNTEST_FAIL
@@ -1017,6 +1043,14 @@ SET ProgramMustFix=1
 SET /A NETFIX+=1
 IF %NETFIX% GTR %NUMNETFIXES% GOTO :FAILED
 CALL :NETFIX%NETFIX%
+GOTO :MAIN_START
+
+:MAINNETTEST_UNREACH
+IF "%USE_RESET_ROUTE_TABLE%"==0 GOTO :MAINNETTEST_FAIL
+SET ProgramMustFix=1
+SET ROUTEFIX+=1
+IF %ROUTEFIX% GTR 1 GOTO :FAILED
+CALL :FIXUNREACHABLE
 GOTO :MAIN_START
 
 REM -----------END INITIAL NETWORK CONNECTION TEST-----------
@@ -1232,14 +1266,14 @@ GOTO :EOF
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET currently=Unable to varify internet connectivity.
-SET currently2=Internet browsing may be slow or unavailable.
+SET currently=Target site [%testwebsite%] is
+SET currently2=unreachable.
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-SET %~1=1
+SET %~1=2
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
@@ -1296,6 +1330,11 @@ REM *****RESET NETWORK ADAPTER SLOW*****
 CALL :FIX_RESET_NETWORK
 GOTO :EOF
 
+
+REM *****RESET ROUTE TABLE*****
+:FIXUNREACHABLE
+ROUTE -F
+GOTO :EOF
 
 
 REM -----------------END FIX INTERNET CONNECTION------------------
@@ -1620,7 +1659,7 @@ ECHO wscript.sleep 2000 >>%disOrEn%Network.vbs
 ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>%disOrEn%Network.vbs
 ECHO objFSO.DeleteFile WScript.ScriptFullName >>%disOrEn%Network.vbs
 ECHO Set objFSO = Nothing >>%disOrEn%Network.vbs
-@ECHO off
+%ECHONESS%@ECHO OFF
 SET isWaiting=0
 CALL :STATS
 cscript %disOrEn%Network.vbs
@@ -2149,6 +2188,7 @@ REM -------------------FIX ATTEMPT FAILED-------------------------
 REM BRANCH (FAILED_CONTINUOUS || FIX || EXIT)
 SET CONNFIX=0
 SET NETFIX=0
+SET ROUTEFIX=0
 IF %CONTINUOUS%==1 GOTO :FAILED_CONTINUOUS
 SET currently=Unable to Connect to Internet.
 SET currently2=
@@ -2193,6 +2233,7 @@ SET /A confixed+=1
 )
 SET CONNFIX=0
 SET NETFIX=0
+SET ROUTEFIX=0
 
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
