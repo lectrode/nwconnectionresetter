@@ -1,16 +1,12 @@
 REM *****************************************************************
 REM ************ DON'T EDIT ANYTHING BEYOND THIS POINT! *************
 REM *****************************************************************
-SET ECHONESS=
-%ECHONESS%@ECHO OFF
-CLS
-ECHO.
-ECHO                             Initializing program...
+CALL :INITPROG
 
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=69
+	SET rvsn=70
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -70,7 +66,15 @@ REM *************Main Code**************
 
 
 REM -------------------Initialize Program--------------------
-REM @ECHO OFF
+GOTO :PASTINIT
+:INITPROG
+SET ECHONESS=
+%ECHONESS%@ECHO OFF
+CLS
+ECHO.
+ECHO                             Initializing program...
+GOTO :EOF
+:PASTINIT
 
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" (
@@ -88,6 +92,7 @@ MODE CON COLS=81 LINES=25
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 REM Set Global Variables
+SET USELOGGING=0
 SET SettingsFileName=NWRSettings
 SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
@@ -109,9 +114,19 @@ SET NCNUM=0
 SET INITPARAMS=%1
 
 
-IF "%MyDate%"=="" (
-SET MyDate=%DATE% %TIME%
-)
+IF NOT "%StartDate%"=="" GOTO :AFTSETTIME
+SET StartDate=%DATE% %TIME%
+SET iYEAR=%DATE:~-4%
+SET iMONTH=%DATE:~4,2%
+SET iDAY=%DATE:~7,2%
+SET iHOUR=%TIME:~0,2%
+SET iMINUTE=%TIME:~3,2%
+SET iSECOND=%TIME:~6,2%
+:AFTSETTIME
+
+
+REM Display program introduction
+CALL :PROGRAM_INTRO
 
 CALL :SETTINGS_SETDEFAULT
 IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
@@ -995,11 +1010,6 @@ GOTO :EOF
 
 
 :TOP
-REM Display program introduction
-CALL :PROGRAM_INTRO
-
-
-
 REM Copy to startup folder if set to start when 
 REM user logs on
 CALL :CHECK_START_AT_LOGON
@@ -1007,7 +1017,6 @@ CALL :CHECK_START_AT_LOGON
 REM -----------------END INITIALIZE PROGRAM------------------
 
 :MAIN_START
-
 REM ------------------TO FIX OR NOT TO FIX-------------------
 IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
 REM ----------------END TO FIX OR NOT TO FIX-----------------
@@ -1032,14 +1041,14 @@ IF %isConnected%==2 GOTO :MAINNETTEST_UNREACH
 
 
 :MAINCONNTEST_FAIL
-SET ProgramMustFix=1
+CALL :DISCONNECTION_DETECTED
 SET /A CONNFIX+=1
 IF %CONNFIX% GTR %NUMCONNFIXES% GOTO :FAILED
 CALL :CONNFIX%CONNFIX%
 GOTO :MAIN_START
 
 :MAINNETTEST_FAIL
-SET ProgramMustFix=1
+CALL :DISCONNECTION_DETECTED
 SET /A NETFIX+=1
 IF %NETFIX% GTR %NUMNETFIXES% GOTO :FAILED
 CALL :NETFIX%NETFIX%
@@ -1047,13 +1056,13 @@ GOTO :MAIN_START
 
 :MAINNETTEST_UNREACH
 IF "%USE_RESET_ROUTE_TABLE%"==0 GOTO :MAINNETTEST_FAIL
-SET ProgramMustFix=1
+CALL :DISCONNECTION_DETECTED
 SET ROUTEFIX+=1
 IF %ROUTEFIX% GTR 1 GOTO :FAILED
 CALL :FIXUNREACHABLE
 GOTO :MAIN_START
 
-REM -----------END INITIAL NETWORK CONNECTION TEST-----------
+REM -----------END INITIAL NETWORK CONNECTION TEST----------
 
 
 
@@ -1079,13 +1088,14 @@ REM ---------------------END PROGRAM INTRO--------------------
 REM ---------------------PROGRAM STATUS-----------------------
 REM %MyDate% = %234567890123456789012345%
 SET STATSSpacer=                                                                                   !
+CALL :GETRUNTIME_LENGTH
 SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 IF "%confixed%"=="" SET confixed=0
-SET SHOWconfixed=                %confixed%
-SET SHOWconfixed=%SHOWconfixed:~-13%
+SET SHOWconfixed=                %confixed% in %RUNTIMEL%
+SET SHOWconfixed=%SHOWconfixed:~-20%
 SET SHOWconfixed=%SHOWconfixed%                       !
 CLS
 								ECHO  ******************************************************************************
@@ -1098,7 +1108,7 @@ CLS
 IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
 IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
-IF "%CONTINUOUS%"=="1"			ECHO  * %MyDate% ^|                   ^|%SHOWconfixed:~0,27%*
+IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^|                   ^|%SHOWconfixed:~0,27%*
 IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
 								ECHO  *                                                                            *
 IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
@@ -1117,6 +1127,73 @@ IF "%SLWMSG%"=="1" (
 )
 GOTO :EOF
 REM ---------------------END PROGRAM STATUS----------------------
+
+
+:GETRUNTIME_LENGTH
+SET cYEAR=%DATE:~-4%
+SET cMONTH=%DATE:~4,2%
+SET cDAY=%DATE:~7,2%
+SET cHOUR=%TIME:~0,2%
+SET cMINUTE=%TIME:~3,2%
+SET cSECOND=%TIME:~6,2%
+
+IF NOT %cYEAR% GEQ 10 SET cYEAR=%cYEAR:~1,1% 
+IF NOT %cMONTH% GEQ 10 SET cMONTH=%cMONTH:~1,1%
+IF NOT %cDAY% GEQ 10 SET cDAY=%cDAY:~1,1%
+IF NOT %cHOUR% GEQ 10 SET cHOUR=%cHOUR:~1,1%
+IF NOT %cMINUTE% GEQ 10 SET cMINUTE=%cMINUTE:~1,1%
+IF NOT %cSECOND% GEQ 10 SET cSECOND=%cSECOND:~1,1%
+
+SET /A LeapYear=cYEAR%%4
+
+IF %cSECOND% LSS %iSECOND% (
+SET /A cMINUTE-=1
+SET /A cSECOND+=60
+)
+IF %cMINUTE% LSS %iMINUTE% (
+SET /A cHOUR-=1
+SET /A cMINUTE+=60
+)
+IF %cHOUR% LSS %iHOUR% (
+SET /A cDAY-=1
+SET /A cHOUR+=24
+)
+
+IF NOT %cDAY% LSS %iDAY% GOTO :AFTcDAYCHECK
+SET /A TMPMO=iMONTH
+SET /A TMPNUM=iMONTH%%2
+IF %cMONTH% LEQ 7 IF %TMPNUM%==1 SET MODAYS=31
+IF %cMONTH% LEQ 7 IF %TMPNUM%==0 SET MODAYS=30
+IF %cMONTH% GEQ 8 IF %TMPNUM%==0 SET MODAYS=31
+IF %cMONTH% GEQ 8 IF %TMPNUM%==1 SET MODAYS=30
+IF %cMONTH%==2 SET MODAYS=28
+IF %cMONTH%==2 IF %LeapYear%==1 SET MODAYS=29
+
+SET /A cMONTH-=1
+SET /A cDAY+=MODAYS
+
+:AFTcDAYCHECK
+IF %cMONTH% LSS %iMONTH% (
+SET /A cYEAR-=1
+SET /A cMONTH+=12
+)
+
+SET /A cYEAR=cYEAR-iYEAR
+SET /A cMONTH=cMONTH-iMONTH
+SET /A cDAY=cDAY-iDAY
+SET /A cHOUR=cHOUR-iHOUR
+SET /A cMINUTE=cMINUTE-iMINUTE
+SET /A cSECOND=cSECOND-iSECOND
+
+IF %cSECOND% LSS 10 SET cSECOND=0%cSECOND%
+IF %cMINUTE% LSS 10 SET cMINUTE=0%cMINUTE%
+
+SET RUNTIMEL=
+IF NOT %cYEAR%==0 SET RUNTIMEL=%cYEAR% yr 
+IF NOT %cMONTH%==0 SET RUNTIMEL=%RUNTIMEL%%cMONTH% mo 
+IF NOT %cDAY%==0 SET RUNTIMEL=%RUNTIMEL%%cDAY% day
+SET RUNTIMEL=%RUNTIMEL%%cHOUR%:%cMINUTE%:%cSECOND%
+GOTO :EOF
 
 
 
@@ -1299,6 +1376,31 @@ GOTO :EOF
 REM ----------------END TEST INTERNET CONNECTION-----------------
 
 
+
+
+:DISCONNECTION_DETECTED
+IF %SETNFileDir%==TEMP GOTO :DISCONNECTION_DETECTED_NOLOG
+SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
+SET MyDate=%MyDate: =0%
+SET MyTime=%TIME: =0%
+TYPE NUL>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%" IF NOT %ProgramMustFix%0==10 ECHO %NETWORK% , Disconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+:DISCONNECTION_DETECTED_NOLOG
+SET ProgramMustFix=1
+GOTO :EOF
+
+
+:RECONNECTION_DETECTED
+IF %SETNFileDir%==TEMP GOTO :RECONNECTION_DETECTED_NOLOG
+SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
+SET MyDate=%MyDate: =0%
+TYPE NUL>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%" ECHO %NETWORK% , Reconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+:RECONNECTION_DETECTED_NOLOG
+SET ProgramMustFix=0
+IF "%confixed%"=="" SET confixed=0
+SET /A confixed+=1
+GOTO :EOF
 
 
 
@@ -2226,11 +2328,7 @@ REM BRANCH (SUCCESS_CONTINUOUS || EXIT)
 
 REM Declare that connection has been fixed
 ECHO ProgramMustFix: %ProgramMustFix%
-IF %ProgramMustFix%==1 (
-SET ProgramMustFix=0
-IF "%confixed%"=="" SET confixed=0
-SET /A confixed+=1
-)
+IF %ProgramMustFix%==1 CALL :RECONNECTION_DETECTED
 SET CONNFIX=0
 SET NETFIX=0
 SET ROUTEFIX=0
