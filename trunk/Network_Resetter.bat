@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=70
+	SET rvsn=71
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -116,12 +116,20 @@ SET INITPARAMS=%1
 
 IF NOT "%StartDate%"=="" GOTO :AFTSETTIME
 SET StartDate=%DATE% %TIME%
+GOTO :AFTSETTIME
 SET iYEAR=%DATE:~-4%
 SET iMONTH=%DATE:~4,2%
 SET iDAY=%DATE:~7,2%
 SET iHOUR=%TIME:~0,2%
 SET iMINUTE=%TIME:~3,2%
 SET iSECOND=%TIME:~6,2%
+
+IF NOT %iYEAR% GEQ 10 SET iYEAR=%iYEAR:~1,1% 
+IF NOT %iMONTH% GEQ 10 SET iMONTH=%iMONTH:~1,1%
+IF NOT %iDAY% GEQ 10 SET iDAY=%iDAY:~1,1%
+IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
+IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
+IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
 :AFTSETTIME
 
 
@@ -1088,14 +1096,15 @@ REM ---------------------END PROGRAM INTRO--------------------
 REM ---------------------PROGRAM STATUS-----------------------
 REM %MyDate% = %234567890123456789012345%
 SET STATSSpacer=                                                                                   !
-CALL :GETRUNTIME_LENGTH
+REM CALL :GETRUNTIME_LENGTH
 SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
 SET SHOWcurrently=%currently%%STATSSpacer%
 SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 IF "%confixed%"=="" SET confixed=0
-SET SHOWconfixed=                %confixed% in %RUNTIMEL%
-SET SHOWconfixed=%SHOWconfixed:~-20%
+REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
+SET SHOWconfixed=                %confixed%
+SET SHOWconfixed=%SHOWconfixed:~-13%
 SET SHOWconfixed=%SHOWconfixed%                       !
 CLS
 								ECHO  ******************************************************************************
