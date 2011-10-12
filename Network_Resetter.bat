@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=71
+	SET rvsn=72
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1393,7 +1393,7 @@ SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
 SET MyDate=%MyDate: =0%
 SET MyTime=%TIME: =0%
 TYPE NUL>>"%SETNFileDir%log.csv"
-IF "%USELOGGING%" IF NOT %ProgramMustFix%0==10 ECHO %NETWORK% , Disconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%"=="1" IF NOT %ProgramMustFix%0==10 ECHO %NETWORK% , Disconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
 :DISCONNECTION_DETECTED_NOLOG
 SET ProgramMustFix=1
 GOTO :EOF
@@ -1404,7 +1404,7 @@ IF %SETNFileDir%==TEMP GOTO :RECONNECTION_DETECTED_NOLOG
 SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
 SET MyDate=%MyDate: =0%
 TYPE NUL>>"%SETNFileDir%log.csv"
-IF "%USELOGGING%" ECHO %NETWORK% , Reconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%"=="1" ECHO %NETWORK% , Reconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
 :RECONNECTION_DETECTED_NOLOG
 SET ProgramMustFix=0
 IF "%confixed%"=="" SET confixed=0
