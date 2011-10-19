@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=73
+	SET rvsn=74
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -56,7 +56,38 @@ REM 				http://www.gnu.org/licenses/gpl.html
 
 
 
+REM ************Alternate Settings****************
+REM These settings are overriden by default. To enable these
+REM settings, please set USE_ALTERNATE_SETTINGS to 1
 
+REM NOTE: These settings are not configurable via the GUI
+REM (You can't set these settings by running the program)
+
+SET USE_ALTERNATE_SETTINGS=0
+
+SET MINUTES=10
+SET NETWORK=Wireless Network Connection
+SET CONTINUOUS=1
+SET AUTO_RETRY=1
+SET CHECK_DELAY=1
+SET SHOW_ALL_ALERTS=1
+SET SHOW_ADVANCED_TESTING=1
+SET SLWMSG=0
+SET TIMER_REFRESH_RATE=1
+SET START_AT_LOGON=1
+SET START_MINIMIZED=0
+SET USELOGGING=1
+SET OMIT_USER_INPUT=0
+SET SKIP_INITIAL_NTWK_TEST=0
+SET USE_IP_RESET=1
+SET USE_NETWORK_RESET_FAST=1
+SET USE_NETWORK_RESET=1
+SET USE_RESET_ROUTE_TABLE=0
+SET ONLY_ONE_NETWORK_NAME_TEST=1
+SET OS_DETECT_OVERRIDE=0
+SET DEBUGN=0
+
+IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
 
 
 
@@ -76,23 +107,11 @@ ECHO                             Initializing program...
 GOTO :EOF
 :PASTINIT
 
-REM Restart itself minimized if set to do so
-IF "%restartingProgram%"=="" (
-	IF "%START_MINIMIZED%"=="1" (
-		IF "%MINIMIZED%"=="" (
-			SET MINIMIZED=1
-			START /MIN CMD /C "%~dpnx0"
-			EXIT
-		)
-	)
-)
-
 REM Set CMD window size & title
 MODE CON COLS=81 LINES=25
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 REM Set Global Variables
-SET USELOGGING=0
 SET SettingsFileName=NWRSettings
 SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
@@ -134,17 +153,62 @@ IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
 
 
 REM Display program introduction
-CALL :PROGRAM_INTRO
+IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM_INTRO
+IF "%USE_ALTERNATE_SETTINGS%"=="0" CALL :PROGRAM_INTRO
 
 CALL :SETTINGS_SETDEFAULT
 IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
+IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
 CALL :SETTINGS_CHECKFILE
 IF "%INITPARAMS%"=="" IF NOT "%SetnBeenSet%"=="1" IF "%CONTINUOUS%"=="0" CALL :SETTINGS_OPTION
-IF "%INITPARAMS%"=="SETTINGS" CALL :SETTINGS_SET
+IF "%INITPARAMS%"=="SETTINGS" IF NOT "%SetnBeenSet%"=="1" CALL :SETTINGS_SET
 
+
+:AFTCALLCHECKSETNFILE
+
+REM The function SETTINGS_EXPORT checks all setting
+REM values before exporting them.
+REM It checks the values wether or not it actually
+REM exports the settings.
 CALL :SETTINGS_EXPORT
 
-GOTO :TOP
+
+REM Restart itself minimized if set to do so
+IF "%restartingProgram%"=="" (
+	IF "%START_MINIMIZED%"=="1" (
+		IF "%MINIMIZED%"=="" (
+			IF "%INITPARAMS%"=="" (
+				SET MINIMIZED=1
+				START /MIN CMD /C "%~dpnx0"
+				EXIT
+			)
+		)
+	)
+)
+
+
+
+REM Copy to startup folder if set to start when 
+REM user logs on
+CALL :CHECK_START_AT_LOGON
+
+GOTO :MAIN_START
+
+:USINGALTSETNNOTICE
+CLS
+ECHO.
+ECHO  ******************************************************************************
+ECHO  *                                                                            *
+ECHO  *          This program is currently set to use internal settings.           *
+ECHO  *                                                                            *
+ECHO  *        To configure settings via the GUI, please open this program         *
+ECHO  *             with notepad and set USE_ALTERNATE_SETTINGS to 0               *
+ECHO  *                                                                            *
+ECHO  ******************************************************************************
+ECHO.
+ECHO.
+CALL :SLEEP 5
+GOTO :EOF
 
 
 :SETTINGS_CHECKFILE
@@ -361,8 +425,8 @@ ECHO What settings would you like to set?
 ECHO Setting                 #   Current Value
 ECHO.
 ECHO -Connection Name       (1)  "%NETWORK%"
-ECHO -Network Reset Stall   (2)   %MINUTES% Minutes
-ECHO -Mode                  (3)   %MODE%
+ECHO -Mode                  (2)   %MODE%
+ECHO -Use Logging           (3)   %USELOGGING%
 ECHO.
 SET usrInput=
 SET /P usrInput=[M/A/X/1/2/3] 
@@ -386,16 +450,17 @@ ECHO What settings would you like to set?
 ECHO Setting                 #   Current Value
 ECHO.
 ECHO -AutoRetry             (1)   %AUTO_RETRY%
-ECHO -Check Delay           (2)   %CHECK_DELAY% Minute[s]
-ECHO -Show All Alerts       (3)   %SHOW_ALL_ALERTS%
-ECHO -Show Advanced Testing (4)   %SHOW_ADVANCED_TESTING%
-ECHO -Slow Messages         (5)   %SLWMSG%
-ECHO -Timer Refresh Rate    (6)   %TIMER_REFRESH_RATE% Second[s]
-ECHO -Start at Logon        (7)   %START_AT_LOGON%
-ECHO -Start Minimized       (8)   %START_MINIMIZED%
+ECHO -Network Reset Stall   (2)   %MINUTES% Minute[s]
+ECHO -Check Delay           (3)   %CHECK_DELAY% Minute[s]
+ECHO -Show All Alerts       (4)   %SHOW_ALL_ALERTS%
+ECHO -Show Advanced Testing (5)   %SHOW_ADVANCED_TESTING%
+ECHO -Slow Messages         (6)   %SLWMSG%
+ECHO -Timer Refresh Rate    (7)   %TIMER_REFRESH_RATE% Second[s]
+ECHO -Start at Logon        (8)   %START_AT_LOGON%
+ECHO -Start Minimized       (9)   %START_MINIMIZED%
 ECHO.
 SET usrInput=
-SET /P usrInput=[B/A/X/1/2/3/4/5/6/7/8] 
+SET /P usrInput=[B/A/X/1/2/3/4/5/6/7/8/9] 
 IF "%usrInput%"=="1" CALL :SETTINGS_SETONE M1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE M2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE M3
@@ -404,6 +469,7 @@ IF "%usrInput%"=="5" CALL :SETTINGS_SETONE M5
 IF "%usrInput%"=="6" CALL :SETTINGS_SETONE M6
 IF "%usrInput%"=="7" CALL :SETTINGS_SETONE M7
 IF "%usrInput%"=="8" CALL :SETTINGS_SETONE M8
+IF "%usrInput%"=="9" CALL :SETTINGS_SETONE M9
 IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
 IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
 IF /I "%usrInput%"=="X" GOTO :EOF
@@ -503,15 +569,6 @@ SET SETTINGDEFAULT=%NETWORK_D%
 SET SETTINGCUR=%NETWORK%
 )
 IF %1==B2 (
-SET SETTINGTITLE=MINUTES
-SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
-SET SETTINGINFO1=Number of minutes to wait before re-enabling
-SET SETTINGINFO2=the network adapter [5-15 reccomended]
-SET SETTINGINFO3=
-SET SETTINGDEFAULT=%MINUTES_D%
-SET SETTINGCUR=%MINUTES%
-)
-IF %1==B3 (
 SET SETTINGTITLE=MODE
 SET SETTINGOPT=
 SET SETTINGINFO1=Enter 0 for Run Once
@@ -520,6 +577,16 @@ SET SETTINGINFO3=
 SET SETNVAR=CONTINUOUS
 SET SETTINGDEFAULT=%CONTINUOUS_D%
 SET SETTINGCUR=%CONTINUOUS%
+)
+IF %1==B3 (
+SET SETTINGTITLE=USE LOGGING
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=
+SET SETTINGINFO2=
+SET SETTINGINFO3=
+SET SETNVAR=USELOGGING
+SET SETTINGDEFAULT=%USELOGGING_D%
+SET SETTINGCUR=%USELOGGING%
 )
 IF %1==M1 (
 SET SETTINGTITLE=AUTO_RETRY
@@ -531,6 +598,15 @@ SET SETTINGDEFAULT=%AUTO_RETRY_D%
 SET SETTINGCUR=%AUTO_RETRY%
 )
 IF %1==M2 (
+SET SETTINGTITLE=MINUTES
+SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
+SET SETTINGINFO1=Number of minutes to wait before re-enabling
+SET SETTINGINFO2=the network adapter [5-15 reccomended]
+SET SETTINGINFO3=
+SET SETTINGDEFAULT=%MINUTES_D%
+SET SETTINGCUR=%MINUTES%
+)
+IF %1==M3 (
 SET SETTINGTITLE=CHECK_DELAY
 SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
 SET SETTINGINFO1=
@@ -539,7 +615,7 @@ SET SETTINGINFO3=connection tests.
 SET SETTINGDEFAULT=%CHECK_DELAY_D%
 SET SETTINGCUR=%CHECK_DELAY%
 )
-IF %1==M3 (
+IF %1==M4 (
 SET SETTINGTITLE=SHOW_ALL_ALERTS
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=When set to On, shows more detailed messages.
@@ -548,7 +624,7 @@ SET SETTINGINFO3=program will always display important messages.
 SET SETTINGDEFAULT=%SHOW_ALL_ALERTS_D%
 SET SETTINGCUR=%SHOW_ALL_ALERTS%
 )
-IF %1==M4 (
+IF %1==M5 (
 SET SETTINGTITLE=SHOW_ADVANCED_TESTING
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Show Advanced Testing Output
@@ -557,7 +633,7 @@ SET SETTINGINFO3=testing the internet
 SET SETTINGDEFAULT=%SHOW_ADVANCED_TESTING_D%
 SET SETTINGCUR=%SHOW_ADVANCED_TESTING%
 )
-IF %1==M5 (
+IF %1==M6 (
 SET SETTINGTITLE=SLOW MESSAGES
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=
@@ -567,7 +643,7 @@ SET SETNVAR=SLWMSG
 SET SETTINGDEFAULT=%SLWMSG_D%
 SET SETTINGCUR=%SLWMSG%
 )
-IF %1==M6 (
+IF %1==M7 (
 SET SETTINGTITLE=TIMER_REFRESH_RATE
 SET SETTINGOPT=Integers greater than 0 Only! [aka 1,2,3,etc]
 SET SETTINGINFO1=Timer Refresh Rate [Update every # seconds]
@@ -576,7 +652,7 @@ SET SETTINGINFO3=
 SET SETTINGDEFAULT=%TIMER_REFRESH_RATE_D%
 SET SETTINGCUR=%TIMER_REFRESH_RATE%
 )
-IF %1==M7 (
+IF %1==M8 (
 SET SETTINGTITLE=START_AT_LOGON
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Start Program at user log on
@@ -585,7 +661,7 @@ SET SETTINGINFO3=NOTE: Not available when running with portable or temp settings
 SET SETTINGDEFAULT=%START_AT_LOGON_D%
 SET SETTINGCUR=%START_AT_LOGON%
 )
-IF %1==M8 (
+IF %1==M9 (
 SET SETTINGTITLE=START_MINIMIZED
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Start Minimized
@@ -834,6 +910,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=1
 SET START_MINIMIZED=1
+SET USELOGGING=0
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
@@ -859,6 +936,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=1
 SET START_MINIMIZED=1
+SET USELOGGING=1
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=1
 SET USE_IP_RESET=1
@@ -884,6 +962,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=1
 SET START_MINIMIZED=1
+SET USELOGGING=0
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
@@ -909,6 +988,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=1
 SET START_MINIMIZED=1
+SET USELOGGING=1
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=0
 SET USE_IP_RESET=1
@@ -923,6 +1003,7 @@ GOTO :EOF
 :SETTINGS_EXPORT
 CALL :SETTINGS_CHECKALL
 IF "%SETNFileDir%"=="TEMP" GOTO :EOF
+IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :EOF
 CALL :HEADER
 IF "%SETNFileDir%"=="" ECHO ERROR: No Setting file location selected.
 IF "%SETNFileDir%"=="" ECHO Cannot export settings
@@ -971,7 +1052,9 @@ GOTO :EOF
 %ECHONESS%@ECHO OFF
 CLS
 ECHO  ******************************************************************************
+ECHO  *                                                                            *
 ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+ECHO  *                                                                            *
 ECHO  ******************************************************************************
 ECHO.
 GOTO :EOF
@@ -1008,6 +1091,7 @@ IF %USE_NETWORK_RESET%==1 (
 )
 CALL :TESTIntVAR TIMER_REFRESH_RATE 1 0 99999999 %TIMER_REFRESH_RATE%
 CALL :TESTIntVAR CHECK_DELAY 1 0 99999999 %CHECK_DELAY%
+CALL :TEST01VAR USELOGGING 0 %USELOGGING%
 CALL :TEST01VAR START_AT_LOGON 0 %START_AT_LOGON%
 CALL :TEST01VAR START_MINIMIZED 0 %START_MINIMIZED%
 CALL :TEST01VAR AUTO_RETRY 0 %AUTO_RETRY%
@@ -1016,11 +1100,6 @@ CALL :TEST01VAR SKIP_INITIAL_NTWK_TEST 0 %SKIP_INITIAL_NTWK_TEST%
 CALL :TEST01VAR ONLY_ONE_NETWORK_NAME_TEST 1 %ONLY_ONE_NETWORK_NAME_TEST%
 GOTO :EOF
 
-
-:TOP
-REM Copy to startup folder if set to start when 
-REM user logs on
-CALL :CHECK_START_AT_LOGON
 
 REM -----------------END INITIALIZE PROGRAM------------------
 
