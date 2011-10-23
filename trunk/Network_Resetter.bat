@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=75
+	SET rvsn=76
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -87,8 +87,6 @@ SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
 SET DEBUGN=0
 
-IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
-
 
 
 REM *************Main Code**************
@@ -108,6 +106,8 @@ GOTO :EOF
 REM Set CMD window size & title
 MODE CON COLS=81 LINES=25
 TITLE Lectrode's Network Connection Resetter r%rvsn%
+
+IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
 
 REM Set Global Variables
 SET SettingsFileName=NWRSettings
@@ -155,7 +155,7 @@ IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM
 IF "%USE_ALTERNATE_SETTINGS%"=="0" CALL :PROGRAM_INTRO
 
 CALL :SETTINGS_SETDEFAULT
-IF "%USE_ALTERNATE_SETTINGS%"=="0" CALL :SETTINGS_RESET2DEFAULT
+IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
 IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
 IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
 CALL :SETTINGS_CHECKFILE
@@ -1010,12 +1010,15 @@ IF "%SETNFileDir%"=="" ECHO Cannot export settings
 IF "%SETNFileDir%"=="" ECHO Press any key to restart the program...
 IF "%SETNFileDir%"=="" PAUSE>NUL
 IF "%SETNFileDir%"=="" GOTO :RESTART_PROGRAM
-ECHO Exporting Settings...
-@ECHO ON
+SET currently=Exporting Settings...
+SET currently2=
+SET SpecificStatus=
+SET isWaiting=0
+CALL :STATS
 IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
 TYPE NUL>"%SETNFileDir%%SettingsFileName%.BAT"
 DEL /F "%SETNFileDir%%SettingsFileName%.BAT"
-ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS>>"%SETNFileDir%%SettingsFileName%.BAT"
+(ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET MINUTES=^%MINUTES%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET NETWORK=^%NETWORK%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET CONTINUOUS=^%CONTINUOUS%)>>"%SETNFileDir%%SettingsFileName%.BAT"
@@ -1037,7 +1040,6 @@ ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS>>"%SETNFileDir%%
 (ECHO SET OS_DETECT_OVERRIDE=^%OS_DETECT_OVERRIDE%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET DEBUGN=^%DEBUGN%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 ECHO GOTO :EOF
-%ECHONESS%@ECHO OFF
 :SETTINGS_EXPORT_SKIP
 ECHO Done Exporting Settings.
 GOTO :EOF
@@ -1472,7 +1474,7 @@ SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
 SET MyDate=%MyDate: =0%
 SET MyTime=%TIME: =0%
 TYPE NUL>>"%SETNFileDir%log.csv"
-IF "%USELOGGING%"=="1" IF NOT %ProgramMustFix%0==10 ECHO %NETWORK% , Disconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%"=="1" IF NOT %ProgramMustFix%0==10 (ECHO %NETWORK% , Disconnected , %MyDate% , %MyTime%)>>"%SETNFileDir%log.csv"
 :DISCONNECTION_DETECTED_NOLOG
 SET ProgramMustFix=1
 GOTO :EOF
@@ -1483,7 +1485,7 @@ IF %SETNFileDir%==TEMP GOTO :RECONNECTION_DETECTED_NOLOG
 SET MyDate=%date:~10,4%-%date:~4,2%-%date:~7,2%
 SET MyDate=%MyDate: =0%
 TYPE NUL>>"%SETNFileDir%log.csv"
-IF "%USELOGGING%"=="1" ECHO %NETWORK% , Reconnected , %MyDate% , %MyTime%>>"%SETNFileDir%log.csv"
+IF "%USELOGGING%"=="1" (ECHO %NETWORK% , Reconnected , %MyDate% , %MyTime%)>>"%SETNFileDir%log.csv"
 :RECONNECTION_DETECTED_NOLOG
 SET ProgramMustFix=0
 IF "%confixed%"=="" SET confixed=0
@@ -1498,7 +1500,7 @@ REM Call the different methods of fixing
 REM This allows for different fixes to be added later
 
 REM In order to add more fixes, NUMCONNFIXES and NUMNETFIXES must
-REM be raised (if the fix partains to them).
+REM be raised (if the fix pertains to them).
 
 
 REM *****RESET NETWORK ADAPTER FAST*****
@@ -1795,61 +1797,59 @@ IF %1==DIS SET trufalse=true
 ECHO disoren: %disOrEn%
 ECHO trufalse: %trufalse%
 PAUSE
-@ECHO on
-ECHO Const ssfCONTROLS = 3 >>%disOrEn%Network.vbs
-ECHO sConnectionName = "%NETWORK%" >>%disOrEn%Network.vbs
-ECHO sEnableVerb = "En&able" >>%disOrEn%Network.vbs
-ECHO sDisableVerb = "Disa&ble" >>%disOrEn%Network.vbs
-ECHO set shellApp = createobject("shell.application") >>%disOrEn%Network.vbs
-ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) >>%disOrEn%Network.vbs
-ECHO set oNetConnections = nothing >>%disOrEn%Network.vbs
-ECHO for each folderitem in oControlPanel.items >>%disOrEn%Network.vbs
-ECHO   if folderitem.name = "Network Connections" then >>%disOrEn%Network.vbs
-ECHO         set oNetConnections = folderitem.getfolder: exit for >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO next >>%disOrEn%Network.vbs
-ECHO if oNetConnections is nothing then >>%disOrEn%Network.vbs
-ECHO msgbox "Couldn't find 'Network Connections' folder" >>%disOrEn%Network.vbs
-ECHO wscript.quit >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO set oLanConnection = nothing >>%disOrEn%Network.vbs
-ECHO for each folderitem in oNetConnections.items >>%disOrEn%Network.vbs
-ECHO if lcase(folderitem.name) = lcase(sConnectionName) then >>%disOrEn%Network.vbs
-ECHO set oLanConnection = folderitem: exit for >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO next >>%disOrEn%Network.vbs
-ECHO Dim objFSO >>%disOrEn%Network.vbs
-ECHO if oLanConnection is nothing then >>%disOrEn%Network.vbs
-ECHO msgbox "Couldn't find %NETWORK%" >>%disOrEn%Network.vbs
-ECHO msgbox "This program requires a valid Network Connection name to work properly" >>%disOrEn%Network.vbs
-ECHO msgbox "Please close the program and open it with notepad for more information" >>%disOrEn%Network.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>%disOrEn%Network.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>%disOrEn%Network.vbs
-ECHO Set objFSO = Nothing >>%disOrEn%Network.vbs
-ECHO wscript.quit >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO bEnabled = true >>%disOrEn%Network.vbs
-ECHO set oEnableVerb = nothing >>%disOrEn%Network.vbs
-ECHO set oDisableVerb = nothing >>%disOrEn%Network.vbs
-ECHO s = "Verbs: " & vbcrlf >>%disOrEn%Network.vbs
-ECHO for each verb in oLanConnection.verbs >>%disOrEn%Network.vbs
-ECHO s = s & vbcrlf & verb.name >>%disOrEn%Network.vbs
-ECHO if verb.name = sEnableVerb then >>%disOrEn%Network.vbs
-ECHO set oEnableVerb = verb >>%disOrEn%Network.vbs
-ECHO bEnabled = false >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO if verb.name = sDisableVerb then >>%disOrEn%Network.vbs
-ECHO set oDisableVerb = verb >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO next >>%disOrEn%Network.vbs
-ECHO if bEnabled = %trufalse% then >>%disOrEn%Network.vbs
-ECHO o%disOrEn%Verb.DoIt >>%disOrEn%Network.vbs
-ECHO end if >>%disOrEn%Network.vbs
-ECHO wscript.sleep 2000 >>%disOrEn%Network.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") >>%disOrEn%Network.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName >>%disOrEn%Network.vbs
-ECHO Set objFSO = Nothing >>%disOrEn%Network.vbs
-%ECHONESS%@ECHO OFF
+(ECHO Const ssfCONTROLS = 3)>>%disOrEn%Network.vbs
+(ECHO sConnectionName = "%NETWORK%")>>%disOrEn%Network.vbs
+(ECHO sEnableVerb = "En&able")>>%disOrEn%Network.vbs
+(ECHO sDisableVerb = "Disa&ble")>>%disOrEn%Network.vbs
+(ECHO set shellApp = createobject("shell.application"))>>%disOrEn%Network.vbs
+(ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS))>>%disOrEn%Network.vbs
+(ECHO set oNetConnections = nothing)>>%disOrEn%Network.vbs
+(ECHO for each folderitem in oControlPanel.items)>>%disOrEn%Network.vbs
+(ECHO   if folderitem.name = "Network Connections" then)>>%disOrEn%Network.vbs
+(ECHO         set oNetConnections = folderitem.getfolder: exit for)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO next)>>%disOrEn%Network.vbs
+(ECHO if oNetConnections is nothing then)>>%disOrEn%Network.vbs
+(ECHO msgbox "Couldn't find 'Network Connections' folder")>>%disOrEn%Network.vbs
+(ECHO wscript.quit)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO set oLanConnection = nothing)>>%disOrEn%Network.vbs
+(ECHO for each folderitem in oNetConnections.items)>>%disOrEn%Network.vbs
+(ECHO if lcase(folderitem.name) = lcase(sConnectionName) then)>>%disOrEn%Network.vbs
+(ECHO set oLanConnection = folderitem: exit for)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO next)>>%disOrEn%Network.vbs
+(ECHO Dim objFSO)>>%disOrEn%Network.vbs
+(ECHO if oLanConnection is nothing then)>>%disOrEn%Network.vbs
+(ECHO msgbox "Couldn't find %NETWORK%")>>%disOrEn%Network.vbs
+(ECHO msgbox "This program requires a valid Network Connection name to work properly")>>%disOrEn%Network.vbs
+(ECHO msgbox "Please close the program and open it with notepad for more information")>>%disOrEn%Network.vbs
+(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>%disOrEn%Network.vbs
+(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>%disOrEn%Network.vbs
+(ECHO Set objFSO = Nothing)>>%disOrEn%Network.vbs
+(ECHO wscript.quit)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO bEnabled = true)>>%disOrEn%Network.vbs
+(ECHO set oEnableVerb = nothing)>>%disOrEn%Network.vbs
+(ECHO set oDisableVerb = nothing)>>%disOrEn%Network.vbs
+(ECHO s = "Verbs: " & vbcrlf)>>%disOrEn%Network.vbs
+(ECHO for each verb in oLanConnection.verbs)>>%disOrEn%Network.vbs
+(ECHO s = s & vbcrlf & verb.name)>>%disOrEn%Network.vbs
+(ECHO if verb.name = sEnableVerb then)>>%disOrEn%Network.vbs
+(ECHO set oEnableVerb = verb)>>%disOrEn%Network.vbs
+(ECHO bEnabled = false)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO if verb.name = sDisableVerb then)>>%disOrEn%Network.vbs
+(ECHO set oDisableVerb = verb)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO next)>>%disOrEn%Network.vbs
+(ECHO if bEnabled = %trufalse% then)>>%disOrEn%Network.vbs
+(ECHO o%disOrEn%Verb.DoIt)>>%disOrEn%Network.vbs
+(ECHO end if)>>%disOrEn%Network.vbs
+(ECHO wscript.sleep 2000)>>%disOrEn%Network.vbs
+(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>%disOrEn%Network.vbs
+(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>%disOrEn%Network.vbs
+(ECHO Set objFSO = Nothing)>>%disOrEn%Network.vbs
 SET isWaiting=0
 CALL :STATS
 cscript %disOrEn%Network.vbs
