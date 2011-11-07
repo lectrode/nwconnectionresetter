@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=76
+	SET rvsn=77
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1991,8 +1991,24 @@ GOTO :EOF
 REM ------------------END CHECK START AT LOG ON-------------------
 
 
-
 :TEST_NETWORK_NAME
+REM ----------------------TEST NETWORK NAME-----------------------
+REM SAFE BRANCH (EXIT || RETURN)
+IF NOT "%~1"=="1" IF %has_tested_ntwk_name_recent% GEQ 1 GOTO :EOF
+SET /A has_tested_ntwk_name_recent+=1
+
+SET currently=Checking if [%NETWORK%]
+SET currently2=is a valid network connection name...
+SET SpecificStatus=
+SET isWaiting=0
+IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
+IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
+GOTO :EOF
+REM --------------------END TEST NETWORK NAME---------------------
+
+
+:TEST_HAS_ADMIN_RIGHTS
 REM ----------------------TEST NETWORK NAME-----------------------
 REM SAFE BRANCH (EXIT || RETURN)
 
@@ -2183,11 +2199,11 @@ SET SpecificStatus=Checking [%NETWORKCOMMON%]
 SET isWaiting=0
 CALL :STATS
 
-IF %DEBUGN%==0 NETSH INTERFACE SET INTERFACE NAME="%NETWORKCOMMON%" NEWNAME="%NETWORKCOMMON%"|FIND "name is not registered " >NUL
+IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORKCOMMON%">NUL
 SET /A NCNUM+=1
-IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :NEED_NETWORK
+IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
+IF %DEBUGN%==0 IF ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
+IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 
 :FOUND_CUSTOM_NAME
