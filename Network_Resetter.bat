@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=77
+	SET rvsn=78
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -2228,14 +2228,11 @@ GOTO :FOUND_CUSTOM_NAME
 :COMMON_NAMES_NOT_FOUND
 SET currently=Could not find [%NETWORK%]
 SET currently2=
-SET SpecificStatus=NOTE: This program must be run as an administrator!
+SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 ECHO.
 ECHO.
-ECHO If the network name is correct, you may need to run this program
-ECHO by right-clicking and selecting "Run as Administrator" (Windows
-ECHO Vista and 7) or RunAs administrator (Windows XP)
 IF %OMIT_USER_INPUT%==1 GOTO :NEED_NETWORK_AUTO
 ECHO.
 ECHO Would you like to view current network connections?
