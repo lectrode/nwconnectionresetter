@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=78
+	SET rvsn=79
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1506,26 +1506,26 @@ REM be raised (if the fix pertains to them).
 REM *****RESET NETWORK ADAPTER FAST*****
 :CONNFIX1
 :NETFIX1
-CALL :FIX_RESET_NETWORK_FAST
+IF "%USE_NETWORK_RESET_FAST%"=="1" CALL :FIX_RESET_NETWORK_FAST
 GOTO :EOF
 
 
 REM *****RESET IP ADDRESS*****
 :CONNFIX2
 :NETFIX2
-CALL :FIX_RESET_IP
+IF "%USE_IP_RESET%"=="1" CALL :FIX_RESET_IP
 GOTO :EOF
 
 
 REM *****RESET NETWORK ADAPTER SLOW*****
 :NETFIX3
-CALL :FIX_RESET_NETWORK
+IF "%USE_NETWORK_RESET%"=="1" CALL :FIX_RESET_NETWORK
 GOTO :EOF
 
 
 REM *****RESET ROUTE TABLE*****
 :FIXUNREACHABLE
-ROUTE -F
+IF "%USE_RESET_ROUTE_TABLE%"=="1" ROUTE -F
 GOTO :EOF
 
 
