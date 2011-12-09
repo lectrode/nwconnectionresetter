@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=81
+	SET rvsn=82
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1336,7 +1336,7 @@ SET main_tests=0
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
 IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
-SET testwebsite=www.google.com
+SET testwebsite=www.yahoo.com
 SET founds=0
 SET times=0
 SET nots=0
