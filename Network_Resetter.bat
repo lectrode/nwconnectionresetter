@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=82
+	SET rvsn=83
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1336,7 +1336,8 @@ SET main_tests=0
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
 IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
-SET testwebsite=www.yahoo.com
+SET testwebsitenum=-1
+CALL :TEST_CHANGETESTSITE
 SET founds=0
 SET times=0
 SET nots=0
@@ -1366,7 +1367,7 @@ GOTO :TEST_TIMED_OUT
 
 :TEST_CONNECTED
 SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Connected
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Connected (%testwebsite%)
 SET /A founds+=1
 SET unreaches=0
 SET times=0
@@ -1377,7 +1378,8 @@ GOTO :TEST_TESTING
 
 :TEST_NOT_CONNECTED
 SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Could not connect
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Could not connect (%testwebsite%)
+CALL :TEST_CHANGETESTSITE
 SET /A nots+=1
 SET unreaches=0
 SET founds=0
@@ -1388,12 +1390,8 @@ GOTO :TEST_TESTING
 
 :TEST_UNREACHABLE
 SET /A totalTests+=1
-IF "%testwebsite%"=="www.google.com" (
-SET testwebsite=www.yahoo.com
-) ELSE (
-SET testwebsite=www.google.com
-)
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (changed testwebsite to %testwebsite%)
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (%testwebsite%)
+CALL :TEST_CHANGETESTSITE
 SET /A unreaches+=1
 SET founds=0
 SET nots=0
@@ -1404,7 +1402,8 @@ GOTO :TEST_TESTING
 
 :TEST_TIMED_OUT
 SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out (%testwebsite%)
+CALL :TEST_CHANGETESTSITE
 SET /A times+=1
 SET unreaches=0
 SET founds=0
@@ -1412,6 +1411,30 @@ SET nots=0
 IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
 IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
+
+:TEST_CHANGETESTSITE
+REM www.google.com 		-> No longer works
+REM www.facebook.com
+REM www.yahoo.com
+REM www.youtube.com		-> No longer works
+REM www.microsoft.com 	-> No longer works
+REM www.linkedin.com
+SET TTLSITES=3
+
+IF "%testwebsitenum%"=="-1" (
+	SET /A testwebsitenum=TTLSITES*%random%/32768
+) ELSE (
+	IF %testwebsitenum% GEQ %TTLSITES% (
+		SET testwebsitenum=1
+	) ELSE (
+		SET /A testwebsitenum+=1
+	)
+)
+
+IF "%testwebsitenum%"=="1" SET testwebsite=www.facebook.com
+IF "%testwebsitenum%"=="2" SET testwebsite=www.yahoo.com
+IF "%testwebsitenum%"=="3" SET testwebsite=www.linkedin.com
+GOTO :EOF
 
 
 :TEST_FAILED
