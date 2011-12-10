@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=84
+	SET rvsn=85
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1335,7 +1335,6 @@ SET main_tests=0
 :TEST_INIT
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Setting Initial Variables...
 SET testwebsitenum=-1
 CALL :TEST_CHANGETESTSITE
 SET founds=0
@@ -1346,9 +1345,8 @@ SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
 
-IF %SHOW_ADVANCED_TESTING%==1 ECHO Attempting to locate %testwebsite%...
 :TEST_TESTING
-FOR /F "delims=" %%a IN ('PING -n 1 %testwebsite%') DO @SET ping_test=%%a
+FOR /F "delims=" %%a IN ('PING -n 1 "%testwebsite%"') DO @SET ping_test=%%a
 
 ECHO %ping_test% |FIND "request could not find" >NUL
 IF NOT ERRORLEVEL 1 GOTO :TEST_NOT_CONNECTED
@@ -1442,6 +1440,7 @@ IF "%testwebsitenum%"=="5" SET testwebsite=www.apple.com
 IF "%testwebsitenum%"=="6" SET testwebsite=www.youtube.com
 IF "%testwebsitenum%"=="7" SET testwebsite=www.baidu.com
 IF "%testwebsitenum%"=="8" SET testwebsite=www.wikipedia.org
+IF "%testwebsite%"=="" GOTO :TEST_CHANGETESTSITE
 GOTO :EOF
 
 
