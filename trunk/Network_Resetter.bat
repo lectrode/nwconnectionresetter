@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=85
+	SET rvsn=86
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -20,17 +20,12 @@ REM 				Email: 		stevenspchelp@gmail.com
 REM 
 REM Notes:			This is easiest read in a program such as Notepad++
 REM 				and using the font "Curier New" size 10.
-REM 				
-REM 				Make sure the settings below are correct BEFORE
-REM 				you run the program. (default settings should be
-REM 				good for computers running Vista and Windows 7 and
-REM 				using the *DEFAULT* wireless connection)
 REM 
 REM 				If it seems stuck on "Resetting IP Address"
 REM 				don't worry about it. It should get past it within a 
 REM 				few minutes. If it persists longer than 10 minutes,
 REM 				email me and I'll help you. If this happens often, you
-REM 				can disable it below under "Advanced Settings"
+REM 				can disable it under "Advanced Settings"
 REM 
 REM 				If after running the program it still won't connect, try
 REM 				increasing the number of MINUTES to wait.
@@ -40,12 +35,14 @@ REM 				your network connection, the network connection may still
 REM 				be disabled. To fix this, re-run this program.
 REM 				You can set MINUTES to 0 for a quick run. 
 REM 
+REM 				Possible error messages you may recieve:
+REM
 REM 				"This Operating System is not currently supported."
 REM 				-The only thing you can do in this case is email me
 REM 				the name of the Operating System and I'll try to add
 REM 				support for it.
-REM 				You can bypass the OS detection below in Advanced
-REM 				Settings, but the program may exhibit unusual behavior.
+REM 				You can bypass the OS detection below in "Advanced
+REM 				Settings", but the program may exhibit unusual behavior.
 REM 
 REM 				"Could not find <network> | This program requires a valid
 REM 				network connection | please open with notepad for more information"
@@ -1161,8 +1158,8 @@ REM Displays notice for 3 seconds
 CLS
 ECHO  ******************************************************************************
 ECHO  *                                                                            *
-ECHO  *                  *Settings and documentation on how to use                 *
-ECHO  *                   this program can be accessed via Notepad                 *
+ECHO  *                     *Documentation on how to use this                      *
+ECHO  *                    program can be accessed via Notepad                     *
 ECHO  *                                                                            *
 ECHO  *                                                                            *
 ECHO  ******************************************************************************
