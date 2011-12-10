@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=86
+	SET rvsn=87
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -57,8 +57,11 @@ REM ************Alternate Settings****************
 REM These settings are overriden by default. To enable these
 REM settings, please set USE_ALTERNATE_SETTINGS to 1
 
-REM NOTE: These settings are not configurable via the GUI
-REM (You can't set these settings by running the program)
+REM NOTE: Changing the settings via the GUI will not change
+REM       the values shown below. These "Alternate" settings
+REM       are provided for those who do not wish to use the
+REM       GUI to set them and/or save them to an external
+REM       file.
 
 SET USE_ALTERNATE_SETTINGS=0
 
@@ -71,7 +74,7 @@ SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
 SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
-SET START_AT_LOGON=1
+SET START_AT_LOGON=0
 SET START_MINIMIZED=0
 SET USELOGGING=1
 SET OMIT_USER_INPUT=0
