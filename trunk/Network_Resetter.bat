@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=83
+	SET rvsn=84
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1413,16 +1413,19 @@ IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
 
 :TEST_CHANGETESTSITE
-REM www.google.com 		-> No longer works
+REM www.google.com
 REM www.facebook.com
 REM www.yahoo.com
-REM www.youtube.com		-> No longer works
-REM www.microsoft.com 	-> No longer works
+REM www.youtube.com
+REM www.microsoft.com 	-> Does not work
 REM www.linkedin.com
-SET TTLSITES=3
+REM www.apple.com
+REM www.baidu.com
+REM www.wikipedia.org
+SET TTLSITES=8
 
 IF "%testwebsitenum%"=="-1" (
-	SET /A testwebsitenum=TTLSITES*%random%/32768
+	SET /A testwebsitenum=TTLSITES*%RANDOM%/32768+1
 ) ELSE (
 	IF %testwebsitenum% GEQ %TTLSITES% (
 		SET testwebsitenum=1
@@ -1433,7 +1436,12 @@ IF "%testwebsitenum%"=="-1" (
 
 IF "%testwebsitenum%"=="1" SET testwebsite=www.facebook.com
 IF "%testwebsitenum%"=="2" SET testwebsite=www.yahoo.com
-IF "%testwebsitenum%"=="3" SET testwebsite=www.linkedin.com
+IF "%testwebsitenum%"=="3" SET testwebsite=www.google.com
+IF "%testwebsitenum%"=="4" SET testwebsite=www.linkedin.com
+IF "%testwebsitenum%"=="5" SET testwebsite=www.apple.com
+IF "%testwebsitenum%"=="6" SET testwebsite=www.youtube.com
+IF "%testwebsitenum%"=="7" SET testwebsite=www.baidu.com
+IF "%testwebsitenum%"=="8" SET testwebsite=www.wikipedia.org
 GOTO :EOF
 
 
