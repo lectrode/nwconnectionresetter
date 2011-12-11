@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=87
+	SET rvsn=88
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -235,7 +235,9 @@ SET SETNFileDir=%THISFILEDIR%
 )
 
 IF %SETNFILECHK%==0 (
-CALL :SETTINGS_FIRSTRUN 1st
+CALL :SETTINGS_RESET2DEFAULT
+SET /A SETNFILECHK+=1
+SET SETNFileDir=TEMP
 )
 
 IF %SETNFILECHK%==1 GOTO :EOF
@@ -265,6 +267,8 @@ GOTO :EOF
 
 :SETTINGS_OPTION
 CALL :HEADER
+IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Default Settings*
+IF "%SETNFileDir%"=="TEMP" ECHO.
 ECHO What would you like to do?
 ECHO -Run program           [1]
 ECHO -Edit Configuration    [2]
@@ -278,34 +282,33 @@ GOTO :SETTINGS_OPTION
 
 
 
-:SETTINGS_FIRSTRUN
+:SETTINGS_CHANGESETTINGLOCATION
 CALL :HEADER
 SET SetnBeenSet=1
-IF "%1"=="1st" ECHO No setting files were found. 
-IF "%1"=="1st" ECHO.
-ECHO What would you like to do?
-ECHO -Run program with temporary settings    [1]
-ECHO -Make settings for this user only       [2] [Recommended]
-ECHO -Make settings for this computer only   [3]
-ECHO -Make settings portable                 [4]
+ECHO Where would you like to save the settings?
+ECHO.
+ECHO -Temporary Settings [Don't Save]          [1]
+ECHO -Current user's Application Data folder   [2] [Recommended]
+ECHO -C:\NWResetter\                           [3]
+ECHO -Same folder as this program [Portable]   [4]
 ECHO.
 SET usrInput=
 SET /P usrInput=[1/2/3/4] 
-IF "%usrInput%"=="" GOTO :SETTINGS_FIRSTRUN_TEMP
-IF "%usrInput%"=="1" GOTO :SETTINGS_FIRSTRUN_TEMP
-IF "%usrInput%"=="2" GOTO :SETTINGS_FIRSTRUN_USR
-IF "%usrInput%"=="3" GOTO :SETTINGS_FIRSTRUN_LOC
-IF "%usrInput%"=="4" GOTO :SETTINGS_FIRSTRUN_PORT
-GOTO :SETTINGS_FIRSTRUN
+IF "%usrInput%"=="" GOTO :SETTINGS_CHANGESETTINGLOCATION_TEMP
+IF "%usrInput%"=="1" GOTO :SETTINGS_CHANGESETTINGLOCATION_TEMP
+IF "%usrInput%"=="2" GOTO :SETTINGS_CHANGESETTINGLOCATION_USR
+IF "%usrInput%"=="3" GOTO :SETTINGS_CHANGESETTINGLOCATION_LOC
+IF "%usrInput%"=="4" GOTO :SETTINGS_CHANGESETTINGLOCATION_PORT
+GOTO :SETTINGS_CHANGESETTINGLOCATION
 
 
-:SETTINGS_FIRSTRUN_TEMP
+:SETTINGS_CHANGESETTINGLOCATION_TEMP
 CALL :SETTINGS_RESET2DEFAULT
 SET SETNFileDir=TEMP
 CALL :SETTINGS_SET
 GOTO :EOF
 
-:SETTINGS_FIRSTRUN_USR
+:SETTINGS_CHANGESETTINGLOCATION_USR
 CALL :SETTINGS_RESET2DEFAULT
 MD "%AppData%\NWResetter"
 SET SETNFileDir=%AppData%\NWResetter\
@@ -313,7 +316,7 @@ CALL :SETTINGS_EXPORT
 CALL :SETTINGS_SET
 GOTO :EOF
 
-:SETTINGS_FIRSTRUN_LOC
+:SETTINGS_CHANGESETTINGLOCATION_LOC
 CALL :SETTINGS_RESET2DEFAULT
 MD "C:\NWResetter"
 SET SETNFileDir=C:\NWResetter\
@@ -321,7 +324,7 @@ CALL :SETTINGS_EXPORT
 CALL :SETTINGS_SET
 GOTO :EOF
 
-:SETTINGS_FIRSTRUN_PORT
+:SETTINGS_CHANGESETTINGLOCATION_PORT
 CALL :SETTINGS_RESET2DEFAULT
 SET SETNFileDir=%THISFILEDIR%
 CALL :SETTINGS_EXPORT
@@ -340,7 +343,7 @@ GOTO :EOF
 
 :SETTINGS_SET
 SET SetnBeenSet=1
-CLS
+IF "%SETNFileDir%"=="TEMP" CALL :SETTINGS_CHKCHOOSELOC
 CALL :HEADER
 IF "%SETNFileDir%"=="TEMP" ECHO You have selected Temporary Settings
 IF "%SETNFileDir%"=="TEMP" ECHO.
@@ -364,8 +367,22 @@ IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
 IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
 IF "%usrInput%"=="3" CALL :SETTINGS_SELECT_PRESET
 IF "%usrInput%"=="4" CALL :SETTINGS_RESET
-IF "%usrInput%"=="5" CALL :SETTINGS_FIRSTRUN
+IF "%usrInput%"=="5" CALL :SETTINGS_CHANGESETTINGLOCATION
 GOTO :SETTINGS_SET
+
+:SETTINGS_CHKCHOOSELOC
+CALL :HEADER
+ECHO Settings file location has not been set. 
+ECHO Any changes you make to settings will not be saved.
+ECHO.
+ECHO Would you like to choose a place to save your settings?
+SET usrInput=
+SET /P usrInput=[y/n] 
+IF /I "%usrInput%"=="" GOTO :SETTINGS_CHANGESETTINGLOCATION
+IF /I "%usrInput%"=="Y" GOTO :SETTINGS_CHANGESETTINGLOCATION
+IF /I "%usrInput%"=="N" GOTO :EOF
+GOTO :SETTINGS_CHKCHOOSELOC
+
 
 
 :SETTINGS_SELECT_PRESET
