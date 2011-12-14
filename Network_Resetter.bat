@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=88
+	SET rvsn=89
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -152,7 +152,7 @@ IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
 
 REM Display program introduction
 IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM_INTRO
-IF "%USE_ALTERNATE_SETTINGS%"=="0" CALL :PROGRAM_INTRO
+IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
 
 CALL :SETTINGS_SETDEFAULT
 IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
@@ -1381,8 +1381,8 @@ GOTO :TEST_TIMED_OUT
 
 
 :TEST_CONNECTED
-SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Connected (%testwebsite%)
+CALL :TEST_INC_TOTALTESTS
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Connect Success      (%testwebsite%)
 SET /A founds+=1
 SET unreaches=0
 SET times=0
@@ -1392,8 +1392,8 @@ GOTO :TEST_TESTING
 
 
 :TEST_NOT_CONNECTED
-SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Could not connect (%testwebsite%)
+CALL :TEST_INC_TOTALTESTS
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Could not connect    (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A nots+=1
 SET unreaches=0
@@ -1404,8 +1404,8 @@ GOTO :TEST_TESTING
 
 
 :TEST_UNREACHABLE
-SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Location Unreachable (%testwebsite%)
+CALL :TEST_INC_TOTALTESTS
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Location Unreachable (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A unreaches+=1
 SET founds=0
@@ -1416,8 +1416,8 @@ GOTO :TEST_TESTING
 
 
 :TEST_TIMED_OUT
-SET /A totalTests+=1
-IF %SHOW_ADVANCED_TESTING%==1 ECHO %totalTests%: Request Timed Out (%testwebsite%)
+CALL :TEST_INC_TOTALTESTS
+IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Request Timed Out    (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A times+=1
 SET unreaches=0
@@ -1426,6 +1426,11 @@ SET nots=0
 IF %times% GEQ %fluke_test_eliminator% GOTO :TEST_FAILED
 IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
+
+:TEST_INC_TOTALTESTS
+SET /A totalTests+=1
+SET SHOWttlTests=%totalTests%  .
+GOTO :EOF
 
 :TEST_CHANGETESTSITE
 REM www.google.com
