@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=94
+	SET rvsn=95
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -193,6 +193,16 @@ REM user logs on
 CALL :CHECK_START_AT_LOGON
 
 GOTO :MAIN_START
+
+:SLEEP
+REM ------------------------PROGRAM SLEEP-------------------------
+REM Program sleeps for %1 seconds
+IF "%1"=="" SET pN=3
+IF NOT "%1"=="" SET pN=%1
+PING -n 2 -w 1000 127.0.0.1>NUL
+PING -n %pN% -w 1000 127.0.0.1>NUL
+GOTO :EOF
+REM ------------------------END PROGRAM SLEEP---------------------
 
 :USINGALTSETNNOTICE
 CLS
@@ -1699,17 +1709,6 @@ REM Checking network connection here causes unwanted recursion
 
 GOTO :EOF
 REM -------------END FIX: RESET NETWORK CONNECTION----------------
-
-
-:SLEEP
-REM ------------------------PROGRAM SLEEP-------------------------
-REM Program sleeps for %1 seconds
-IF "%1"=="" SET pN=3
-IF NOT "%1"=="" SET pN=%1
-PING -n 2 -w 1000 127.0.0.1>NUL
-PING -n %pN% -w 1000 127.0.0.1>NUL
-GOTO :EOF
-REM ------------------------END PROGRAM SLEEP---------------------
 
 
 :WAIT
