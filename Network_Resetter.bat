@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=95
+	SET rvsn=96
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -97,6 +97,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 :INITPROG
 SET ECHONESS=
+PROMPT :
 %ECHONESS%@ECHO OFF
 CLS
 ECHO.
@@ -105,7 +106,7 @@ GOTO :EOF
 :PASTINIT
 
 REM Set CMD window size & title
-MODE CON COLS=81 LINES=25
+%ECHONESS%MODE CON COLS=81 LINES=25
 TITLE Lectrode's Network Connection Resetter r%rvsn%
 
 IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
@@ -281,8 +282,8 @@ CALL :HEADER
 IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Default Settings*
 IF "%SETNFileDir%"=="TEMP" ECHO.
 ECHO What would you like to do?
-ECHO -Run program           [1]
-ECHO -Edit Configuration    [2]
+ECHO -Detect/Fix Connection   [1]
+ECHO -Edit Configuration      [2]
 ECHO.
 SET usrInput=
 SET /P usrInput=[1/2] 
@@ -1165,7 +1166,7 @@ REM Determine if connection needs to be fixed
 IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :MAINNETTEST_FAIL
 
 REM TEST CONNECTION AND INTERNET ACCESS
-CALL :TEST_CONNECTION isConnected
+CALL :TEST_CONNECTION
 IF %isConnected%==0 GOTO :MAINCONNTEST_FAIL
 IF %isConnected%==1 GOTO :MAINCONNTEST_SUCCESS
 
@@ -1235,7 +1236,7 @@ SET SHOWconfixed=                %confixed%
 SET SHOWconfixed=%SHOWconfixed:~-13%
 SET SHOWconfixed=%SHOWconfixed%                       !
 CLS
-								ECHO  ******************************************************************************
+								ECHO. ******************************************************************************
 								ECHO  *                                                                            *
 								ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
 								ECHO  *                                                                            *
@@ -1339,6 +1340,7 @@ REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
 SET conchks=0
 SET maxconchks=51
+SET isConnected=0
 
 
 :CHECK_CONNECTED
@@ -1357,7 +1359,7 @@ IF ERRORLEVEL 1 SET /A connectcheckgood+=1
 SET /A conchks+=1
 IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
 IF NOT %connectcheckgood% GEQ 2 GOTO :CHECK_CONNECTED
-SET %1=1
+SET isConnected=1
 GOTO :EOF
 
 :CHECK_CONNECTED_FAILED
@@ -1366,20 +1368,21 @@ SET currently2=(Currently Disconnected)
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-SET %1=0
+SET isConnected=0
 GOTO :EOF
 
 :TEST_INTERNET
+SET main_tests=0
+SET MaxStalls=10
+SET NumStalls=0
+
+
+:TEST_INIT
 SET currently=Testing Internet Connection...
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
-
-SET main_tests=0
-
-
-:TEST_INIT
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
 SET testwebsitenum=-1
@@ -1391,6 +1394,12 @@ SET unreaches=0
 SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
+SET /A NumStalls+=1
+
+SET T_MILI_SMALLEST=200
+SET T1_DATE=%DATE%
+FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T1_HR=%%t&SET T1_MIN=%%u&SET T1_SEC=%%v&SET T1_MIL=%%w
+SET /A T1_TTLTIME=T1_MIL+(T1_SEC*100)+(T1_MIN*6000)+(T1_HR*360000)
 
 :TEST_TESTING
 FOR /F "delims=" %%a IN ('PING -n 1 "%testwebsite%"') DO @SET ping_test=%%a
@@ -1499,6 +1508,18 @@ GOTO :EOF
 
 :TEST_FAILED
 REM DEBUGGING || FAILED A TEST
+
+REM TEST TOO FAST FIX Part 2
+SET T2_DATE=%DATE%
+IF NOT "%T1_DATE%"=="%T2_DATE%" GOTO :TEST_INTERNET
+FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T2_HR=%%t&SET T2_MIN=%%u&SET T2_SEC=%%v&SET T2_MIL=%%w
+SET /A T2_TTLTIME=T2_MIL+(T2_SEC*100)+(T2_MIN*6000)+(T2_HR*360000)
+SET /A T_TIMEPAST=T2_TTLTIME-T1_TTLTIME
+IF %SHOW_ADVANCED_TESTING%==1 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% ECHO Test Too Fast Detected! Stalling...
+IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% IF NOT %NumStalls% GEQ %MaxStalls% CALL :SLEEP&GOTO :TEST_INIT
+
+
+
 SET /A main_tests=main_tests+1
 
 IF %SLWMSG%==1 CALL :SLEEP
@@ -1509,7 +1530,7 @@ SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 
-SET %~1=0
+SET isConnected=0
 GOTO :EOF
 
 :TEST_UNREACHED
@@ -1523,7 +1544,7 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-SET %~1=2
+SET isConnected=2
 GOTO :EOF
 
 :TEST_EXCEEDED_TEST_LIMIT
@@ -1537,7 +1558,7 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-SET %~1=1
+SET isConnected=1
 GOTO :EOF
 
 :TEST_NEED_BROWSER
@@ -1551,14 +1572,14 @@ SET isWaiting=1
 CALL :STATS
 SET isWaiting=0
 
-SET %~1=1
+SET isConnected=1
 GOTO :EOF
 
 :TEST_SUCCEEDED
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET %~1=1
+SET isConnected=1
 GOTO :EOF
 REM ----------------END TEST INTERNET CONNECTION-----------------
 
