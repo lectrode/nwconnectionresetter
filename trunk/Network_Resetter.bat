@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=97
+	SET rvsn=98
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -2219,9 +2219,13 @@ IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
 IF %USE_IP_RESET%==1 GOTO :TEST_FIXES_VALS_OK
 IF %USE_NETWORK_RESET%==1 GOTO :TEST_FIXES_VALS_OK
+IF %USE_NETWORK_RESET_FAST%==1 GOTO :TEST_FIXES_VALS_OK
+IF %USE_RESET_ROUTE_TABLE%==1 GOTO :TEST_FIXES_VALS_OK
+
+
 
 :TEST_FIXES_VALS_INQUERY
-SET currently=Both fixes are disabled.
+SET currently=All fixes are disabled.
 SET currently2=
 SET SpecificStatus=
 SET isWaiting=0
@@ -2229,10 +2233,10 @@ CALL :STATS
 IF %OMIT_USER_INPUT%==1 GOTO :TEST_FIXES_VALS_AUTO
 ECHO.
 ECHO.
-ECHO Would you like to temporarily enable both of the fixes?
+ECHO Would you like to temporarily enable 3 of the fixes?
 ECHO.
 ECHO [ "n" : Run program but check internet connection only ]
-ECHO [ "y" : Enable both fixes ]
+ECHO [ "y" : Enable Reset IP, NetworkSlow, NetworkFast fixes ]
 ECHO.
 
 SET /P usrInpt=[y/n] 
@@ -2260,6 +2264,7 @@ CALL :STATS
 SET isWaiting=0
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET=1
+SET USE_NETWORK_RESET_FAST=1
 SET Using_Fixes=1
 SET currently=Checking validity of Settings...
 SET currently2=
