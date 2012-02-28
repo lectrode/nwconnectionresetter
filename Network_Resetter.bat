@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=96
+	SET rvsn=97
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1395,11 +1395,7 @@ SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
 SET /A NumStalls+=1
-
 SET T_MILI_SMALLEST=200
-SET T1_DATE=%DATE%
-FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T1_HR=%%t&SET T1_MIN=%%u&SET T1_SEC=%%v&SET T1_MIL=%%w
-SET /A T1_TTLTIME=T1_MIL+(T1_SEC*100)+(T1_MIN*6000)+(T1_HR*360000)
 
 :TEST_TESTING
 FOR /F "delims=" %%a IN ('PING -n 1 "%testwebsite%"') DO @SET ping_test=%%a
@@ -1432,6 +1428,7 @@ GOTO :TEST_TESTING
 
 :TEST_NOT_CONNECTED
 CALL :TEST_INC_TOTALTESTS
+IF %nots%==0 CALL :TEST_SET_TIME1
 IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Could not connect    (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A nots+=1
@@ -1444,6 +1441,7 @@ GOTO :TEST_TESTING
 
 :TEST_UNREACHABLE
 CALL :TEST_INC_TOTALTESTS
+IF %unreaches%==0 CALL :TEST_SET_TIME1
 IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Location Unreachable (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A unreaches+=1
@@ -1456,6 +1454,7 @@ GOTO :TEST_TESTING
 
 :TEST_TIMED_OUT
 CALL :TEST_INC_TOTALTESTS
+IF %times%==0 CALL :TEST_SET_TIME1
 IF %SHOW_ADVANCED_TESTING%==1 ECHO %SHOWttlTests:~0,2%: Request Timed Out    (%testwebsite%)
 CALL :TEST_CHANGETESTSITE
 SET /A times+=1
@@ -1472,17 +1471,15 @@ SET /A totalTests+=1
 SET SHOWttlTests=%totalTests%  .
 GOTO :EOF
 
+:TEST_SET_TIME1
+SET T1_DATE=%DATE%
+FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T1_HR=%%t&SET T1_MIN=%%u&SET T1_SEC=%%v&SET T1_MIL=%%w
+SET /A T1_TTLTIME=T1_MIL+(T1_SEC*100)+(T1_MIN*6000)+(T1_HR*360000)
+GOTO :EOF
+
 :TEST_CHANGETESTSITE
-REM www.google.com
-REM www.facebook.com
-REM www.yahoo.com
-REM www.youtube.com
-REM www.microsoft.com 	-> Does not work
-REM www.linkedin.com
-REM www.apple.com
-REM www.baidu.com
-REM www.wikipedia.org
-SET TTLSITES=8
+REM Microsoft Sites do NOT work!
+SET TTLSITES=9
 
 IF "%testwebsitenum%"=="-1" (
 	SET /A testwebsitenum=TTLSITES*%RANDOM%/32768+1
@@ -1495,27 +1492,30 @@ IF "%testwebsitenum%"=="-1" (
 )
 
 IF "%testwebsitenum%"=="1" SET testwebsite=www.facebook.com
-IF "%testwebsitenum%"=="2" SET testwebsite=www.yahoo.com
-IF "%testwebsitenum%"=="3" SET testwebsite=www.google.com
-IF "%testwebsitenum%"=="4" SET testwebsite=www.linkedin.com
+IF "%testwebsitenum%"=="2" SET testwebsite=www.google.com
+IF "%testwebsitenum%"=="3" SET testwebsite=www.linkedin.com
+IF "%testwebsitenum%"=="4" SET testwebsite=www.yahoo.com
 IF "%testwebsitenum%"=="5" SET testwebsite=www.apple.com
 IF "%testwebsitenum%"=="6" SET testwebsite=www.youtube.com
-IF "%testwebsitenum%"=="7" SET testwebsite=www.baidu.com
-IF "%testwebsitenum%"=="8" SET testwebsite=www.wikipedia.org
+IF "%testwebsitenum%"=="7" SET testwebsite=www.ask.com
+IF "%testwebsitenum%"=="8" SET testwebsite=www.baidu.com
+IF "%testwebsitenum%"=="9" SET testwebsite=www.wikipedia.org
 IF "%testwebsite%"=="" GOTO :TEST_CHANGETESTSITE
 GOTO :EOF
 
 
 :TEST_FAILED
 REM DEBUGGING || FAILED A TEST
-
-REM TEST TOO FAST FIX Part 2
 SET T2_DATE=%DATE%
 IF NOT "%T1_DATE%"=="%T2_DATE%" GOTO :TEST_INTERNET
 FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T2_HR=%%t&SET T2_MIN=%%u&SET T2_SEC=%%v&SET T2_MIL=%%w
 SET /A T2_TTLTIME=T2_MIL+(T2_SEC*100)+(T2_MIN*6000)+(T2_HR*360000)
 SET /A T_TIMEPAST=T2_TTLTIME-T1_TTLTIME
-IF %SHOW_ADVANCED_TESTING%==1 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% ECHO Test Too Fast Detected! Stalling...
+IF %NumStalls%==1 SET TH=st
+IF %NumStalls%==2 SET TH=nd
+IF %NumStalls%==3 SET TH=rd
+IF %NumStalls% GEQ 4 SET TH=th
+IF %SHOW_ADVANCED_TESTING%==1 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% ECHO Test Too Fast Detected! Stalling...(%NumStalls%%TH% of Max:%MaxStalls%)
 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% IF NOT %NumStalls% GEQ %MaxStalls% CALL :SLEEP&GOTO :TEST_INIT
 
 
@@ -1532,6 +1532,7 @@ CALL :STATS
 
 SET isConnected=0
 GOTO :EOF
+
 
 :TEST_UNREACHED
 IF %SLWMSG%==1 CALL :SLEEP
