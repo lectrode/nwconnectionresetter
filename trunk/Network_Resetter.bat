@@ -6,7 +6,9 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=98
+	SET rvsn=99
+REM Branch:
+	SET Branch=
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -107,7 +109,8 @@ GOTO :EOF
 
 REM Set CMD window size & title
 %ECHONESS%MODE CON COLS=81 LINES=25
-TITLE Lectrode's Network Connection Resetter r%rvsn%
+SET THISTITLE=Lectrode's Network Connection Resetter %Branch%r%rvsn%
+TITLE %THISTITLE%
 
 IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
 
@@ -1232,13 +1235,14 @@ SET SHOWcurrently2=%currently2%%STATSSpacer%
 SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
 IF "%confixed%"=="" SET confixed=0
 REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
-SET SHOWconfixed=                %confixed%
-SET SHOWconfixed=%SHOWconfixed:~-13%
-SET SHOWconfixed=%SHOWconfixed%                       !
+IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
+SET LastTitle=%THISTITLE%
+SET Lastconfixed=%confixed%
 CLS
 								ECHO. ******************************************************************************
 								ECHO  *                                                                            *
-								ECHO  *         ******   Lectrode's Network Connection Resetter r%rvsn%  ******        *
+								ECHO  * %SHOWTitle% *
 								ECHO  *                                                                            *
 								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
 								ECHO  *                                                                            *
@@ -1246,7 +1250,7 @@ CLS
 IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
 IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
 IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
-IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^|                   ^|%SHOWconfixed:~0,27%*
+IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^|                   ^|%SHOWconfixed%*
 IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
 								ECHO  *                                                                            *
 IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
@@ -1265,6 +1269,49 @@ IF "%SLWMSG%"=="1" (
 )
 GOTO :EOF
 REM ---------------------END PROGRAM STATUS----------------------
+
+
+:CENTERTEXT
+SET TTLSPACE=%1
+SET VAR2SET=%2
+SET TEXT=
+:CENTERTEXT_GETALLTEXT
+IF NOT "%3"=="" SET TEXT=%TEXT%%PARAMSPACE%%3
+IF NOT "%3"=="" SET PARAMSPACE= &SHIFT&GOTO :CENTERTEXT_GETALLTEXT
+CALL :StrLength STRLEN %TEXT%
+
+
+SET /A HALFSPACE=(TTLSPACE-STRLEN)/2
+SET INCNUM=0
+:ADDSPACEFRONT
+SET /A INCNUM+=1
+SET TEXT= %TEXT%
+IF NOT %INCNUM% GEQ %HALFSPACE% GOTO :ADDSPACEFRONT
+
+SET INCNUM=0
+:ADDSPACEBACK
+SET /A INCNUM+=1
+SET TEXT=%TEXT% 
+IF NOT %INCNUM% GEQ %HALFSPACE% GOTO :ADDSPACEBACK
+
+SET /A NUMCHECK=(TTLSPACE-STRLEN)%%2
+IF %NUMCHECK% GEQ 1 SET TEXT= %TEXT%
+
+SET %VAR2SET%=%TEXT%
+GOTO :EOF
+
+
+:StrLength
+::StrLength(retVal,string)
+SET StrLenVar=%1
+:StrLength_GETALLTEXT
+IF NOT "%2"=="" SET #=%#%%PARAMSPACE%%2
+IF NOT "%2"=="" SET PARAMSPACE= &SHIFT&GOTO :StrLength_GETALLTEXT
+set length=0
+:stringLengthLoop
+if defined # (set #=%#:~1%&set /A length += 1&goto stringLengthLoop)
+set "%StrLenVar%=%length%"
+GOTO :EOF
 
 
 :GETRUNTIME_LENGTH
