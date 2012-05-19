@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r101
+	SET rvsn=r102
 REM Branch:
 	SET Branch=
 
@@ -97,22 +97,23 @@ REM *************Main Code**************
 
 REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
+
 :INITPROG
 SET ECHONESS=
 PROMPT :
 %ECHONESS%@ECHO OFF
 CLS
+REM Set CMD window size
+%ECHONESS%MODE CON COLS=81 LINES=25
 ECHO.
 ECHO                             Initializing program...
 GOTO :EOF
+
 :PASTINIT
-
 IF NOT "%Branch%"=="" SET Branch=[%Branch%] 
-
-REM Set CMD window size & title
-%ECHONESS%MODE CON COLS=81 LINES=25
 SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
 TITLE %THISTITLE%
+
 
 IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
 
@@ -137,7 +138,6 @@ IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
 
-
 IF NOT "%StartDate%"=="" GOTO :AFTSETTIME
 SET StartDate=%DATE% %TIME%
 GOTO :AFTSETTIME
@@ -155,11 +155,6 @@ IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
 IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
 IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
 :AFTSETTIME
-
-
-REM Display program introduction
-IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM_INTRO
-IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
 
 CALL :SETTINGS_SETDEFAULT
 IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
@@ -192,13 +187,62 @@ IF "%restartingProgram%"=="" (
 	)
 )
 
-
-
 REM Copy to startup folder if set to start when 
 REM user logs on
 CALL :CHECK_START_AT_LOGON
 
+REM Display program introduction
+IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM_INTRO
+IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
+
+
 GOTO :MAIN_START
+
+:STATS
+REM ---------------------PROGRAM STATUS-----------------------
+SET STATSSpacer=                                                                                   !
+REM CALL :GETRUNTIME_LENGTH
+SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
+SET SHOWcurrently=%currently%%STATSSpacer%
+SET SHOWcurrently2=%currently2%%STATSSpacer%
+SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
+IF "%confixed%"=="" SET confixed=0
+REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
+IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
+SET LastTitle=%THISTITLE%
+SET Lastconfixed=%confixed%
+CLS
+								ECHO. ******************************************************************************
+								ECHO  *                                                                            *
+								ECHO  * %SHOWTitle% *
+								ECHO  *                                                                            *
+								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
+								ECHO  *                                                                            *
+								ECHO  *----------------------------------------------------------------------------*
+IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
+IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
+IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^|                   ^|%SHOWconfixed%*
+IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
+								ECHO  *                                                                            *
+IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
+IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
+IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
+IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
+IF NOT "%currently%"==""		ECHO  *                                                                            *
+IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
+IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
+								ECHO  ******************************************************************************
+
+IF "%SLWMSG%"=="1" (
+	CALL :SLEEP
+) ELSE (
+	IF "%isWaiting%"=="1" CALL :SLEEP
+)
+GOTO :EOF
+REM ---------------------END PROGRAM STATUS----------------------
+
 
 :SLEEP
 REM ------------------------PROGRAM SLEEP-------------------------
@@ -212,11 +256,14 @@ REM ------------------------END PROGRAM SLEEP---------------------
 
 
 :HEADER
+REM Settings header. Used when configuring settings.
 %ECHONESS%@ECHO OFF
 CLS
+IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+SET LastTitle=%THISTITLE%
 ECHO  ******************************************************************************
 ECHO  *                                                                            *
-ECHO  *         ******   Lectrode's Network Connection Resetter %rvsn%  ******        *
+ECHO  * %SHOWTitle% *
 ECHO  *                                                                            *
 ECHO  ******************************************************************************
 ECHO.
@@ -274,54 +321,6 @@ GOTO :MAIN_START
 REM -----------END INITIAL NETWORK CONNECTION TEST----------
 
 
-
-
-
-:STATS
-REM ---------------------PROGRAM STATUS-----------------------
-REM %MyDate% = %234567890123456789012345%
-SET STATSSpacer=                                                                                   !
-REM CALL :GETRUNTIME_LENGTH
-SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
-SET SHOWcurrently=%currently%%STATSSpacer%
-SET SHOWcurrently2=%currently2%%STATSSpacer%
-SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
-IF "%confixed%"=="" SET confixed=0
-REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
-IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
-IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
-SET LastTitle=%THISTITLE%
-SET Lastconfixed=%confixed%
-CLS
-								ECHO. ******************************************************************************
-								ECHO  *                                                                            *
-								ECHO  * %SHOWTitle% *
-								ECHO  *                                                                            *
-								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
-								ECHO  *                                                                            *
-								ECHO  *----------------------------------------------------------------------------*
-IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
-IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
-IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^|                   ^|%SHOWconfixed%*
-IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
-								ECHO  *                                                                            *
-IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
-IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
-IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
-IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
-IF NOT "%currently%"==""		ECHO  *                                                                            *
-IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
-IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
-								ECHO  ******************************************************************************
-
-IF "%SLWMSG%"=="1" (
-	CALL :SLEEP
-) ELSE (
-	IF "%isWaiting%"=="1" CALL :SLEEP
-)
-GOTO :EOF
-REM ---------------------END PROGRAM STATUS----------------------
 
 
 :CENTERTEXT
@@ -638,8 +637,8 @@ GOTO :EOF
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET currently=Target site [%testwebsite%] is
-SET currently2=unreachable.
+SET currently=Target sites are unreachable.
+SET currently2=
 SET SpecificStatus=
 SET isWaiting=1
 CALL :STATS
@@ -1004,7 +1003,6 @@ IF %1==DIS SET disOrEn=Disable
 IF %1==DIS SET trufalse=true
 ECHO disoren: %disOrEn%
 ECHO trufalse: %trufalse%
-PAUSE
 (ECHO Const ssfCONTROLS = 3)>>%disOrEn%Network.vbs
 (ECHO sConnectionName = "%NETWORK%")>>%disOrEn%Network.vbs
 (ECHO sEnableVerb = "En&able")>>%disOrEn%Network.vbs
@@ -1815,7 +1813,7 @@ SET SETNFileDir=%THISFILEDIR%
 )
 
 IF %SETNFILECHK%==0 (
-CALL :SETTINGS_RESET2DEFAULT
+REM CALL :SETTINGS_RESET2DEFAULT
 SET /A SETNFILECHK+=1
 SET SETNFileDir=TEMP
 )
@@ -1883,13 +1881,13 @@ GOTO :SETTINGS_CHANGESETTINGLOCATION
 
 
 :SETTINGS_CHANGESETTINGLOCATION_TEMP
-CALL :SETTINGS_RESET2DEFAULT
+REM CALL :SETTINGS_RESET2DEFAULT
 SET SETNFileDir=TEMP
 CALL :SETTINGS_SET
 GOTO :EOF
 
 :SETTINGS_CHANGESETTINGLOCATION_USR
-CALL :SETTINGS_RESET2DEFAULT
+REM CALL :SETTINGS_RESET2DEFAULT
 MD "%AppData%\NWResetter"
 SET SETNFileDir=%AppData%\NWResetter\
 CALL :SETTINGS_EXPORT
@@ -1897,7 +1895,7 @@ CALL :SETTINGS_SET
 GOTO :EOF
 
 :SETTINGS_CHANGESETTINGLOCATION_LOC
-CALL :SETTINGS_RESET2DEFAULT
+REM CALL :SETTINGS_RESET2DEFAULT
 MD "C:\NWResetter"
 SET SETNFileDir=C:\NWResetter\
 CALL :SETTINGS_EXPORT
@@ -1905,7 +1903,7 @@ CALL :SETTINGS_SET
 GOTO :EOF
 
 :SETTINGS_CHANGESETTINGLOCATION_PORT
-CALL :SETTINGS_RESET2DEFAULT
+REM CALL :SETTINGS_RESET2DEFAULT
 SET SETNFileDir=%THISFILEDIR%
 CALL :SETTINGS_EXPORT
 CALL :SETTINGS_SET
@@ -2122,6 +2120,7 @@ ECHO. %SETTINGINFO1%
 ECHO. %SETTINGINFO2%
 ECHO. %SETTINGINFO3%
 ECHO.
+ECHO Default Value: %SETTINGDEFAULT%
 IF "%SETTINGCUR%"=="" ECHO Current Value: [none set yet]
 IF NOT "%SETTINGCUR%"=="" ECHO Current Value: %SETTINGCUR%
 ECHO.
@@ -2365,7 +2364,7 @@ GOTO :EOF
 
 
 :SETTINGS_SETDEFAULT
-REM Sets variables holding default settings values
+REM Defines default setting values
 SET MINUTES_D=10
 SET NETWORK_D=Wireless Network Connection
 SET CONTINUOUS_D=0
@@ -2391,6 +2390,7 @@ SET DEBUGN_D=0
 GOTO :EOF
 
 :SETTINGS_RESET2DEFAULT
+REM Set all settings to their default values.
 SET MINUTES=%MINUTES_D%
 SET NETWORK=%NETWORK_D%
 SET CONTINUOUS=%CONTINUOUS_D%
@@ -2506,7 +2506,6 @@ GOTO :SETTINGS_VIEW_PRESET04
 
 :SETTINGS_PRESET01
 REM Normal Run to Fix
-ECHO Resetting all settings to "Normal Run to Fix"
 SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=0
@@ -2533,7 +2532,6 @@ GOTO :EOF
 
 :SETTINGS_PRESET02
 REM Advanced Run to Fix
-ECHO Resetting all settings to "Advanced Run to Fix"
 SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=0
@@ -2560,7 +2558,6 @@ GOTO :EOF
 
 :SETTINGS_PRESET03
 REM Normal Connection Monitoring
-ECHO Resetting all settings to "Normal Connection Monitoring"
 SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
@@ -2587,7 +2584,6 @@ GOTO :EOF
 
 :SETTINGS_PRESET04
 REM Advanced Connection Monitoring
-ECHO Resetting all settings to "Advanced Connection Monitoring"
 SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
@@ -2660,3 +2656,4 @@ GOTO :EOF
 CALL %THISFILEDIR%%SettingsFileName%.BAT LOAD
 GOTO :EOF
 
+REM EOF
