@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r102
+	SET rvsn=r103
 REM Branch:
 	SET Branch=
 
@@ -175,16 +175,10 @@ CALL :SETTINGS_EXPORT
 
 
 REM Restart itself minimized if set to do so
-IF "%restartingProgram%"=="" (
-	IF "%START_MINIMIZED%"=="1" (
-		IF "%MINIMIZED%"=="" (
-			IF "%INITPARAMS%"=="" (
-				SET MINIMIZED=1
-				START /MIN CMD /C "%~dpnx0"
-				EXIT
-			)
-		)
-	)
+IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
+	SET MINIMIZED=1
+	START /MIN CMD /C "%~dpnx0"
+	EXIT
 )
 
 REM Copy to startup folder if set to start when 
@@ -361,8 +355,12 @@ IF NOT "%2"=="" SET #=%#%%PARAMSPACE%%2
 IF NOT "%2"=="" SET PARAMSPACE= &SHIFT&GOTO :StrLength_GETALLTEXT
 set length=0
 :stringLengthLoop
-if defined # (set #=%#:~1%&set /A length += 1&goto stringLengthLoop)
-set "%StrLenVar%=%length%"
+SET #def=0
+IF DEFINED # SET #def=1
+IF %#def%==1 SET #=%#:~1%
+IF %#def%==1 SET /A length += 1
+IF %#def%==1 GOTO :stringLengthLoop
+SET "%StrLenVar%=%length%"
 GOTO :EOF
 
 
@@ -444,26 +442,21 @@ SET isConnected=0
 
 :CHECK_CONNECTED
 SET currently=Checking for connectivity...
-SET currently2=(Currently Disconnected)
+SET currently2=[Currently Disconnected]
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
 IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
-SET connectcheckgood=0
 FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
 ECHO %connect_test% |FIND "Disconnected" >NUL
-IF ERRORLEVEL 1 SET /A connectcheckgood+=1
-ECHO %connect_test% |FIND "Disabled" >NUL
-IF ERRORLEVEL 1 SET /A connectcheckgood+=1
+IF ERRORLEVEL 1 SET isConnected=1&GOTO :EOF
 SET /A conchks+=1
 IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
-IF NOT %connectcheckgood% GEQ 2 GOTO :CHECK_CONNECTED
-SET isConnected=1
-GOTO :EOF
+GOTO :CHECK_CONNECTED
 
 :CHECK_CONNECTED_FAILED
 SET currently=Connectivity test failed
-SET currently2=(Currently Disconnected)
+SET currently2=[Currently Disconnected]
 SET SpecificStatus=
 SET isWaiting=0
 CALL :STATS
@@ -1753,7 +1746,6 @@ ECHO  *                                                                         
 ECHO  ******************************************************************************
 ECHO.
 ECHO.
-ECHO Initiallizing...
 CALL :SLEEP
 GOTO :EOF
 REM ---------------------END PROGRAM INTRO--------------------
@@ -2170,7 +2162,7 @@ SET SETTINGTITLE=MODE
 SET SETTINGOPT=
 SET SETTINGINFO1=Enter 0 for Run Once
 SET SETTINGINFO2=Enter 1 for Continuous [checks every %CHECK_DELAY% minute[s]]
-SET SETTINGINFO3=
+SET SETTINGINFO3=[Must run settings file to configure settings if this is set to 1]
 SET SETNVAR=CONTINUOUS
 SET SETTINGDEFAULT=%CONTINUOUS_D%
 SET SETTINGCUR=%CONTINUOUS%
