@@ -6,9 +6,9 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r104
+	SET rvsn=r106
 REM Branch:
-	SET Branch=
+	SET Branch=AutoUpdate
 
 REM 
 REM Description:	Fixes network connection by trying each of the following:
@@ -1199,6 +1199,78 @@ GOTO :MAIN_START
 REM -----------END FIX ATTEMPT SUCCEEDED (RECHECK)----------------
 
 
+
+
+
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+REM ------------------------AUTO-UPDATE---------------------------
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+
+
+
+
+:SelfUpdate
+IF "%AUTOUPDATE%"=="" GOTO :EOF
+IF "%AUTOUPDATE%"=="0" GOTO :EOF
+IF "%AUTOUPDATE%"=="3" GOTO :SelfUpdate_dev
+
+REM Get versions
+SET DLFilePath=http://electrodexs.net/ncr/cur.txt
+SET DLFileName=cur.bat
+CALL :DLFile
+CALL %THISDIR%%DLFileName%
+
+IF "%AUTOUPDATE%"=="1" SET remotevsn=
+
+IF "%rvsn%"=="%
+
+IF "%AUTOUPDATE%"=="1" SET AUFfile=
+
+
+
+:DLFile
+IF "%DLFile%"=="" GOTO :EOF
+IF NOT %DEBUGN%==0 GOTO :EOF
+@ECHO on
+ECHO NUL>webdown.vbs
+ECHO 'Download Update  >webdown.vbs
+ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
+ECHO xpost.open "HEAD", "%DLFfile%", False '>>webdown.vbs
+ECHO xpost.send '>>webdown.vbs
+ECHO Select Case Cint(xpost.status) '>>webdown.vbs
+ECHO    Case 200, 202, 302 '>>webdown.vbs
+ECHO      Set xpost = Nothing '>>webdown.vbs
+ECHO      CheckPath = True '>>webdown.vbs
+ECHO    Case Else '>>webdown.vbs
+ECHO    Set xpost = Nothing '>>webdown.vbs
+ECHO      CheckPath = False '>>webdown.vbs
+ECHO End Select '>>webdown.vbs
+ECHO If (CheckPath) Then '>>webdown.vbs
+ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
+ECHO xPost.Open "GET","%DLFfile%",0 '>>webdown.vbs
+ECHO xPost.Send() '>>webdown.vbs
+ECHO Set sGet = CreateObject("ADODB.Stream") '>>webdown.vbs
+ECHO sGet.Mode = 3 '>>webdown.vbs
+ECHO sGet.Type = 1 '>>webdown.vbs
+ECHO sGet.Open() '>>webdown.vbs
+ECHO sGet.Write(xPost.responseBody) '>>webdown.vbs
+ECHO sGet.SaveToFile "%DLFileName%",2 '>>webdown.vbs
+ECHO END IF '>>webdown.vbs
+ECHO Dim objFSO '>>webdown.vbs
+ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>webdown.vbs
+ECHO objFSO.DeleteFile WScript.ScriptFullName '>>webdown.vbs
+ECHO Set objFSO = Nothing '>>webdown.vbs
+cscript webdown.vbs
+@ECHO off
+GOTO :EOF
+
+
+
+:SelfUpdate_dev
+REM SVN check rvsn & update
+GOTO :EOF
 
 
 
