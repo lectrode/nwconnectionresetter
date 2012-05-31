@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r107
+	SET rvsn=r108
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -71,6 +71,7 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
+SET AUTOUPDATE=1
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
@@ -99,14 +100,14 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET ECHONESS=
+SET NoECHO=::
 PROMPT :
-%ECHONESS%@ECHO OFF
+%NoECHO%@ECHO OFF
 CLS
 REM Set CMD window size
-%ECHONESS%MODE CON COLS=81 LINES=25
-ECHO.
-ECHO                             Initializing program...
+%NoECHO%MODE CON COLS=81 LINES=25
+%NoECHO%ECHO.
+%NoECHO%ECHO                             Initializing program...
 GOTO :EOF
 
 :PASTINIT
@@ -175,6 +176,8 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
+CALL :SelfUpdate
+
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
 	SET MINIMIZED=1
@@ -195,46 +198,46 @@ GOTO :MAIN_START
 
 :STATS
 REM ---------------------PROGRAM STATUS-----------------------
-SET statsSleep=%1
-SET STATSSpacer=                                                                                   !
-REM CALL :GETRUNTIME_LENGTH
-SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
-SET SHOWcurrently=%currently%%STATSSpacer%
-SET SHOWcurrently2=%currently2%%STATSSpacer%
-SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
-SET SHOWFixMode=                 
-IF x%Using_Fixes%==x0 SET SHOWFixMode=-Not using fixes-
-IF "%confixed%"=="" SET confixed=0
-REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
-IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
-IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
-SET LastTitle=%THISTITLE%
-SET Lastconfixed=%confixed%
-CLS
-								ECHO. ******************************************************************************
+%NoECHO%SET statsSleep=%1
+%NoECHO%SET STATSSpacer=                                                                                   !
+%NoECHO%REM CALL :GETRUNTIME_LENGTH
+%NoECHO%SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
+%NoECHO%SET SHOWcurrently=%currently%%STATSSpacer%
+%NoECHO%SET SHOWcurrently2=%currently2%%STATSSpacer%
+%NoECHO%SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
+%NoECHO%SET SHOWFixMode=                 
+%NoECHO%IF x%Using_Fixes%==x0 SET SHOWFixMode=-Not using fixes-
+%NoECHO%IF "%confixed%"=="" SET confixed=0
+%NoECHO%REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
+%NoECHO%SET LastTitle=%THISTITLE%
+%NoECHO%SET Lastconfixed=%confixed%
+%NoECHO%CLS
+%NoECHO%								ECHO. ******************************************************************************
+%NoECHO%								ECHO  *                                                                            *
+%NoECHO%								ECHO  * %SHOWTitle% *
+%NoECHO%								ECHO  *                                                                            *
+%NoECHO%								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
+%NoECHO%								ECHO  *                                                                            *
+%NoECHO%								ECHO  *----------------------------------------------------------------------------*
+%NoECHO%IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
+%NoECHO%IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
+%NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
+%NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^| %SHOWFixMode% ^|%SHOWconfixed%*
+%NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
 								ECHO  *                                                                            *
-								ECHO  * %SHOWTitle% *
-								ECHO  *                                                                            *
-								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
-								ECHO  *                                                                            *
-								ECHO  *----------------------------------------------------------------------------*
-IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
-IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
-IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^| %SHOWFixMode% ^|%SHOWconfixed%*
-IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
-								ECHO  *                                                                            *
-IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
-IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
-IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
-IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
-IF NOT "%currently%"==""		ECHO  *                                                                            *
-IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
-IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
+%NoECHO%IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
+%NoECHO%IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
+%NoECHO%IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
+%NoECHO%IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
+%NoECHO%IF NOT "%currently%"==""		ECHO  *                                                                            *
+%NoECHO%IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
+%NoECHO%IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
 								ECHO  ******************************************************************************
 
-IF "%SLWMSG%"=="1" CALL :SLEEP %statsSleep%
-IF NOT "%SLWMSG%"=="1" IF NOT "%statsSleep%"=="" CALL :SLEEP %statsSleep%
+%NoECHO%IF "%SLWMSG%"=="1" CALL :SLEEP %statsSleep%
+%NoECHO%IF NOT "%SLWMSG%"=="1" IF NOT "%statsSleep%"=="" CALL :SLEEP %statsSleep%
 GOTO :EOF
 REM ---------------------END PROGRAM STATUS----------------------
 
@@ -252,16 +255,16 @@ REM ------------------------END PROGRAM SLEEP---------------------
 
 :HEADER
 REM Settings header. Used when configuring settings.
-%ECHONESS%@ECHO OFF
-CLS
-IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
-SET LastTitle=%THISTITLE%
-ECHO  ******************************************************************************
-ECHO  *                                                                            *
-ECHO  * %SHOWTitle% *
-ECHO  *                                                                            *
-ECHO  ******************************************************************************
-ECHO.
+%NoECHO%@ECHO OFF
+%NoECHO%CLS
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%SET LastTitle=%THISTITLE%
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  * %SHOWTitle% *
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO.
 GOTO :EOF
 
 
@@ -446,7 +449,7 @@ SET currently=Checking for connectivity...
 SET currently2=[Currently Disconnected]
 SET SpecificStatus=
 CALL :STATS
-IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
+%NoECHO%IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
 FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
 ECHO %connect_test% |FIND "Disconnected" >NUL
 IF ERRORLEVEL 1 SET isConnected=1&GOTO :EOF
@@ -1172,6 +1175,7 @@ SET CONNFIX=0
 SET NETFIX=0
 SET ROUTEFIX=0
 
+
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet. EXITING...
 SET currently2=
@@ -1212,21 +1216,23 @@ REM --------------------------------------------------------------
 
 
 :SelfUpdate
+@ECHO ON
 REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
 IF "%AUTOUPDATE%"=="" GOTO :EOF
 IF "%AUTOUPDATE%"=="0" GOTO :EOF
 IF "%AUTOUPDATE%"=="3" GOTO :SelfUpdate_dev
 
-CALL :GET_RemoteServer
+CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
 SET NeedUpdate=0
 SET webdowntimeout=15
 SET remotevsn=
-SET DLFilePath=%remoteserver%cur.txt
+SET DLFilePath=%remoteserver%cur
 SET DLFileName=cur.bat
-CALL :DLFile
+CALL :SelfUpdate_DLFile
 CALL %THISDIR%%DLFileName%
+IF NOT "!BR_%Branch:~1,-1%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
 IF "%AUTOUPDATE%"=="1" SET remotevsn=%stablevsn%
 IF "%AUTOUPDATE%"=="2" SET remotevsn=%betavsn%
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
@@ -1240,23 +1246,37 @@ SET rvsnchk=%rvsnchk:r=%
 SET rvsnchk=%rvsnchk:v=%
 IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
+PAUSE
+
 REM Download new version
-IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable.txt
-IF "%AUTOUPDATE%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta.txt
+IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
+IF "%AUTOUPDATE%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
 SET DLFileName=Network_Resetter_Update.txt
-CALL :DLFile
+CALL :SelfUpdate_DLFile
 
 REM Verify file contents
-CALL :VerifyFileContents "%THISDIR%%DLFileName%"
-IF NOT EXIST %1 GOTO :SelfUpdate_Error
+CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
+IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
 
-GOTO :EOF
+:SelfUpdate_randomupdatename
+SET updaterfile=%THISDIR%updater%RANDOM:~0,7%.bat
+IF EXIST "%THISDIR%%updaterfile%" GOTO :SelfUpdate_randomupdatename
+
+PAUSE
+
+@ECHO ON
+(ECHO DEL "%THISFILENAMEPATH%")>%updaterfile%
+(ECHO REN "%THISDIR%%DLFileName%" "%THISFILENAME%")>>%updaterfile%
+(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+CALL "%THISDIR%%updaterfile%"
+EXIT
 
 
 
-:DLFile
-IF "%DLFile%"=="" GOTO :EOF
+:SelfUpdate_DLFile
+IF "%DLFilePath%"=="" GOTO :EOF
 IF NOT %DEBUGN%==0 GOTO :EOF
 @ECHO on
 ECHO NUL>webdown.vbs
@@ -1288,7 +1308,7 @@ ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>webdown.vbs
 ECHO objFSO.DeleteFile WScript.ScriptFullName '>>webdown.vbs
 ECHO Set objFSO = Nothing '>>webdown.vbs
 START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo webdown.vbs
-@ECHO off
+%NoECHO%@ECHO off
 GOTO :EOF
 
 
@@ -1298,9 +1318,20 @@ REM SVN check rvsn & update
 GOTO :EOF
 
 
-:VerifyFileContents
-ECHO size: %~z1
-PAUSE
+:SelfUpdate_VerifyFileContents
+SET vdl_fileloc=%*
+SET vdl_filevalid=0
+SET vdl_attempts=0
+:SelfUpdate_VerifyFileContents_retry
+SET vdl_attempts+=1
+CALL :SelfUpdate_VerifyFileContents_check %vdl_fileloc%
+IF %vdl_filevalid%==0 IF %vdl_attempts% GTR 5 DEL /F/S/Q %vdl_fileloc%
+GOTO :EOF
+
+
+:SelfUpdate_VerifyFileContents_check
+SET vdl_filesize=%~z1
+IF 0%verificationsize% LSS 0%vdl_filesize% SET vdl_filevalid=1
 GOTO :EOF
 
 
@@ -1314,7 +1345,7 @@ REM Could not self-update
 GOTO :EOF
 
 
-:GET_RemoteServer
+:SelfUpdate_GETRemoteServer
 REM Main or backup or disconnect
 SET remoteserver=http://electrodexs.net/ncr/
 GOTO :EOF
@@ -1828,35 +1859,35 @@ REM --------------------------------------------------------------
 :PROGRAM_INTRO
 REM ----------------------PROGRAM INTRO----------------------
 REM Displays notice for 3 seconds
-CLS
-ECHO  ******************************************************************************
-ECHO  *                                                                            *
-ECHO  *                     *Documentation on how to use this                      *
-ECHO  *                    program can be accessed via Notepad                     *
-ECHO  *                                                                            *
-ECHO  *                                                                            *
-ECHO  ******************************************************************************
-ECHO.
-ECHO.
-CALL :SLEEP
+%NoECHO%CLS
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  *                     *Documentation on how to use this                      *
+%NoECHO%ECHO  *                    program can be accessed via Notepad                     *
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO.
+%NoECHO%ECHO.
+%NoECHO%CALL :SLEEP
 GOTO :EOF
 REM ---------------------END PROGRAM INTRO--------------------
 
 
 :USINGALTSETNNOTICE
-CLS
-ECHO.
-ECHO  ******************************************************************************
-ECHO  *                                                                            *
-ECHO  *          This program is currently set to use internal settings.           *
-ECHO  *                                                                            *
-ECHO  *        To configure settings via the GUI, please open this program         *
-ECHO  *             with notepad and set USE_ALTERNATE_SETTINGS to 0               *
-ECHO  *                                                                            *
-ECHO  ******************************************************************************
-ECHO.
-ECHO.
-CALL :SLEEP 5
+%NoECHO%CLS
+%NoECHO%ECHO.
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  *          This program is currently set to use internal settings.           *
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  *        To configure settings via the GUI, please open this program         *
+%NoECHO%ECHO  *             with notepad and set USE_ALTERNATE_SETTINGS to 0               *
+%NoECHO%ECHO  *                                                                            *
+%NoECHO%ECHO  ******************************************************************************
+%NoECHO%ECHO.
+%NoECHO%ECHO.
+%NoECHO%CALL :SLEEP 5
 GOTO :EOF
 
 
