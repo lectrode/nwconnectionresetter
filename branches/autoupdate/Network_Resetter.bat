@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r106
+	SET rvsn=r107
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -1212,21 +1212,46 @@ REM --------------------------------------------------------------
 
 
 :SelfUpdate
+REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
 IF "%AUTOUPDATE%"=="" GOTO :EOF
 IF "%AUTOUPDATE%"=="0" GOTO :EOF
 IF "%AUTOUPDATE%"=="3" GOTO :SelfUpdate_dev
 
+CALL :GET_RemoteServer
+
 REM Get versions
-SET DLFilePath=http://electrodexs.net/ncr/cur.txt
+SET NeedUpdate=0
+SET webdowntimeout=15
+SET remotevsn=
+SET DLFilePath=%remoteserver%cur.txt
 SET DLFileName=cur.bat
 CALL :DLFile
 CALL %THISDIR%%DLFileName%
+IF "%AUTOUPDATE%"=="1" SET remotevsn=%stablevsn%
+IF "%AUTOUPDATE%"=="2" SET remotevsn=%betavsn%
+IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
-IF "%AUTOUPDATE%"=="1" SET remotevsn=
+REM Compare versions
+SET remotevsn=%remotevsn:.=%
+SET remotevsn=%remotevsn:_=%
+SET rvsnchk=%rvsn:.=%
+SET rvsnchk=%rvsnchk:_=%
+SET rvsnchk=%rvsnchk:r=%
+SET rvsnchk=%rvsnchk:v=%
+IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
-IF "%rvsn%"=="%
+REM Download new version
+IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable.txt
+IF "%AUTOUPDATE%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta.txt
+SET DLFileName=Network_Resetter_Update.txt
+CALL :DLFile
 
-IF "%AUTOUPDATE%"=="1" SET AUFfile=
+REM Verify file contents
+CALL :VerifyFileContents "%THISDIR%%DLFileName%"
+IF NOT EXIST %1 GOTO :SelfUpdate_Error
+
+
+GOTO :EOF
 
 
 
@@ -1237,7 +1262,7 @@ IF NOT %DEBUGN%==0 GOTO :EOF
 ECHO NUL>webdown.vbs
 ECHO 'Download Update  >webdown.vbs
 ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
-ECHO xpost.open "HEAD", "%DLFfile%", False '>>webdown.vbs
+ECHO xpost.open "HEAD", "%DLFilePath%", False '>>webdown.vbs
 ECHO xpost.send '>>webdown.vbs
 ECHO Select Case Cint(xpost.status) '>>webdown.vbs
 ECHO    Case 200, 202, 302 '>>webdown.vbs
@@ -1249,7 +1274,7 @@ ECHO      CheckPath = False '>>webdown.vbs
 ECHO End Select '>>webdown.vbs
 ECHO If (CheckPath) Then '>>webdown.vbs
 ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
-ECHO xPost.Open "GET","%DLFfile%",0 '>>webdown.vbs
+ECHO xPost.Open "GET","%DLFilePath%",0 '>>webdown.vbs
 ECHO xPost.Send() '>>webdown.vbs
 ECHO Set sGet = CreateObject("ADODB.Stream") '>>webdown.vbs
 ECHO sGet.Mode = 3 '>>webdown.vbs
@@ -1262,7 +1287,7 @@ ECHO Dim objFSO '>>webdown.vbs
 ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>webdown.vbs
 ECHO objFSO.DeleteFile WScript.ScriptFullName '>>webdown.vbs
 ECHO Set objFSO = Nothing '>>webdown.vbs
-cscript webdown.vbs
+START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo webdown.vbs
 @ECHO off
 GOTO :EOF
 
@@ -1270,6 +1295,28 @@ GOTO :EOF
 
 :SelfUpdate_dev
 REM SVN check rvsn & update
+GOTO :EOF
+
+
+:VerifyFileContents
+ECHO size: %~z1
+PAUSE
+GOTO :EOF
+
+
+:SelfUpdate_AlreadyUp2date
+REM Already up to date
+GOTO :EOF
+
+
+:SelfUpdate_Error
+REM Could not self-update
+GOTO :EOF
+
+
+:GET_RemoteServer
+REM Main or backup or disconnect
+SET remoteserver=http://electrodexs.net/ncr/
 GOTO :EOF
 
 
