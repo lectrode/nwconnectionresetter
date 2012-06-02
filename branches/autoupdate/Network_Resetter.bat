@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r113
+	SET rvsn=r114
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -72,7 +72,7 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
-SET AUTOUPDATE=1
+SET AUTOUPDATE=3
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
@@ -1223,7 +1223,6 @@ REM --------------------------------------------------------------
 
 
 :SelfUpdate
-@ECHO ON
 REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
 IF "%AUTOUPDATE%"=="" GOTO :EOF
 IF "%AUTOUPDATE%"=="0" GOTO :EOF
@@ -1275,6 +1274,7 @@ IF EXIST "%THISDIR%%updaterfile%" GOTO :SelfUpdate_randomupdatename
 (ECHO REN "%THISDIR%%DLFileName%" "%THISFILENAME%")>>%updaterfile%
 (ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+%NoECHO%@ECHO OFF
 CALL "%THISDIR%%updaterfile%"
 EXIT
 
@@ -1283,7 +1283,7 @@ EXIT
 :SelfUpdate_DLFile
 IF "%DLFilePath%"=="" GOTO :EOF
 IF NOT %DEBUGN%==0 GOTO :EOF
-@ECHO on
+@ECHO ON
 ECHO NUL>webdown.vbs
 ECHO 'Download Update  >webdown.vbs
 ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
@@ -1324,14 +1324,18 @@ REM svn info Network_Resetter.bat
 REM "Last Changed Rev: ###"
 
 REM Check SVN installed:
-svn -?
+svn -?>NUL
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 PAUSE
 REM Valid working copy
-SET SU_Needcheckout=0
-svn info Network_Resetter.bat
+svn info
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
-svn update&GOTO :TOP
+SET SU_NeedsUpdate=0
+FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
+SET SU_NeedsUpdate
+PAUSE
+IF %SU_NeedsUpdate%==1 svn update&GOTO :TOP
+GOTO :SelfUpdate_Error
 
 :SU_UpdateByCheckout
 SET checkoutfolder=%THISDIR%Network_Resetter%RANDOM:~0,7%
@@ -1364,11 +1368,13 @@ GOTO :EOF
 
 :SelfUpdate_AlreadyUp2date
 REM Already up to date
+PAUSE
 GOTO :EOF
 
 
 :SelfUpdate_Error
 REM Could not self-update
+PAUSE
 GOTO :EOF
 
 
