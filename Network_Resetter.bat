@@ -1,6 +1,7 @@
 REM *****************************************************************
 REM ************        USE CAUTION WHEN EDITING!       *************
 REM *****************************************************************
+:TOP
 CALL :INITPROG
 
 REM -----Program Info-----
@@ -177,7 +178,7 @@ CALL :SETTINGS_EXPORT
 CALL :CHECK_NEED_ADMIN
 
 REM CALL :SelfUpdate
-REM (uncomment above line to test)
+:: (uncomment above line to test)
 
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
@@ -1253,7 +1254,6 @@ SET rvsnchk=%rvsnchk:r=%
 SET rvsnchk=%rvsnchk:v=%
 IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
-PAUSE
 
 REM Download new version
 IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
@@ -1269,8 +1269,6 @@ IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 :SelfUpdate_randomupdatename
 SET updaterfile=%THISDIR%updater%RANDOM:~0,7%.bat
 IF EXIST "%THISDIR%%updaterfile%" GOTO :SelfUpdate_randomupdatename
-
-PAUSE
 
 @ECHO ON
 (ECHO DEL "%THISFILENAMEPATH%")>%updaterfile%
@@ -1325,17 +1323,26 @@ REM SVN check rvsn & update
 REM svn info Network_Resetter.bat
 REM "Last Changed Rev: ###"
 
-REM SVN installed:
+REM Check SVN installed:
 svn -?
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 PAUSE
 REM Valid working copy
 SET SU_Needcheckout=0
 svn info Network_Resetter.bat
-IF ERRORLEVEL 1 SET SU_Needcheckout=1
-IF %SU_Needcheckout%==1 IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk Network_Resetter
-IF %SU_Needcheckout%==1 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% Network_Resetter
+IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
+svn update
+IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
+GOTO :TOP
 
+:SU_UpdateByCheckout
+SET checkoutfolder=%THISDIR%Network_Resetter%RANDOM:~0,7%
+IF EXIST "%checkoutfolder%" GOTO :SU_UpdateByCheckout
+IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk Network_Resetter
+IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% Network_Resetter
+IF NOT EXIST "%THISDIR%Network_Resetter" Network_Resetter.bat GOTO :SelfUpdate_Error
+REN "%THISDIR%Network_Resetter/Network_Resetter.bat" NR_Update.bat
+MOVE /Y "%THISDIR%NR_Update/Network_Resetter.bat" NR_Update.bat
 PAUSE
 GOTO :EOF
 
