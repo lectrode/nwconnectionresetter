@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r112
+	SET rvsn=r113
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -101,7 +101,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET NoECHO=::
+SET NoECHO=
 PROMPT :
 %NoECHO%@ECHO OFF
 CLS
