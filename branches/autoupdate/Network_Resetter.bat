@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r115
+	SET rvsn=r116
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -101,7 +101,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET NoECHO=
+SET NoECHO=::
 PROMPT :
 %NoECHO%@ECHO OFF
 CLS
@@ -177,7 +177,7 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
-REM CALL :SelfUpdate
+CALL :SelfUpdate
 :: (uncomment above line to test)
 
 REM Restart itself minimized if set to do so
@@ -373,6 +373,17 @@ GOTO :EOF
 :ToLower
 FOR %%i IN ("A=a" "B=b" "C=c" "D=d" "E=e" "F=f" "G=g" "H=h" "I=i" "J=j" "K=k" "L=l" "M=m" "N=n" "O=o" "P=p" "Q=q" "R=r" "S=s" "T=t" "U=u" "V=v" "W=w" "X=x" "Y=y" "Z=z") DO CALL SET "%1=%%%1:%%~i%%"
 GOTO:EOF
+
+:GET_Randomfilename
+SET filevar=%1
+SET ext=%2
+SET %filevar%=%THISDIR%temp%RANDOM:~0,7%%ext%
+IF EXIST "%THISDIR%!%filevar%!" GOTO :GET_Randomfilename
+
+:GET_Randomfoldername
+SET foldervar=%1
+SET %filevar%=%THISDIR%temp%RANDOM:~0,7%
+IF EXIST "%THISDIR%!%filevar%!/" NUL GOTO :GET_Randomfoldername
 
 
 :GETRUNTIME_LENGTH
@@ -1226,11 +1237,23 @@ REM --------------------------------------------------------------
 REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
 IF "%AUTOUPDATE%"=="" GOTO :EOF
 IF "%AUTOUPDATE%"=="0" GOTO :EOF
+%NoECHO%IF "%AUTOUPDATE%"=="1" SET SU_GUI_AUTOUPDATE=Stable
+%NoECHO%IF "%AUTOUPDATE%"=="2" SET SU_GUI_AUTOUPDATE=Beta
+%NoECHO%IF "%AUTOUPDATE%"=="3" SET SU_GUI_AUTOUPDATE=Dev
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Initializing...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
 IF "%AUTOUPDATE%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Retrieving local and remote versions...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
+
 SET NeedUpdate=0
 SET webdowntimeout=15
 SET remotevsn=
@@ -1245,6 +1268,11 @@ IF "%AUTOUPDATE%"=="2" SET remotevsn=%betavsn%
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
 REM Compare versions
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Comparing versions...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
+
 SET remotevsn=%remotevsn:.=%
 SET remotevsn=%remotevsn:_=%
 SET rvsnchk=%rvsn:.=%
@@ -1255,19 +1283,31 @@ IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 
 REM Download new version
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Downloading latest %SU_GUI_AUTOUPDATE% version
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS 1
+
 IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
 IF "%AUTOUPDATE%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
 SET DLFileName=Network_Resetter_Update.txt
 CALL :SelfUpdate_DLFile
 
 REM Verify file contents
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Verifying downloaded file...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
+
 CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
 IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Updating script...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS 1
 
-:SelfUpdate_randomupdatename
-SET updaterfile=%THISDIR%updater%RANDOM:~0,7%.bat
-IF EXIST "%THISDIR%%updaterfile%" GOTO :SelfUpdate_randomupdatename
+CALL :GET_Randomfilename updaterfile .bat
 
 @ECHO ON
 (ECHO DEL "%THISFILENAMEPATH%")>%updaterfile%
@@ -1319,33 +1359,67 @@ GOTO :EOF
 
 
 :SelfUpdate_dev
-REM SVN check rvsn & update
-REM svn info Network_Resetter.bat
-REM "Last Changed Rev: ###"
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Initializing...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
 
 REM Check SVN installed:
 svn -?>NUL
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
-PAUSE
 REM Valid working copy
-svn info
+svn info>NUL
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
+
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Comparing versions...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
+
 SET SU_NeedsUpdate=0
 FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
-SET SU_NeedsUpdate
+IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
+
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Updating script...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS 1
 PAUSE
-IF %SU_NeedsUpdate%==1 svn update&GOTO :TOP
-GOTO :SelfUpdate_Error
+
+CALL :GET_Randomfilename updaterfile .bat
+@ECHO ON
+(ECHO svn update)>%updaterfile%
+(ECHO PAUSE)>>%updaterfile%
+(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+%NoECHO%@ECHO OFF
+PAUSE
+START CMD /C "%THISDIR%%updaterfile%"
+EXIT
 
 :SU_UpdateByCheckout
-SET checkoutfolder=%THISDIR%Network_Resetter%RANDOM:~0,7%
-IF EXIST "%checkoutfolder%" GOTO :SU_UpdateByCheckout
-IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk Network_Resetter
-IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% Network_Resetter
-IF NOT EXIST "%THISDIR%Network_Resetter" Network_Resetter.bat GOTO :SelfUpdate_Error
-REN "%THISDIR%Network_Resetter/Network_Resetter.bat" NR_Update.bat
-MOVE /Y "%THISDIR%NR_Update/Network_Resetter.bat" "%THISDIR%Network_Resetter.bat"&GOTO :TOP
-GOTO :SelfUpdate_Error
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Checking out latest version...
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS
+
+CALL :GET_Randomfoldername checkoutfolder
+
+IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk %checkoutfolder%
+IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% %checkoutfolder%
+IF NOT EXIST "%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
+REN "%checkoutfolder%/Network_Resetter.bat" NR_Update.bat
+MOVE /Y "%checkoutfolder%/NR_Update.bat" "%THISDIR%"
+RD /S/Q %checkoutfolder%
+
+CALL :GET_Randomfilename updaterfile .bat
+@ECHO ON
+(ECHO MOVE /Y "%THISDIR%NR_Update.bat" "Network_Resetter.bat")>%updaterfile%
+(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+%NoECHO%@ECHO OFF
+START CMD /C "%THISDIR%%updaterfile%"
+EXIT
 
 
 
