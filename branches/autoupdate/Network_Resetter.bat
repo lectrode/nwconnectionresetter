@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r111
+	SET rvsn=r112
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -101,7 +101,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET NoECHO=
+SET NoECHO=::
 PROMPT :
 %NoECHO%@ECHO OFF
 CLS
@@ -1331,9 +1331,7 @@ REM Valid working copy
 SET SU_Needcheckout=0
 svn info Network_Resetter.bat
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
-svn update
-IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
-GOTO :TOP
+svn update&GOTO :TOP
 
 :SU_UpdateByCheckout
 SET checkoutfolder=%THISDIR%Network_Resetter%RANDOM:~0,7%
@@ -1342,9 +1340,8 @@ IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/tr
 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% Network_Resetter
 IF NOT EXIST "%THISDIR%Network_Resetter" Network_Resetter.bat GOTO :SelfUpdate_Error
 REN "%THISDIR%Network_Resetter/Network_Resetter.bat" NR_Update.bat
-MOVE /Y "%THISDIR%NR_Update/Network_Resetter.bat" NR_Update.bat
-PAUSE
-GOTO :EOF
+MOVE /Y "%THISDIR%NR_Update/Network_Resetter.bat" "%THISDIR%Network_Resetter.bat"&GOTO :TOP
+GOTO :SelfUpdate_Error
 
 
 
