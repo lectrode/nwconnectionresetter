@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r108
+	SET rvsn=r109
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -100,7 +100,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET NoECHO=::
+SET NoECHO=
 PROMPT :
 %NoECHO%@ECHO OFF
 CLS
@@ -111,7 +111,7 @@ REM Set CMD window size
 GOTO :EOF
 
 :PASTINIT
-IF NOT "%Branch%"=="" SET Branch=[%Branch%] 
+IF NOT "%Branch%"=="" SET branchurl=%Branch%&SET Branch=[%Branch%] &CALL :ToLower branchurl
 SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
 TITLE %THISTITLE%
 
@@ -176,7 +176,8 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
-CALL :SelfUpdate
+REM CALL :SelfUpdate
+REM (uncomment above line to test)
 
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
@@ -366,6 +367,11 @@ IF %#def%==1 SET /A length += 1
 IF %#def%==1 GOTO :stringLengthLoop
 SET "%StrLenVar%=%length%"
 GOTO :EOF
+
+
+:ToLower
+FOR %%i IN ("A=a" "B=b" "C=c" "D=d" "E=e" "F=f" "G=g" "H=h" "I=i" "J=j" "K=k" "L=l" "M=m" "N=n" "O=o" "P=p" "Q=q" "R=r" "S=s" "T=t" "U=u" "V=v" "W=w" "X=x" "Y=y" "Z=z") DO CALL SET "%1=%%%1:%%~i%%"
+GOTO:EOF
 
 
 :GETRUNTIME_LENGTH
@@ -1231,6 +1237,7 @@ SET remotevsn=
 SET DLFilePath=%remoteserver%cur
 SET DLFileName=cur.bat
 CALL :SelfUpdate_DLFile
+IF NOT EXIST %THISDIR%%DLFileName% GOTO :SelfUpdate_Error
 CALL %THISDIR%%DLFileName%
 IF NOT "!BR_%Branch:~1,-1%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
 IF "%AUTOUPDATE%"=="1" SET remotevsn=%stablevsn%
@@ -1315,7 +1322,23 @@ GOTO :EOF
 
 :SelfUpdate_dev
 REM SVN check rvsn & update
+REM svn info Network_Resetter.bat
+REM "Last Changed Rev: ###"
+
+REM SVN installed:
+svn -?
+IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
+PAUSE
+REM Valid working copy
+SET SU_Needcheckout=0
+svn info Network_Resetter.bat
+IF ERRORLEVEL 1 SET SU_Needcheckout=1
+IF %SU_Needcheckout%==1 IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk Network_Resetter
+IF %SU_Needcheckout%==1 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% Network_Resetter
+
+PAUSE
 GOTO :EOF
+
 
 
 :SelfUpdate_VerifyFileContents
