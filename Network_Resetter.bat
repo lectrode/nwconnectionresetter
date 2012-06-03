@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r131
+	SET rvsn=r132
 REM Branch:
 	SET Branch=
 
@@ -1272,7 +1272,7 @@ SET rvsnchk=%rvsnchk:_=%
 SET rvsnchk=%rvsnchk:r=%
 SET rvsnchk=%rvsnchk:v=%
 SET rvsnchk=%rvsnchk:b=%
-SET lastUPDATECHANNEL=%rvsn:~1,1%
+SET lastUPDATECHANNEL=%rvsn:~0,1%
 IF %lastUPDATECHANNEL%==v SET lastUPDATECHANNEL=1
 IF %lastUPDATECHANNEL%==b SET lastUPDATECHANNEL=2
 IF %lastUPDATECHANNEL%==r SET lastUPDATECHANNEL=3
@@ -1286,10 +1286,10 @@ REM Get versions
 %NoECHO%SET SpecificStatus=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
+SET webdowntimeout=15
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate
 
 SET NeedUpdate=0
-SET webdowntimeout=15
 SET remotevsn=
 SET DLFilePath=%remoteserver%cur
 SET DLFileName=cur.bat
@@ -1351,8 +1351,7 @@ CALL :GET_Randomfilename updaterfile .bat
 (ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-CALL "%THISFILEDIR%%updaterfile%"
-EXIT
+CALL "%THISFILEDIR%%updaterfile%"&EXIT
 
 
 
@@ -2741,7 +2740,7 @@ SET NETWORK_D=Wireless Network Connection
 SET CONTINUOUS_D=0
 SET AUTO_RETRY_D=0
 SET AUTOUPDATE_D=1
-SET UPDATECHANNEL_D=1
+SET UPDATECHANNEL_D=3
 SET CHECKUPDATEFREQ_D=5
 SET CHECK_DELAY_D=1
 SET SHOW_ALL_ALERTS_D=1
