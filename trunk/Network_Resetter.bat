@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r130
+	SET rvsn=r131
 REM Branch:
 	SET Branch=
 
@@ -1272,6 +1272,10 @@ SET rvsnchk=%rvsnchk:_=%
 SET rvsnchk=%rvsnchk:r=%
 SET rvsnchk=%rvsnchk:v=%
 SET rvsnchk=%rvsnchk:b=%
+SET lastUPDATECHANNEL=%rvsn:~1,1%
+IF %lastUPDATECHANNEL%==v SET lastUPDATECHANNEL=1
+IF %lastUPDATECHANNEL%==b SET lastUPDATECHANNEL=2
+IF %lastUPDATECHANNEL%==r SET lastUPDATECHANNEL=3
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
@@ -1281,6 +1285,8 @@ REM Get versions
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
+
+IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate
 
 SET NeedUpdate=0
 SET webdowntimeout=15
@@ -1309,6 +1315,7 @@ IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 
 REM Download new version
+:SU_ForceUpdate
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Downloading latest %SU_GUI_UPDATECHANNEL% version
@@ -1406,11 +1413,14 @@ IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 %NoECHO%SET SpecificStatus=Comparing versions...
 %NoECHO%CALL :STATS
 
+IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_dev
+
 SET SU_NeedsUpdate=0
 FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
 ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
 IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
 
+:SU_ForceUpdate_dev
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Updating script...
@@ -1430,6 +1440,8 @@ EXIT
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Comparing versions...
 %NoECHO%CALL :STATS
+
+IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_UBC
 
 IF NOT "%branch%"=="" SET webdowntimeout=15
 IF NOT "%branch%"=="" SET DLFilePath=%remoteserver%cur
@@ -1452,7 +1464,7 @@ SET remotevsn=%remotevsn:.=%
 SET remotevsn=%remotevsn:_=%
 IF %rvsnchk% GEQ %remotevsn% GOTO :SelfUpdate_AlreadyUp2Date
 
-
+:SU_ForceUpdate_UBC
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Checking out latest version...
