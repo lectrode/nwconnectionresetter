@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r124
+	SET rvsn=r125
 REM Branch:
 	SET Branch=
 
@@ -1479,14 +1479,11 @@ IF EXIST "%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UB
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
-(ECHO PAUSE)>%updaterfile%
-(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO START CMD /C "%THISFILENAMEPATH%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
 SET SU_ERR=305
-START CMD /C "%THISFILEDIR%%updaterfile%"
-IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
-EXIT
+START CMD /C "%THISFILEDIR%%updaterfile%"&EXIT
 
 
 :SelfUpdate_GETRemoteServer
@@ -2576,7 +2573,7 @@ SET SETTINGOPT=1 for Stable, 2 for Beta, 3 for Dev
 SET SETTINGINFO1=Determines which release version this
 SET SETTINGINFO2=script will update to
 SET SETTINGINFO3=
-SET SETNVAR=
+SET SETNVAR=UPDATECHANNEL
 )
 IF %1==U3 (
 SET SETTINGTITLE=Update Check Frequency
@@ -3011,6 +3008,9 @@ DEL /F "%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET NETWORK=^%NETWORK%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET CONTINUOUS=^%CONTINUOUS%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET AUTO_RETRY=^%AUTO_RETRY%)>>"%SETNFileDir%%SettingsFileName%.BAT"
+(ECHO SET AUTOUPDATE=^%AUTOUPDATE%)>>"%SETNFileDir%%SettingsFileName%.BAT"
+(ECHO SET UPDATECHANNEL=^%UPDATECHANNEL%)>>"%SETNFileDir%%SettingsFileName%.BAT"
+(ECHO SET CHECKUPDATEFREQ=^%CHECKUPDATEFREQ%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET CHECK_DELAY=^%CHECK_DELAY%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET SHOW_ALL_ALERTS=^%SHOW_ALL_ALERTS%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET SHOW_ADVANCED_TESTING=^%SHOW_ADVANCED_TESTING%)>>"%SETNFileDir%%SettingsFileName%.BAT"
