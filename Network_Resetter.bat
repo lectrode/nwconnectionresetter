@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r117
+	SET rvsn=r118
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -101,7 +101,7 @@ REM -------------------Initialize Program--------------------
 GOTO :PASTINIT
 
 :INITPROG
-SET NoECHO=::
+SET NoECHO=
 PROMPT :
 %NoECHO%@ECHO OFF
 CLS
@@ -177,7 +177,7 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
-CALL :SelfUpdate
+REM CALL :SelfUpdate
 :: (uncomment above line to test)
 
 REM Restart itself minimized if set to do so
@@ -379,11 +379,13 @@ SET filevar=%1
 SET ext=%2
 SET %filevar%=%THISDIR%temp%RANDOM:~0,7%%ext%
 IF EXIST "%THISDIR%!%filevar%!" GOTO :GET_Randomfilename
+GOTO :EOF
 
 :GET_Randomfoldername
 SET foldervar=%1
 SET %filevar%=%THISDIR%temp%RANDOM:~0,7%
 IF EXIST "%THISDIR%!%filevar%!/" NUL GOTO :GET_Randomfoldername
+GOTO :EOF
 
 
 :GETRUNTIME_LENGTH
@@ -1232,8 +1234,8 @@ REM --------------------------------------------------------------
 
 
 
-
 :SelfUpdate
+
 REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
 IF "%AUTOUPDATE%"=="" GOTO :EOF
 IF "%AUTOUPDATE%"=="0" GOTO :EOF
@@ -1260,11 +1262,13 @@ SET remotevsn=
 SET DLFilePath=%remoteserver%cur
 SET DLFileName=cur.bat
 CALL :SelfUpdate_DLFile
+SET SU_ERR=101
 IF NOT EXIST %THISDIR%%DLFileName% GOTO :SelfUpdate_Error
 CALL %THISDIR%%DLFileName%
 IF NOT "!BR_%Branch:~1,-1%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
 IF "%AUTOUPDATE%"=="1" SET remotevsn=%stablevsn%
 IF "%AUTOUPDATE%"=="2" SET remotevsn=%betavsn%
+SET SU_ERR=102
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
 REM Compare versions
@@ -1299,6 +1303,7 @@ REM Verify file contents
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
 
+SET SU_ERR=103
 CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
 IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
@@ -1365,6 +1370,7 @@ GOTO :EOF
 %NoECHO%CALL :STATS
 
 REM Check SVN installed:
+SET SU_ERR=201
 svn -?>NUL
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 REM Valid working copy
@@ -1377,23 +1383,21 @@ IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 %NoECHO%CALL :STATS
 
 SET SU_NeedsUpdate=0
-FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
+FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
+ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
 IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
 
 %NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
 %NoECHO%SET currently2=Updating script...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS 1
-PAUSE
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO svn update)>%updaterfile%
-(ECHO PAUSE)>>%updaterfile%
 (ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-PAUSE
 START CMD /C "%THISDIR%%updaterfile%"
 EXIT
 
@@ -1404,23 +1408,40 @@ EXIT
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfoldername checkoutfolder
+CALL :GET_Randomfilename NR_Update .bat
 
+SET SU_ERR=301
 IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk %checkoutfolder%
 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% %checkoutfolder%
 IF NOT EXIST "%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
-REN "%checkoutfolder%/Network_Resetter.bat" NR_Update.bat
-MOVE /Y "%checkoutfolder%/NR_Update.bat" "%THISDIR%"
+SET SU_ERR=302
+REN "%checkoutfolder%/Network_Resetter.bat" %NR_Update%
+IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
+SET SU_ERR=303
+MOVE /Y "%checkoutfolder%/%NR_Update%" "%THISDIR%"
+IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
+SET SU_UBC_DelfolAttempts=0
+:SU_UBC_RetryDelFol
+SET /A SU_UBC_DelfolAttempts+=1
 RD /S/Q %checkoutfolder%
+IF EXIST "%checkoutfolder%/" NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UBC_RetryDelFol
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO MOVE /Y "%THISDIR%NR_Update.bat" "Network_Resetter.bat")>%updaterfile%
+(ECHO MOVE /Y "%THISDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
 (ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
+SET SU_ERR=304
 START CMD /C "%THISDIR%%updaterfile%"
+IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 EXIT
 
+
+:SelfUpdate_GETRemoteServer
+REM Main or backup or disconnect
+SET remoteserver=http://electrodexs.net/ncr/
+GOTO :EOF
 
 
 :SelfUpdate_VerifyFileContents
@@ -1433,28 +1454,83 @@ CALL :SelfUpdate_VerifyFileContents_check %vdl_fileloc%
 IF %vdl_filevalid%==0 IF %vdl_attempts% GTR 5 DEL /F/S/Q %vdl_fileloc%
 GOTO :EOF
 
-
 :SelfUpdate_VerifyFileContents_check
 SET vdl_filesize=%~z1
 IF 0%verificationsize% LSS 0%vdl_filesize% SET vdl_filevalid=1
+IF %vdl_filevalid%==0 CALL :SLEEP 1
 GOTO :EOF
 
 
 :SelfUpdate_AlreadyUp2date
 REM Already up to date
+%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently2=Script is already up to date
+%NoECHO%SET SpecificStatus=
+%NoECHO%CALL :STATS 2
+
 PAUSE
 GOTO :EOF
 
 
 :SelfUpdate_Error
-REM Could not self-update
+REM Could not self-update [ERR:%SU_ERR%]
+%NoECHO%ECHO Self-Update has encountered a critical error and cannot continue
+%NoECHO%ECHO.
+%NoECHO%IF %SU_ERR%==101 ECHO ERR:%SU_ERR% Could not retrieve remote versions file^
+%NoECHO%				 &CALL :SU_ERRSOL_READWRITE^
+%NoECHO%				 &CALL :SU_ERRSOL_NET
+
+%NoECHO%IF %SU_ERR%==102 ECHO ERR:%SU_ERR% Remote versions file is invalid^
+%NoECHO%				&CALL :SU_ERRSOL_TIMEOUT^
+%NoECHO%				&CALL :SU_ERRSOL_CHANGEDFORMAT
+
+%NoECHO%IF %SU_ERR%==103 ECHO ERR:%SU_ERR% Could not download updated script^
+%NoECHO%				&CALL :SU_ERRSOL_TIMEOUT^
+%NoECHO%				&CALL :SU_ERRSOL_NET
+
+%NoECHO%IF %SU_ERR%==201 ECHO ERR:%SU_ERR% SVN command line not installed properly^
+%NoECHO%				&CALL :SU_ERRSOL_SVN
+
+%NoECHO%IF %SU_ERR%==301 ECHO ERR:%SU_ERR% Could not checkout updated script to new folder^
+%NoECHO%				 &CALL :SU_ERRSOL_READWRITE^
+%NoECHO%				 &CALL :SU_ERRSOL_NET
+
+%NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not rename temporary update file^
+%NoECHO%				 &CALL :SU_ERRSOL_READWRITE
+
+%NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not move temporary update file^
+%NoECHO%				 &CALL :SU_ERRSOL_READWRITE
+
+%NoECHO%IF %SU_ERR%==304 ECHO ERR:%SU_ERR% Could not start temporary script file
+%NoECHO%ECHO.
 PAUSE
 GOTO :EOF
 
+:SU_ERRSOL_READWRITE
+ECHO ^>Please make sure you have read/write access to the
+ECHO  location this script is in.
+GOTO :EOF
 
-:SelfUpdate_GETRemoteServer
-REM Main or backup or disconnect
-SET remoteserver=http://electrodexs.net/ncr/
+:SU_ERRSOL_NET
+ECHO ^>Please make sure you are connected to the internet.
+ECHO ^>You may need to manually update this script if your 
+ECHO  connection quality is poor
+GOTO :EOF
+
+:SU_ERRSOL_TIMEOUT
+ECHO ^>With slower connections please configure the Self-Update
+ECHO  to use a longer timeout.
+GOTO :EOF
+
+:SU_ERRSOL_CHANGEDFORMAT
+ECHO ^>You may need to manually update this script if the
+ECHO  update method has changed.
+GOTO :EOF
+
+:SU_ERRSOL_SVN
+ECHO ^>This channel requires that you have SVN tools installed
+ECHO  You may need to install/reinstall SVN and make sure the
+ECHO command line tools are also installed.
 GOTO :EOF
 
 
