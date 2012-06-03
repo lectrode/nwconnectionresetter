@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r132
+	SET rvsn=r133
 REM Branch:
 	SET Branch=
 
@@ -261,7 +261,7 @@ REM ------------------------END PROGRAM SLEEP---------------------
 REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
 %NoECHO%CLS
-%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%SET LastTitle=%THISTITLE%
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
@@ -1564,7 +1564,9 @@ REM Could not self-update [ERR:%SU_ERR%]
 
 %NoECHO%IF %SU_ERR%==305 ECHO ERR:%SU_ERR% Could not start temporary script file
 %NoECHO%ECHO.
-PAUSE
+IF %CONTINUOUS%==0 PAUSE
+IF %CONTINUOUS%==1 ECHO Press Ctrl+S to pause script...(will continue in some seconds)
+IF %CONTINUOUS%==1 CALL :SLEEP 5
 GOTO :EOF
 
 :SU_ERRSOL_READWRITE
@@ -2735,12 +2737,14 @@ GOTO :EOF
 
 :SETTINGS_SETDEFAULT
 REM Defines default setting values
+IF %rvsn:~0,1%==v SET UPDATECHANNEL_D=1
+IF %rvsn:~0,1%==b SET UPDATECHANNEL_D=2
+IF %rvsn:~0,1%==r SET UPDATECHANNEL_D=3
 SET MINUTES_D=10
 SET NETWORK_D=Wireless Network Connection
 SET CONTINUOUS_D=0
 SET AUTO_RETRY_D=0
 SET AUTOUPDATE_D=1
-SET UPDATECHANNEL_D=3
 SET CHECKUPDATEFREQ_D=5
 SET CHECK_DELAY_D=1
 SET SHOW_ALL_ALERTS_D=1
