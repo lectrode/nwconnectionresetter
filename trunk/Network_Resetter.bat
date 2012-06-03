@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r129
+	SET rvsn=r130
 REM Branch:
 	SET Branch=
 
@@ -181,9 +181,7 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
-REM CALL :SelfUpdate
-:: (uncomment above line to test in continuous mode
-:: without running settings file)
+
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
 	SET MINIMIZED=1
@@ -1273,6 +1271,7 @@ SET rvsnchk=%rvsn:.=%
 SET rvsnchk=%rvsnchk:_=%
 SET rvsnchk=%rvsnchk:r=%
 SET rvsnchk=%rvsnchk:v=%
+SET rvsnchk=%rvsnchk:b=%
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
