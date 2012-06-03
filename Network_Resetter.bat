@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r120
+	SET rvsn=r121
 REM Branch:
 	SET Branch=
 
@@ -72,6 +72,7 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
+SET AUTOUPDATE=1
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
@@ -80,6 +81,7 @@ SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=0
 SET START_MINIMIZED=0
 SET UPDATECHANNEL=3
+SET CHECKUPDATEFREQ=5
 SET USELOGGING=1
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=0
@@ -136,6 +138,7 @@ SET currently=
 SET currently2=
 SET SpecificStatus=
 SET delaymins=
+IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=0
 IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
@@ -1116,8 +1119,11 @@ IF %isConnected%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
 GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
-IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 SET currently=Currently Connected to the Internet.
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1^
+&IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% SET TestsSinceUpdate=0&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
+IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 SET currently2=
 SET SpecificStatus=
 CALL :STATS
@@ -1212,8 +1218,11 @@ SET NETFIX=0
 SET ROUTEFIX=0
 
 
-IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently=Successfully Connected to Internet.
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1^
+&IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% SET TestsSinceUpdate=0&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
+IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently2=
 SET SpecificStatus=
 CALL :STATS
@@ -1256,18 +1265,18 @@ REM UPDATECHANNEL: 1=stable 2=beta 3=dev
 %NoECHO%IF "%UPDATECHANNEL%"=="1" SET SU_GUI_UPDATECHANNEL=Stable
 %NoECHO%IF "%UPDATECHANNEL%"=="2" SET SU_GUI_UPDATECHANNEL=Beta
 %NoECHO%IF "%UPDATECHANNEL%"=="3" SET SU_GUI_UPDATECHANNEL=Dev
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Initializing...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently% 
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Initializing...
 %NoECHO%CALL :STATS
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Retrieving local and remote versions...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently% 
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 SET NeedUpdate=0
@@ -1286,9 +1295,9 @@ SET SU_ERR=102
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
 REM Compare versions
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Comparing versions...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Comparing versions...
 %NoECHO%CALL :STATS
 
 SET remotevsn=%remotevsn:.=%
@@ -1301,10 +1310,10 @@ IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 
 REM Download new version
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Downloading latest %SU_GUI_UPDATECHANNEL% version
-%NoECHO%SET SpecificStatus=
-%NoECHO%CALL :STATS 1
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Downloading latest %SU_GUI_UPDATECHANNEL% version
+%NoECHO%CALL :STATS
 
 IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
 IF "%UPDATECHANNEL%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
@@ -1314,19 +1323,19 @@ SET DLFileName=Network_Resetter_Update.txt
 CALL :SelfUpdate_DLFile
 
 REM Verify file contents
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Verifying downloaded file...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Verifying downloaded file...
 %NoECHO%CALL :STATS
 
 SET SU_ERR=103
 CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
 IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Updating script...
-%NoECHO%SET SpecificStatus=
-%NoECHO%CALL :STATS 1
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Updating script...
+%NoECHO%CALL :STATS
 
 CALL :GET_Randomfilename updaterfile .bat
 
@@ -1380,9 +1389,9 @@ GOTO :EOF
 
 
 :SelfUpdate_dev
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Initializing...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Initializing...
 %NoECHO%CALL :STATS
 
 REM Check SVN installed:
@@ -1393,9 +1402,9 @@ REM Valid working copy
 svn info>NUL
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Comparing versions...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Comparing versions...
 %NoECHO%CALL :STATS
 
 SET SU_NeedsUpdate=0
@@ -1403,10 +1412,10 @@ FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
 ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
 IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Updating script...
-%NoECHO%SET SpecificStatus=
-%NoECHO%CALL :STATS 1
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Updating script...
+%NoECHO%CALL :STATS
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
@@ -1418,9 +1427,9 @@ START CMD /C "%THISDIR%%updaterfile%"
 EXIT
 
 :SU_UpdateByCheckout
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Checking out latest version...
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Checking out latest version...
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfoldername checkoutfolder
@@ -1479,14 +1488,15 @@ GOTO :EOF
 
 :SelfUpdate_AlreadyUp2date
 REM Already up to date
-%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
-%NoECHO%SET currently2=Script is already up to date
-%NoECHO%SET SpecificStatus=
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Script is already up to date
 %NoECHO%CALL :STATS 3
 GOTO :EOF
 
 
 :SelfUpdate_Error
+%NoECHO%MODE CON LINES=120
 REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%ECHO Self-Update has encountered a critical error and cannot continue
 %NoECHO%ECHO.
@@ -2171,6 +2181,7 @@ SET /P usrInput=[1/2/3/x]
 IF "%usrInput%"=="" GOTO :EOF
 IF "%usrInput%"=="1" GOTO :EOF
 IF "%usrInput%"=="2" GOTO :SETTINGS_SET
+IF "%usrInput%"=="3" SET currently=Manual check for updates...
 IF "%usrInput%"=="3" CALL :SelfUpdate
 IF /I "%usrInput%"=="x" EXIT
 GOTO :SETTINGS_OPTION
