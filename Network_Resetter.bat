@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r121
+	SET rvsn=r122
 REM Branch:
 	SET Branch=
 
@@ -381,14 +381,14 @@ GOTO:EOF
 :GET_Randomfilename
 SET filevar=%1
 SET ext=%2
-SET %filevar%=%THISDIR%temp%RANDOM:~0,7%%ext%
-IF EXIST "%THISDIR%!%filevar%!" GOTO :GET_Randomfilename
+SET %filevar%=temp%RANDOM:~0,7%%ext%
+IF EXIST "%THISFILEDIR%!%filevar%!" GOTO :GET_Randomfilename
 GOTO :EOF
 
 :GET_Randomfoldername
 SET foldervar=%1
-SET %filevar%=%THISDIR%temp%RANDOM:~0,7%
-IF EXIST "%THISDIR%!%filevar%!/" NUL GOTO :GET_Randomfoldername
+SET %foldervar%=temp%RANDOM:~0,7%
+IF EXIST "%THISFILEDIR%!%foldervar%!"NUL GOTO :GET_Randomfoldername
 GOTO :EOF
 
 
@@ -1286,8 +1286,8 @@ SET DLFilePath=%remoteserver%cur
 SET DLFileName=cur.bat
 CALL :SelfUpdate_DLFile
 SET SU_ERR=101
-IF NOT EXIST %THISDIR%%DLFileName% GOTO :SelfUpdate_Error
-CALL %THISDIR%%DLFileName%
+IF NOT EXIST %THISFILEDIR%%DLFileName% GOTO :SelfUpdate_Error
+CALL %THISFILEDIR%%DLFileName%
 IF NOT "!BR_%branchurl%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
 IF "%UPDATECHANNEL%"=="1" SET remotevsn=%stablevsn%
 IF "%UPDATECHANNEL%"=="2" SET remotevsn=%betavsn%
@@ -1329,8 +1329,8 @@ REM Verify file contents
 %NoECHO%CALL :STATS
 
 SET SU_ERR=103
-CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
-IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
+CALL :SelfUpdate_VerifyFileContents "%THISFILEDIR%%DLFileName%"
+IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
@@ -1341,11 +1341,11 @@ CALL :GET_Randomfilename updaterfile .bat
 
 @ECHO ON
 (ECHO DEL "%THISFILENAMEPATH%")>%updaterfile%
-(ECHO REN "%THISDIR%%DLFileName%" "%THISFILENAME%")>>%updaterfile%
-(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO REN "%THISFILEDIR%%DLFileName%" "%THISFILENAME%")>>%updaterfile%
+(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-CALL "%THISDIR%%updaterfile%"
+CALL "%THISFILEDIR%%updaterfile%"
 EXIT
 
 
@@ -1420,10 +1420,10 @@ IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO svn update)>%updaterfile%
-(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-START CMD /C "%THISDIR%%updaterfile%"
+START CMD /C "%THISFILEDIR%%updaterfile%"
 EXIT
 
 :SU_UpdateByCheckout
@@ -1438,27 +1438,24 @@ CALL :GET_Randomfilename NR_Update .bat
 SET SU_ERR=301
 IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk %checkoutfolder%
 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% %checkoutfolder%
-IF NOT EXIST "%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
+IF NOT EXIST "%THISFILEDIR%%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
 SET SU_ERR=302
-REN "%checkoutfolder%/Network_Resetter.bat" %NR_Update%
-IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
-SET SU_ERR=303
-MOVE /Y "%checkoutfolder%/%NR_Update%" "%THISDIR%"
+MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%NR_Update%"
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 SET SU_UBC_DelfolAttempts=0
 :SU_UBC_RetryDelFol
 SET /A SU_UBC_DelfolAttempts+=1
 RD /S/Q %checkoutfolder%
-IF EXIST "%checkoutfolder%/" NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UBC_RetryDelFol
+IF EXIST "%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UBC_RetryDelFol
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO MOVE /Y "%THISDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
-(ECHO START CMD /C "%THISDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
+(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-SET SU_ERR=304
-START CMD /C "%THISDIR%%updaterfile%"
+SET SU_ERR=303
+START CMD /C "%THISFILEDIR%%updaterfile%"
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 EXIT
 
@@ -1519,13 +1516,10 @@ REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%				 &CALL :SU_ERRSOL_READWRITE^
 %NoECHO%				 &CALL :SU_ERRSOL_NET
 
-%NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not rename temporary update file^
+%NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not move/rename temporary update file^
 %NoECHO%				 &CALL :SU_ERRSOL_READWRITE
 
-%NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not move temporary update file^
-%NoECHO%				 &CALL :SU_ERRSOL_READWRITE
-
-%NoECHO%IF %SU_ERR%==304 ECHO ERR:%SU_ERR% Could not start temporary script file
+%NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not start temporary script file
 %NoECHO%ECHO.
 PAUSE
 GOTO :EOF
