@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r128
+	SET rvsn=r129
 REM Branch:
 	SET Branch=
 
@@ -1437,8 +1437,8 @@ IF NOT "%branch%"=="" SET DLFilePath=%remoteserver%cur
 IF NOT "%branch%"=="" SET DLFileName=cur.bat
 IF NOT "%branch%"=="" CALL :SelfUpdate_DLFile
 SET SU_ERR=301
-IF NOT "%branch%"=="" IF NOT EXIST %THISFILEDIR%%DLFileName% GOTO :SelfUpdate_Error
-IF NOT "%branch%"=="" CALL %THISFILEDIR%%DLFileName%
+IF NOT "%branch%"=="" IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
+IF NOT "%branch%"=="" CALL "%THISFILEDIR%%DLFileName%"
 IF "!BR_%branchurl%!"=="integrated" SET branchurl=
 
 SET SU_ERR=302
@@ -1463,23 +1463,23 @@ CALL :GET_Randomfoldername checkoutfolder
 CALL :GET_Randomfilename NR_Update .bat
 
 SET SU_ERR=303
-IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk %checkoutfolder%
-IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% %checkoutfolder%
-IF NOT EXIST "%THISFILEDIR%%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
+IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%"
+IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%"
+IF NOT EXIST "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" GOTO :SelfUpdate_Error
 SET SU_ERR=304
-MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%NR_Update%"
+MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%"
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 SET SU_UBC_DelfolAttempts=0
 :SU_UBC_RetryDelFol
 SET /A SU_UBC_DelfolAttempts+=1
-RD /S/Q %checkoutfolder%
-IF EXIST "%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UBC_RetryDelFol
+RD /S/Q "%THISFILEDIR%%checkoutfolder%"
+IF EXIST "%THISFILEDIR%%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UBC_RetryDelFol
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "%THISFILENAME%")>%updaterfile%
-(ECHO START CMD /C "%THISFILENAMEPATH%")>>%updaterfile%
-(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "%THISFILENAMEPATH%")>"%THISFILEDIR%%updaterfile%"
+(ECHO START CMD /C "%THISFILENAMEPATH%")>>"%THISFILEDIR%%updaterfile%"
+(ECHO DEL /F/S/Q "%%~dpnx0")>>"%THISFILEDIR%%updaterfile%"
 %NoECHO%@ECHO OFF
 SET SU_ERR=305
 START CMD /C "%THISFILEDIR%%updaterfile%"&EXIT
@@ -1542,7 +1542,7 @@ REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%				 &CALL :SU_ERRSOL_NET
 
 %NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not retrieve svn remote versions^
-%NoECHO%				&CALL :SU_ERRSOL_CHANGEDFORMAT
+%NoECHO%				&CALL :SU_ERRSOL_CHANGEDFORMAT^
 %NoECHO%				 &CALL :SU_ERRSOL_NET
 
 %NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not checkout updated script to new folder^
@@ -2152,7 +2152,7 @@ SET /P usrInput=[1/2/3/x]
 IF "%usrInput%"=="" GOTO :EOF
 IF "%usrInput%"=="1" SET usrInput=&GOTO :EOF
 IF "%usrInput%"=="2" SET usrInput=&CALL :SETTINGS_SET
-IF "%usrInput%"=="3" SET usrInput=&SET currently=Manual check for updates...
+IF "%usrInput%"=="3" SET currently=Manual check for updates...
 IF "%usrInput%"=="3" SET usrInput=&CALL :SelfUpdate
 IF /I "%usrInput%"=="x" EXIT
 GOTO :SETTINGS_OPTION
