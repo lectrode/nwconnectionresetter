@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r126
+	SET rvsn=r127
 REM Branch:
 	SET Branch=
 
@@ -1120,8 +1120,6 @@ GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
 SET currently=Currently Connected to the Internet.
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% ^
-SET TestsSinceUpdate=0&IF %TestsSinceUpdate%==0 CALL :SelfUpdate&SET /A TestsSinceUpdate+=1
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 SET currently2=
@@ -1134,7 +1132,8 @@ GOTO :TOP
 
 
 :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
-
+IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 SET /A TestsSinceUpdate+=1&CALL :SelfUpdate
 SET currently=Waiting to re-check Internet Connection...
 SET currently2=Last check: Connected
 CALL :STATS
@@ -1145,6 +1144,7 @@ GOTO :CHECK_CONNECTION_ONLY
 
 
 :CHECK_CONNECTION_ONLY_FAIL
+SET /A TestsSinceUpdate+=1
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
 SET currently=NOT Connected to the Internet.
 SET currently2=No fixes are set to be used.
@@ -1173,6 +1173,7 @@ REM BRANCH (FAILED_CONTINUOUS || FIX || EXIT)
 SET CONNFIX=0
 SET NETFIX=0
 SET ROUTEFIX=0
+SET /A TestsSinceUpdate+=1
 IF %CONTINUOUS%==1 GOTO :FAILED_CONTINUOUS
 SET currently=Unable to Connect to Internet.
 SET currently2=
@@ -1218,10 +1219,8 @@ SET NETFIX=0
 SET ROUTEFIX=0
 
 SET currently=Successfully Connected to Internet.
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate% GEQ ^
-%CHECKUPDATEFREQ% SET TestsSinceUpdate=0
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1
+IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 SET /A TestsSinceUpdate+=1&CALL :SelfUpdate
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently2=
