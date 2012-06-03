@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r118
+	SET rvsn=r119
 REM Branch:
 	SET Branch=AutoUpdate
 
@@ -72,7 +72,6 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
-SET AUTOUPDATE=3
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
@@ -80,6 +79,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=0
 SET START_MINIMIZED=0
+SET UPDATECHANNEL=3
 SET USELOGGING=1
 SET OMIT_USER_INPUT=0
 SET SKIP_INITIAL_NTWK_TEST=0
@@ -120,6 +120,7 @@ TITLE %THISTITLE%
 IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
 
 REM Set Global Variables
+SETLOCAL ENABLEDELAYEDEXPANSION
 SET SettingsFileName=NWRSettings
 SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
@@ -165,7 +166,7 @@ IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
 IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
 CALL :SETTINGS_CHECKFILE
 IF "%INITPARAMS%"=="" IF NOT "%SetnBeenSet%"=="1" IF "%CONTINUOUS%"=="0" CALL :SETTINGS_OPTION
-IF "%INITPARAMS%"=="SETTINGS" IF NOT "%SetnBeenSet%"=="1" CALL :SETTINGS_SET
+IF "%INITPARAMS%"=="SETTINGS" IF NOT "%SetnBeenSet%"=="1" CALL :SETTINGS_OPTION
 
 :AFTCALLCHECKSETNFILE
 
@@ -178,8 +179,7 @@ CALL :SETTINGS_EXPORT
 CALL :CHECK_NEED_ADMIN
 
 REM CALL :SelfUpdate
-:: (uncomment above line to test)
-
+:: (uncomment above line to test in continuous mode)
 REM Restart itself minimized if set to do so
 IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
 	SET MINIMIZED=1
@@ -199,7 +199,7 @@ IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
 GOTO :MAIN_START
 
 :STATS
-REM ---------------------PROGRAM STATUS-----------------------
+%NoECHO%REM ---------------------PROGRAM STATUS-----------------------
 %NoECHO%SET statsSleep=%1
 %NoECHO%SET STATSSpacer=                                                                                   !
 %NoECHO%REM CALL :GETRUNTIME_LENGTH
@@ -1094,9 +1094,11 @@ REM --------------------------------------------------------------
 REM --------------UNSUPPORTED OPERATING SYSTEM--------------------
 REM EXIT
 SET currently=This Operating System is not currently supported.
-SET currently2=EXITING...
+SET currently2=
 SET SpecificStatus=
-CALL :STATS 6
+CALL :STATS
+ECHO Press any key to EXIT...
+PAUSE>NUL
 EXIT
 REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 
@@ -1114,11 +1116,15 @@ GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
-SET currently=Currently Connected to the Internet. EXITING...
+SET currently=Currently Connected to the Internet.
 SET currently2=
 SET SpecificStatus=
-CALL :STATS 3
-EXIT
+CALL :STATS
+ECHO.
+ECHO Press any key to return to main menu...
+PAUSE>NUL
+GOTO :TOP
+
 
 :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 
@@ -1134,10 +1140,13 @@ GOTO :CHECK_CONNECTION_ONLY
 :CHECK_CONNECTION_ONLY_FAIL
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
 SET currently=NOT Connected to the Internet.
-SET currently2=No fixes are set to be used. EXITING...
+SET currently2=No fixes are set to be used.
 SET SpecificStatus=
-CALL :STATS 3
-EXIT
+CALL :STATS
+ECHO.
+ECHO Press any key to return to main menu...
+PAUSE>NUL
+GOTO :TOP
 
 :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
 SET currently=Waiting to re-check Internet Connection...
@@ -1163,11 +1172,17 @@ SET currently2=
 SET SpecificStatus=
 CALL :STATS 3
 IF %AUTO_RETRY%==1 GOTO :MAIN_START
-IF %OMIT_USER_INPUT%==1 EXIT
-ECHO Retry?
-SET /P usrInpt=[y/n] 
-IF "%usrInpt%"=="n" EXIT
-IF "%usrInpt%"=="y" GOTO :MAIN_START
+ECHO What would you like to do?
+ECHO.
+ECHO Retry                 [1]      
+ECHO Return to Main Menu   [2]
+ECHO Exit                  [3]
+ECHO.
+SET /P usrInpt=[1/2/3] 
+IF "%usrInpt%"=="" GOTO :MAIN_START
+IF "%usrInpt%"=="1" GOTO :MAIN_START
+IF "%usrInpt%"=="2" GOTO :TOP
+IF "%usrInpt%"=="3" EXIT
 GOTO :FAILED
 
 REM -----------------END FIX ATTEMPT FAILED-----------------------
@@ -1197,17 +1212,17 @@ SET ROUTEFIX=0
 
 
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
-SET currently=Successfully Connected to Internet. EXITING...
+SET currently=Successfully Connected to Internet.
 SET currently2=
 SET SpecificStatus=
 CALL :STATS
 ECHO.
-ECHO.
 ECHO If you still cannot access the internet, you may need
 ECHO to log into the network via Cisco or a similar program.
-CALL :SLEEP 5
-IF %DEBUGN%==1 PAUSE
-EXIT
+ECHO.
+ECHO Press any key to return to main menu...
+PAUSE
+GOTO :TOP
 REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
 
 
@@ -1236,22 +1251,20 @@ REM --------------------------------------------------------------
 
 :SelfUpdate
 
-REM AUTOUPDATE: 0=none 1=stable 2=beta 3=dev
-IF "%AUTOUPDATE%"=="" GOTO :EOF
-IF "%AUTOUPDATE%"=="0" GOTO :EOF
-%NoECHO%IF "%AUTOUPDATE%"=="1" SET SU_GUI_AUTOUPDATE=Stable
-%NoECHO%IF "%AUTOUPDATE%"=="2" SET SU_GUI_AUTOUPDATE=Beta
-%NoECHO%IF "%AUTOUPDATE%"=="3" SET SU_GUI_AUTOUPDATE=Dev
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+REM UPDATECHANNEL: 1=stable 2=beta 3=dev
+%NoECHO%IF "%UPDATECHANNEL%"=="1" SET SU_GUI_UPDATECHANNEL=Stable
+%NoECHO%IF "%UPDATECHANNEL%"=="2" SET SU_GUI_UPDATECHANNEL=Beta
+%NoECHO%IF "%UPDATECHANNEL%"=="3" SET SU_GUI_UPDATECHANNEL=Dev
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Initializing...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
-IF "%AUTOUPDATE%"=="3" GOTO :SelfUpdate_dev
+IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Retrieving local and remote versions...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1265,14 +1278,14 @@ CALL :SelfUpdate_DLFile
 SET SU_ERR=101
 IF NOT EXIST %THISDIR%%DLFileName% GOTO :SelfUpdate_Error
 CALL %THISDIR%%DLFileName%
-IF NOT "!BR_%Branch:~1,-1%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
-IF "%AUTOUPDATE%"=="1" SET remotevsn=%stablevsn%
-IF "%AUTOUPDATE%"=="2" SET remotevsn=%betavsn%
+IF NOT "!BR_%branchurl%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
+IF "%UPDATECHANNEL%"=="1" SET remotevsn=%stablevsn%
+IF "%UPDATECHANNEL%"=="2" SET remotevsn=%betavsn%
 SET SU_ERR=102
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
 REM Compare versions
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Comparing versions...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1287,18 +1300,20 @@ IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 
 REM Download new version
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
-%NoECHO%SET currently2=Downloading latest %SU_GUI_AUTOUPDATE% version
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
+%NoECHO%SET currently2=Downloading latest %SU_GUI_UPDATECHANNEL% version
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS 1
 
-IF "%AUTOUPDATE%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
-IF "%AUTOUPDATE%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
+IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
+IF "%UPDATECHANNEL%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
+REM IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%stablefile%
+REM IF "%UPDATECHANNEL%"=="2" SET DLFilePath=%betafile%
 SET DLFileName=Network_Resetter_Update.txt
 CALL :SelfUpdate_DLFile
 
 REM Verify file contents
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Verifying downloaded file...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1307,7 +1322,7 @@ SET SU_ERR=103
 CALL :SelfUpdate_VerifyFileContents "%THISDIR%%DLFileName%"
 IF NOT EXIST "%THISDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Updating script...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS 1
@@ -1364,7 +1379,7 @@ GOTO :EOF
 
 
 :SelfUpdate_dev
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Initializing...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1377,7 +1392,7 @@ REM Valid working copy
 svn info>NUL
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Comparing versions...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1387,7 +1402,7 @@ FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
 ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
 IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
 
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Updating script...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS 1
@@ -1402,7 +1417,7 @@ START CMD /C "%THISDIR%%updaterfile%"
 EXIT
 
 :SU_UpdateByCheckout
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Checking out latest version...
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS
@@ -1463,7 +1478,7 @@ GOTO :EOF
 
 :SelfUpdate_AlreadyUp2date
 REM Already up to date
-%NoECHO%SET currently=Self-Update (On %SU_GUI_AUTOUPDATE% Channel)
+%NoECHO%SET currently=Self-Update (On %SU_GUI_UPDATECHANNEL% Channel)
 %NoECHO%SET currently2=Script is already up to date
 %NoECHO%SET SpecificStatus=
 %NoECHO%CALL :STATS 2
@@ -2143,17 +2158,22 @@ GOTO :EOF
 
 :SETTINGS_OPTION
 CALL :HEADER
-IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Default Settings*
+ECHO.
+IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Temporary Settings*
 IF "%SETNFileDir%"=="TEMP" ECHO.
 ECHO What would you like to do?
 ECHO -Detect/Fix Connection   [1]
 ECHO -Edit Configuration      [2]
+ECHO -Check for Update        [3]
+ECHO -EXIT                    [x]
 ECHO.
 SET usrInput=
-SET /P usrInput=[1/2] 
+SET /P usrInput=[1/2/3/x] 
 IF "%usrInput%"=="" GOTO :EOF
 IF "%usrInput%"=="1" GOTO :EOF
 IF "%usrInput%"=="2" GOTO :SETTINGS_SET
+IF "%usrInput%"=="3" CALL :SelfUpdate
+IF /I "%usrInput%"=="x" EXIT
 GOTO :SETTINGS_OPTION
 
 
@@ -2232,13 +2252,11 @@ ECHO -Choose setting to change from list         (2)
 ECHO -Select a Settings Preset                   (3)
 ECHO -Reset all settings to their default values (4)
 ECHO -Change where settings are stored           (5)
-ECHO -Run program                                (R)
-ECHO -Exit                                       (X)
+ECHO -Main Menu                                  (x)
 ECHO.
 SET usrInput=
-SET /P usrInput=[1/2/3/4/5/R/X] 
-IF /I "%usrInput%"=="R" GOTO :EOF
-IF /I "%usrInput%"=="X" EXIT
+SET /P usrInput=[1/2/3/4/5/X] 
+IF /I "%usrInput%"=="X" GOTO :EOF
 IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
 IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
 IF "%usrInput%"=="3" CALL :SETTINGS_SELECT_PRESET
@@ -2331,7 +2349,6 @@ IF /I "%usrInput%"=="X" GOTO :EOF
 GOTO :SETTINGS_SET_LIST_MAIN
 
 :SETTINGS_SET_LIST_MISC
-CLS
 CALL :HEADER
 ECHO Navigation:
 ECHO -View Basic Settings    (B)
@@ -2369,7 +2386,6 @@ GOTO :SETTINGS_SET_LIST_MISC
 
 
 :SETTINGS_SET_LIST_ADV
-CLS
 CALL :HEADER
 ECHO Navigation:
 ECHO -View Basic Settings    (B)
@@ -2408,7 +2424,6 @@ IF /I "%usrInput%"=="X" GOTO :EOF
 GOTO :SETTINGS_SET_LIST_ADV
 
 :SETTINGS_SETONE
-CLS
 CALL :SETTINGS_GETINFO %1
 CALL :HEADER
 ECHO. *%SETTINGTITLE%*
