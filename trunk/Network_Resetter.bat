@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r127
+	SET rvsn=r128
 REM Branch:
 	SET Branch=
 
@@ -1477,7 +1477,7 @@ IF EXIST "%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UB
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
+(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "%THISFILENAME%")>%updaterfile%
 (ECHO START CMD /C "%THISFILENAMEPATH%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
