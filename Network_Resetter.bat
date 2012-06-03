@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r125
+	SET rvsn=r126
 REM Branch:
 	SET Branch=
 
@@ -2137,6 +2137,54 @@ REM --------------------------------------------------------------
 
 
 
+:SETTINGS_OPTION
+CALL :HEADER
+ECHO.
+IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Temporary Settings*
+IF "%SETNFileDir%"=="TEMP" ECHO.
+ECHO What would you like to do?
+ECHO -Detect/Fix Connection   [1]
+ECHO -Edit Configuration      [2]
+ECHO -Check for Update        [3]
+ECHO -EXIT                    [x]
+ECHO.
+SET usrInput=
+SET /P usrInput=[1/2/3/x] 
+IF "%usrInput%"=="" GOTO :EOF
+IF "%usrInput%"=="1" SET usrInput=&GOTO :EOF
+IF "%usrInput%"=="2" SET usrInput=&CALL :SETTINGS_SET
+IF "%usrInput%"=="3" SET usrInput=&SET currently=Manual check for updates...
+IF "%usrInput%"=="3" SET usrInput=&CALL :SelfUpdate
+IF /I "%usrInput%"=="x" EXIT
+GOTO :SETTINGS_OPTION
+
+:SETTINGS_SET
+SET SetnBeenSet=1
+IF "%SETNFileDir%"=="TEMP" CALL :SETTINGS_CHKCHOOSELOC
+CALL :HEADER
+IF "%SETNFileDir%"=="TEMP" ECHO You have selected Temporary Settings
+IF "%SETNFileDir%"=="TEMP" ECHO.
+IF "%SETNFileDir%"=="TEMP" ECHO Changes made to settings will be lost when program
+IF "%SETNFileDir%"=="TEMP" ECHO is closed.
+IF "%SETNFileDir%"=="TEMP" ECHO.
+ECHO What would you like to do?
+ECHO -Review all settings                        (1)
+ECHO -Choose setting to change from list         (2)
+ECHO -Select a Settings Preset                   (3)
+ECHO -Reset all settings to their default values (4)
+ECHO -Change where settings are stored           (5)
+ECHO -Main Menu                                  (x)
+ECHO.
+SET usrInput=
+SET /P usrInput=[1/2/3/4/5/X] 
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+IF "%usrInput%"=="1" SET usrInput=&CALL :SETTINGS_SET_ALL
+IF "%usrInput%"=="2" SET usrInput=&CALL :SETTINGS_SET_LIST_MAIN
+IF "%usrInput%"=="3" SET usrInput=&CALL :SETTINGS_SELECT_PRESET
+IF "%usrInput%"=="4" SET usrInput=&CALL :SETTINGS_RESET
+IF "%usrInput%"=="5" SET usrInput=&CALL :SETTINGS_CHANGESETTINGLOCATION
+GOTO :SETTINGS_SET
+
 
 :SETTINGS_CHECKFILE
 SET SETNFILECHK=0
@@ -2181,38 +2229,16 @@ IF NOT "%FOUNDPORT%"==""  ECHO -Portable [Same folder as main file] [P]
 SET usrInput=
 SET /P usrInput=[] 
 IF NOT "%FOUNDPORT%"=="" IF /I "%usrInput%"=="P" SET SETNFileDir=%THISFILEDIR%
-IF NOT "%FOUNDPORT%"=="" IF /I "%usrInput%"=="P" GOTO :EOF
+IF NOT "%FOUNDPORT%"=="" IF /I "%usrInput%"=="P" SET usrInput=&GOTO :EOF
 IF NOT "%FOUNDUSER%"=="" IF /I "%usrInput%"=="U" SET SETNFileDir=%Appdata%\NWResetter\
-IF NOT "%FOUNDUSER%"=="" IF /I "%usrInput%"=="U" GOTO :EOF
+IF NOT "%FOUNDUSER%"=="" IF /I "%usrInput%"=="U" SET usrInput=&GOTO :EOF
 IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" SET SETNFileDir=C:\NWResetter\
-IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" GOTO :EOF
+IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_CHECKFILE_MULTIPLE
 
 :SETTINGS_CHECKFILE_END
 IF "%INITPARAMS%"=="SETTINGS" SET INITPARAMS=
 GOTO :EOF
-
-
-:SETTINGS_OPTION
-CALL :HEADER
-ECHO.
-IF "%SETNFileDir%"=="TEMP" ECHO *Currently Using Temporary Settings*
-IF "%SETNFileDir%"=="TEMP" ECHO.
-ECHO What would you like to do?
-ECHO -Detect/Fix Connection   [1]
-ECHO -Edit Configuration      [2]
-ECHO -Check for Update        [3]
-ECHO -EXIT                    [x]
-ECHO.
-SET usrInput=
-SET /P usrInput=[1/2/3/x] 
-IF "%usrInput%"=="" GOTO :EOF
-IF "%usrInput%"=="1" GOTO :EOF
-IF "%usrInput%"=="2" GOTO :SETTINGS_SET
-IF "%usrInput%"=="3" SET currently=Manual check for updates...
-IF "%usrInput%"=="3" CALL :SelfUpdate
-IF /I "%usrInput%"=="x" EXIT
-GOTO :SETTINGS_OPTION
 
 
 
@@ -2229,10 +2255,10 @@ ECHO.
 SET usrInput=
 SET /P usrInput=[1/2/3/4] 
 IF "%usrInput%"=="" GOTO :SETTINGS_CHANGESETTINGLOCATION_TEMP
-IF "%usrInput%"=="1" GOTO :SETTINGS_CHANGESETTINGLOCATION_TEMP
-IF "%usrInput%"=="2" GOTO :SETTINGS_CHANGESETTINGLOCATION_USR
-IF "%usrInput%"=="3" GOTO :SETTINGS_CHANGESETTINGLOCATION_LOC
-IF "%usrInput%"=="4" GOTO :SETTINGS_CHANGESETTINGLOCATION_PORT
+IF "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION_TEMP
+IF "%usrInput%"=="2" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION_USR
+IF "%usrInput%"=="3" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION_LOC
+IF "%usrInput%"=="4" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION_PORT
 GOTO :SETTINGS_CHANGESETTINGLOCATION
 
 
@@ -2275,32 +2301,7 @@ CALL :SETTINGS_RESET2DEFAULT
 CALL :SETTINGS_EXPORT
 GOTO :EOF
 
-:SETTINGS_SET
-SET SetnBeenSet=1
-IF "%SETNFileDir%"=="TEMP" CALL :SETTINGS_CHKCHOOSELOC
-CALL :HEADER
-IF "%SETNFileDir%"=="TEMP" ECHO You have selected Temporary Settings
-IF "%SETNFileDir%"=="TEMP" ECHO.
-IF "%SETNFileDir%"=="TEMP" ECHO Changes made to settings will be lost when program
-IF "%SETNFileDir%"=="TEMP" ECHO is closed.
-IF "%SETNFileDir%"=="TEMP" ECHO.
-ECHO What would you like to do?
-ECHO -Review all settings                        (1)
-ECHO -Choose setting to change from list         (2)
-ECHO -Select a Settings Preset                   (3)
-ECHO -Reset all settings to their default values (4)
-ECHO -Change where settings are stored           (5)
-ECHO -Main Menu                                  (x)
-ECHO.
-SET usrInput=
-SET /P usrInput=[1/2/3/4/5/X] 
-IF /I "%usrInput%"=="X" GOTO :EOF
-IF "%usrInput%"=="1" CALL :SETTINGS_SET_ALL
-IF "%usrInput%"=="2" CALL :SETTINGS_SET_LIST_MAIN
-IF "%usrInput%"=="3" CALL :SETTINGS_SELECT_PRESET
-IF "%usrInput%"=="4" CALL :SETTINGS_RESET
-IF "%usrInput%"=="5" CALL :SETTINGS_CHANGESETTINGLOCATION
-GOTO :SETTINGS_SET
+
 
 :SETTINGS_CHKCHOOSELOC
 CALL :HEADER
@@ -2311,8 +2312,8 @@ ECHO Would you like to choose a place to save your settings?
 SET usrInput=
 SET /P usrInput=[y/n] 
 IF /I "%usrInput%"=="" GOTO :SETTINGS_CHANGESETTINGLOCATION
-IF /I "%usrInput%"=="Y" GOTO :SETTINGS_CHANGESETTINGLOCATION
-IF /I "%usrInput%"=="N" GOTO :EOF
+IF /I "%usrInput%"=="Y" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION
+IF /I "%usrInput%"=="N" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_CHKCHOOSELOC
 
 
@@ -2328,11 +2329,11 @@ ECHO -Cancel                                     (X)
 ECHO.
 SET usrInput=
 SET /P usrInput=[1/2/3/4/X] 
-IF /I "%usrInput%"=="X" GOTO :EOF
-IF "%usrInput%"=="1" GOTO :SETTINGS_VIEW_PRESET01
-IF "%usrInput%"=="2" GOTO :SETTINGS_VIEW_PRESET02
-IF "%usrInput%"=="3" GOTO :SETTINGS_VIEW_PRESET03
-IF "%usrInput%"=="4" GOTO :SETTINGS_VIEW_PRESET04
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+IF "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET01
+IF "%usrInput%"=="2" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET02
+IF "%usrInput%"=="3" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET03
+IF "%usrInput%"=="4" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET04
 GOTO :SETTINGS_SELECT_PRESET
 
 
@@ -2386,10 +2387,10 @@ IF "%usrInput%"=="1" CALL :SETTINGS_SETONE B1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE B2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B3
 IF "%usrInput%"=="4" CALL :SETTINGS_SETONE B4
-IF /I "%usrInput%"=="U" GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" GOTO :EOF
+IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
+IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_SET_LIST_MAIN
 
 :SETTINGS_SET_LIST_UPDATE
@@ -2414,10 +2415,10 @@ SET /P usrInput=[M/A/X/1/2/3]
 IF "%usrInput%"=="1" CALL :SETTINGS_SETONE U1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE U2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE U3
-IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" GOTO :EOF
+IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
+IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_SET_LIST_UPDATE
 
 :SETTINGS_SET_LIST_MISC
@@ -2451,10 +2452,10 @@ IF "%usrInput%"=="6" CALL :SETTINGS_SETONE M6
 IF "%usrInput%"=="7" CALL :SETTINGS_SETONE M7
 IF "%usrInput%"=="8" CALL :SETTINGS_SETONE M8
 IF "%usrInput%"=="9" CALL :SETTINGS_SETONE M9
-IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="U" GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="A" GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" GOTO :EOF
+IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_SET_LIST_MISC
 
 
@@ -2491,10 +2492,10 @@ IF "%usrInput%"=="7" CALL :SETTINGS_SETONE A7
 IF "%usrInput%"=="8" CALL :SETTINGS_SETONE A8
 IF "%usrInput%"=="9" CALL :SETTINGS_SETONE A9
 IF "%usrInput%"=="10" CALL :SETTINGS_SETONE A10
-IF /I "%usrInput%"=="B" GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="U" GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="M" GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="X" GOTO :EOF
+IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_SET_LIST_ADV
 
 :SETTINGS_SETONE
@@ -2796,10 +2797,10 @@ ECHO -View next preset      [N]
 ECHO -Cancel                [X]
 SET usrInput=
 SET /P usrInput=[1/N/X] 
-IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
-IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET02
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET02
 IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET01
-IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET01
+IF /I "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_PRESET01
 GOTO :SETTINGS_VIEW_PRESET01
 
 :SETTINGS_VIEW_PRESET02
@@ -2819,10 +2820,10 @@ ECHO -View next preset      [N]
 ECHO -Cancel                [X]
 SET usrInput=
 SET /P usrInput=[1/N/X] 
-IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
-IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET03
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET03
 IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET02
-IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET02
+IF /I "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_PRESET02
 GOTO :SETTINGS_VIEW_PRESET02
 
 :SETTINGS_VIEW_PRESET03
@@ -2841,10 +2842,10 @@ ECHO -View next preset      [N]
 ECHO -Cancel                [X]
 SET usrInput=
 SET /P usrInput=[1/N/X] 
-IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
-IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET04
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET04
 IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET03
-IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET03
+IF /I "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_PRESET03
 GOTO :SETTINGS_VIEW_PRESET03
 
 :SETTINGS_VIEW_PRESET04
@@ -2864,10 +2865,10 @@ ECHO -View next preset      [N]
 ECHO -Cancel                [X]
 SET usrInput=
 SET /P usrInput=[1/N/X] 
-IF /I "%usrInput%"=="X" GOTO :SETTINGS_SELECT_PRESET
-IF /I "%usrInput%"=="N" GOTO :SETTINGS_VIEW_PRESET01
+IF /I "%usrInput%"=="X" SET usrInput=&GOTO :SETTINGS_SELECT_PRESET
+IF /I "%usrInput%"=="N" SET usrInput=&GOTO :SETTINGS_VIEW_PRESET01
 IF /I "%usrInput%"=="" GOTO :SETTINGS_PRESET04
-IF /I "%usrInput%"=="1" GOTO :SETTINGS_PRESET04
+IF /I "%usrInput%"=="1" SET usrInput=&GOTO :SETTINGS_PRESET04
 GOTO :SETTINGS_VIEW_PRESET04
 
 :SETTINGS_PRESET01
