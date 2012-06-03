@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r122
+	SET rvsn=r123
 REM Branch:
 	SET Branch=
 
@@ -1120,8 +1120,8 @@ GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
 SET currently=Currently Connected to the Internet.
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1^
-&IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% SET TestsSinceUpdate=0&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% ^
+SET TestsSinceUpdate=0&IF %TestsSinceUpdate%==0 CALL :SelfUpdate&SET /A TestsSinceUpdate+=1
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 SET currently2=
@@ -1217,10 +1217,11 @@ SET CONNFIX=0
 SET NETFIX=0
 SET ROUTEFIX=0
 
-
 SET currently=Successfully Connected to Internet.
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1^
-&IF %TestsSinceUpdate% GEQ %CHECKUPDATEFREQ% SET TestsSinceUpdate=0&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate% GEQ ^
+%CHECKUPDATEFREQ% SET TestsSinceUpdate=0
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 SET /A TestsSinceUpdate+=1
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently2=
@@ -1231,7 +1232,7 @@ ECHO If you still cannot access the internet, you may need
 ECHO to log into the network via Cisco or a similar program.
 ECHO.
 ECHO Press any key to return to main menu...
-PAUSE
+PAUSE>NUL
 GOTO :TOP
 REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
 
@@ -1269,6 +1270,10 @@ REM UPDATECHANNEL: 1=stable 2=beta 3=dev
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Initializing...
 %NoECHO%CALL :STATS
+SET rvsnchk=%rvsn:.=%
+SET rvsnchk=%rvsnchk:_=%
+SET rvsnchk=%rvsnchk:r=%
+SET rvsnchk=%rvsnchk:v=%
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
 CALL :SelfUpdate_GETRemoteServer
@@ -1302,10 +1307,6 @@ REM Compare versions
 
 SET remotevsn=%remotevsn:.=%
 SET remotevsn=%remotevsn:_=%
-SET rvsnchk=%rvsn:.=%
-SET rvsnchk=%rvsnchk:_=%
-SET rvsnchk=%rvsnchk:r=%
-SET rvsnchk=%rvsnchk:v=%
 IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 
@@ -1429,17 +1430,44 @@ EXIT
 :SU_UpdateByCheckout
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Comparing versions...
+%NoECHO%CALL :STATS
+
+IF NOT "%branch%"=="" SET webdowntimeout=15
+IF NOT "%branch%"=="" SET DLFilePath=%remoteserver%cur
+IF NOT "%branch%"=="" SET DLFileName=cur.bat
+IF NOT "%branch%"=="" CALL :SelfUpdate_DLFile
+SET SU_ERR=301
+IF NOT "%branch%"=="" IF NOT EXIST %THISFILEDIR%%DLFileName% GOTO :SelfUpdate_Error
+IF NOT "%branch%"=="" CALL %THISFILEDIR%%DLFileName%
+IF "!BR_%branchurl%!"=="integrated" SET branchurl=
+
+SET SU_ERR=302
+SET remoteRepo=http://nwconnectionresetter.googlecode.com/svn/trunk/
+IF NOT "%branchurl%"=="" SET remoteRepo=http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl%/
+FOR /F "tokens=* DELIMS=" %%u IN ('svn info %remoteRepo%Network_Resetter.bat') DO ^
+ECHO %%u |FIND "Last Changed Rev">NUL&IF NOT ERRORLEVEL 1 SET SU_InLine=%%u
+FOR /F "tokens=4 DELIMS= " %%u IN ("%SU_InLine%") DO SET remotevsn=%%u
+IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
+
+SET remotevsn=%remotevsn:.=%
+SET remotevsn=%remotevsn:_=%
+IF %rvsnchk% GEQ %remotevsn% GOTO :SelfUpdate_AlreadyUp2Date
+
+
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET SpecificStatus=Checking out latest version...
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfoldername checkoutfolder
 CALL :GET_Randomfilename NR_Update .bat
 
-SET SU_ERR=301
+SET SU_ERR=303
 IF "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/trunk %checkoutfolder%
 IF NOT "%Branch%"=="" svn checkout http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% %checkoutfolder%
 IF NOT EXIST "%THISFILEDIR%%checkoutfolder%" Network_Resetter.bat GOTO :SelfUpdate_Error
-SET SU_ERR=302
+SET SU_ERR=304
 MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%NR_Update%"
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 SET SU_UBC_DelfolAttempts=0
@@ -1451,10 +1479,11 @@ IF EXIST "%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 5 GOTO :SU_UB
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "Network_Resetter.bat")>%updaterfile%
+(ECHO PAUSE)>%updaterfile%
 (ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
-SET SU_ERR=303
+SET SU_ERR=305
 START CMD /C "%THISFILEDIR%%updaterfile%"
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 EXIT
@@ -1512,14 +1541,22 @@ REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%IF %SU_ERR%==201 ECHO ERR:%SU_ERR% SVN command line not installed properly^
 %NoECHO%				&CALL :SU_ERRSOL_SVN
 
-%NoECHO%IF %SU_ERR%==301 ECHO ERR:%SU_ERR% Could not checkout updated script to new folder^
+%NoECHO%IF %SU_ERR%==301 ECHO ERR:%SU_ERR% Could not retrieve remote versions file^
 %NoECHO%				 &CALL :SU_ERRSOL_READWRITE^
 %NoECHO%				 &CALL :SU_ERRSOL_NET
 
-%NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not move/rename temporary update file^
+%NoECHO%IF %SU_ERR%==302 ECHO ERR:%SU_ERR% Could not retrieve svn remote versions^
+%NoECHO%				&CALL :SU_ERRSOL_CHANGEDFORMAT
+%NoECHO%				 &CALL :SU_ERRSOL_NET
+
+%NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not checkout updated script to new folder^
+%NoECHO%				 &CALL :SU_ERRSOL_READWRITE^
+%NoECHO%				 &CALL :SU_ERRSOL_NET
+
+%NoECHO%IF %SU_ERR%==304 ECHO ERR:%SU_ERR% Could not move/rename temporary update file^
 %NoECHO%				 &CALL :SU_ERRSOL_READWRITE
 
-%NoECHO%IF %SU_ERR%==303 ECHO ERR:%SU_ERR% Could not start temporary script file
+%NoECHO%IF %SU_ERR%==305 ECHO ERR:%SU_ERR% Could not start temporary script file
 %NoECHO%ECHO.
 PAUSE
 GOTO :EOF
