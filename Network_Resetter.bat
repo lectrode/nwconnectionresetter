@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r133
+	SET rvsn=r134
 REM Branch:
 	SET Branch=
 
@@ -72,7 +72,7 @@ SET MINUTES=10
 SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
-SET AUTOUPDATE=1
+SET AUTOUPDATE=0
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
 SET SHOW_ADVANCED_TESTING=1
@@ -80,7 +80,7 @@ SET SLWMSG=0
 SET TIMER_REFRESH_RATE=1
 SET START_AT_LOGON=0
 SET START_MINIMIZED=0
-SET UPDATECHANNEL=3
+SET UPDATECHANNEL=2
 SET CHECKUPDATEFREQ=5
 SET USELOGGING=1
 SET OMIT_USER_INPUT=0
@@ -138,28 +138,28 @@ SET currently=
 SET currently2=
 SET SpecificStatus=
 SET delaymins=
-IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=0
+IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
 IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
 
-IF NOT "%StartDate%"=="" GOTO :AFTSETTIME
-SET StartDate=%DATE% %TIME%
-GOTO :AFTSETTIME
-SET iYEAR=%DATE:~-4%
-SET iMONTH=%DATE:~4,2%
-SET iDAY=%DATE:~7,2%
-SET iHOUR=%TIME:~0,2%
-SET iMINUTE=%TIME:~3,2%
-SET iSECOND=%TIME:~6,2%
 
-IF NOT %iYEAR% GEQ 10 SET iYEAR=%iYEAR:~1,1% 
-IF NOT %iMONTH% GEQ 10 SET iMONTH=%iMONTH:~1,1%
-IF NOT %iDAY% GEQ 10 SET iDAY=%iDAY:~1,1%
-IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
-IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
-IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
-:AFTSETTIME
+IF "%StartDate%"=="" SET StartDate=%DATE% %TIME%
+REM GOTO :AFTSETTIME
+REM SET iYEAR=%DATE:~-4%
+REM SET iMONTH=%DATE:~4,2%
+REM SET iDAY=%DATE:~7,2%
+REM SET iHOUR=%TIME:~0,2%
+REM SET iMINUTE=%TIME:~3,2%
+REM SET iSECOND=%TIME:~6,2%
+
+REM IF NOT %iYEAR% GEQ 10 SET iYEAR=%iYEAR:~1,1% 
+REM IF NOT %iMONTH% GEQ 10 SET iMONTH=%iMONTH:~1,1%
+REM IF NOT %iDAY% GEQ 10 SET iDAY=%iDAY:~1,1%
+REM IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
+REM IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
+REM IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
+REM :AFTSETTIME
 
 CALL :DETECT_ADMIN_RIGHTS
 
@@ -261,7 +261,7 @@ REM ------------------------END PROGRAM SLEEP---------------------
 REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
 %NoECHO%CLS
-%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%SET LastTitle=%THISTITLE%
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
@@ -1130,8 +1130,9 @@ GOTO :TOP
 
 
 :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
+SET /A TestsSinceUpdate+=1
 IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 SET /A TestsSinceUpdate+=1&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
 SET currently=Waiting to re-check Internet Connection...
 SET currently2=Last check: Connected
 CALL :STATS
@@ -1217,8 +1218,9 @@ SET NETFIX=0
 SET ROUTEFIX=0
 
 SET currently=Successfully Connected to Internet.
+SET /A TestsSinceUpdate+=1
 IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 SET /A TestsSinceUpdate+=1&CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently2=
