@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r134
+	SET rvsn=r135
 REM Branch:
 	SET Branch=
 
@@ -1411,15 +1411,13 @@ IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Comparing versions...
+%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_dev
 
-SET SU_NeedsUpdate=0
 FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
-ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_NeedsUpdate=1
-IF %SU_NeedsUpdate%==0 GOTO :SelfUpdate_AlreadyUp2Date
+ECHO %%u |FIND "*">NUL&IF ERRORLEVEL 1 GOTO :SelfUpdate_AlreadyUp2Date
 
 :SU_ForceUpdate_dev
 %NoECHO%SET currently=%currently%
@@ -1439,7 +1437,7 @@ EXIT
 :SU_UpdateByCheckout
 %NoECHO%SET currently=%currently%
 %NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Comparing versions...
+%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_UBC
@@ -1460,6 +1458,11 @@ FOR /F "tokens=* DELIMS=" %%u IN ('svn info %remoteRepo%Network_Resetter.bat') D
 ECHO %%u |FIND "Last Changed Rev">NUL&IF NOT ERRORLEVEL 1 SET SU_InLine=%%u
 FOR /F "tokens=4 DELIMS= " %%u IN ("%SU_InLine%") DO SET remotevsn=%%u
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
+
+%NoECHO%SET currently=%currently%
+%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET SpecificStatus=Comparing versions...
+%NoECHO%CALL :STATS
 
 SET remotevsn=%remotevsn:.=%
 SET remotevsn=%remotevsn:_=%
