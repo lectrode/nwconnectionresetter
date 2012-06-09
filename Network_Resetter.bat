@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r135
+	SET rvsn=r136
 REM Branch:
 	SET Branch=
 
@@ -510,7 +510,7 @@ SET totalTests=0
 SET fluke_test_eliminator=5
 SET maxTestLimit=15
 SET /A NumStalls+=1
-SET T_MILI_SMALLEST=200
+SET T_MILI_SMALLEST=300
 
 :TEST_TESTING
 FOR /F "delims=" %%a IN ('PING -n 1 "%testwebsite%"') DO @SET ping_test=%%a
@@ -1002,63 +1002,63 @@ IF %1==EN SET disOrEn=Enable
 IF %1==EN SET trufalse=false
 IF %1==DIS SET disOrEn=Disable
 IF %1==DIS SET trufalse=true
-ECHO disoren: %disOrEn%
-ECHO trufalse: %trufalse%
-(ECHO Const ssfCONTROLS = 3)>>%disOrEn%Network.vbs
-(ECHO sConnectionName = "%NETWORK%")>>%disOrEn%Network.vbs
-(ECHO sEnableVerb = "En&able")>>%disOrEn%Network.vbs
-(ECHO sDisableVerb = "Disa&ble")>>%disOrEn%Network.vbs
-(ECHO set shellApp = createobject("shell.application"))>>%disOrEn%Network.vbs
-(ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS))>>%disOrEn%Network.vbs
-(ECHO set oNetConnections = nothing)>>%disOrEn%Network.vbs
-(ECHO for each folderitem in oControlPanel.items)>>%disOrEn%Network.vbs
-(ECHO   if folderitem.name = "Network Connections" then)>>%disOrEn%Network.vbs
-(ECHO         set oNetConnections = folderitem.getfolder: exit for)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO next)>>%disOrEn%Network.vbs
-(ECHO if oNetConnections is nothing then)>>%disOrEn%Network.vbs
-(ECHO msgbox "Couldn't find 'Network Connections' folder")>>%disOrEn%Network.vbs
-(ECHO wscript.quit)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO set oLanConnection = nothing)>>%disOrEn%Network.vbs
-(ECHO for each folderitem in oNetConnections.items)>>%disOrEn%Network.vbs
-(ECHO if lcase(folderitem.name) = lcase(sConnectionName) then)>>%disOrEn%Network.vbs
-(ECHO set oLanConnection = folderitem: exit for)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO next)>>%disOrEn%Network.vbs
-(ECHO Dim objFSO)>>%disOrEn%Network.vbs
-(ECHO if oLanConnection is nothing then)>>%disOrEn%Network.vbs
-(ECHO msgbox "Couldn't find %NETWORK%")>>%disOrEn%Network.vbs
-(ECHO msgbox "This program requires a valid Network Connection name to work properly")>>%disOrEn%Network.vbs
-(ECHO msgbox "Please close the program and open it with notepad for more information")>>%disOrEn%Network.vbs
-(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>%disOrEn%Network.vbs
-(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>%disOrEn%Network.vbs
-(ECHO Set objFSO = Nothing)>>%disOrEn%Network.vbs
-(ECHO wscript.quit)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO bEnabled = true)>>%disOrEn%Network.vbs
-(ECHO set oEnableVerb = nothing)>>%disOrEn%Network.vbs
-(ECHO set oDisableVerb = nothing)>>%disOrEn%Network.vbs
-(ECHO s = "Verbs: " & vbcrlf)>>%disOrEn%Network.vbs
-(ECHO for each verb in oLanConnection.verbs)>>%disOrEn%Network.vbs
-(ECHO s = s & vbcrlf & verb.name)>>%disOrEn%Network.vbs
-(ECHO if verb.name = sEnableVerb then)>>%disOrEn%Network.vbs
-(ECHO set oEnableVerb = verb)>>%disOrEn%Network.vbs
-(ECHO bEnabled = false)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO if verb.name = sDisableVerb then)>>%disOrEn%Network.vbs
-(ECHO set oDisableVerb = verb)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO next)>>%disOrEn%Network.vbs
-(ECHO if bEnabled = %trufalse% then)>>%disOrEn%Network.vbs
-(ECHO o%disOrEn%Verb.DoIt)>>%disOrEn%Network.vbs
-(ECHO end if)>>%disOrEn%Network.vbs
-(ECHO wscript.sleep 2000)>>%disOrEn%Network.vbs
-(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>%disOrEn%Network.vbs
-(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>%disOrEn%Network.vbs
-(ECHO Set objFSO = Nothing)>>%disOrEn%Network.vbs
+CALL :GET_Randomfilename %disOrEn%Network vbs
+SET %disOrEn%Network="%THISFILEDIR%%disOrEn%Network"
+(ECHO Const ssfCONTROLS = 3)>>!%disOrEn%Network!
+(ECHO sConnectionName = "%NETWORK%")>>!%disOrEn%Network!
+(ECHO sEnableVerb = "En&able")>>!%disOrEn%Network!
+(ECHO sDisableVerb = "Disa&ble")>>!%disOrEn%Network!
+(ECHO set shellApp = createobject("shell.application"))>>!%disOrEn%Network!
+(ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS))>>!%disOrEn%Network!
+(ECHO set oNetConnections = nothing)>>!%disOrEn%Network!
+(ECHO for each folderitem in oControlPanel.items)>>!%disOrEn%Network!
+(ECHO   if folderitem.name = "Network Connections" then)>>!%disOrEn%Network!
+(ECHO         set oNetConnections = folderitem.getfolder: exit for)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO next)>>!%disOrEn%Network!
+(ECHO if oNetConnections is nothing then)>>!%disOrEn%Network!
+(ECHO msgbox "Couldn't find 'Network Connections' folder")>>!%disOrEn%Network!
+(ECHO wscript.quit)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO set oLanConnection = nothing)>>!%disOrEn%Network!
+(ECHO for each folderitem in oNetConnections.items)>>!%disOrEn%Network!
+(ECHO if lcase(folderitem.name) = lcase(sConnectionName) then)>>!%disOrEn%Network!
+(ECHO set oLanConnection = folderitem: exit for)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO next)>>!%disOrEn%Network!
+(ECHO Dim objFSO)>>!%disOrEn%Network!
+(ECHO if oLanConnection is nothing then)>>!%disOrEn%Network!
+(ECHO msgbox "Couldn't find %NETWORK%")>>!%disOrEn%Network!
+(ECHO msgbox "This program requires a valid Network Connection name to work properly")>>!%disOrEn%Network!
+(ECHO msgbox "Please close the program and open it with notepad for more information")>>!%disOrEn%Network!
+(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>!%disOrEn%Network!
+(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>!%disOrEn%Network!
+(ECHO Set objFSO = Nothing)>>!%disOrEn%Network!
+(ECHO wscript.quit)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO bEnabled = true)>>!%disOrEn%Network!
+(ECHO set oEnableVerb = nothing)>>!%disOrEn%Network!
+(ECHO set oDisableVerb = nothing)>>!%disOrEn%Network!
+(ECHO s = "Verbs: " & vbcrlf)>>!%disOrEn%Network!
+(ECHO for each verb in oLanConnection.verbs)>>!%disOrEn%Network!
+(ECHO s = s & vbcrlf & verb.name)>>!%disOrEn%Network!
+(ECHO if verb.name = sEnableVerb then)>>!%disOrEn%Network!
+(ECHO set oEnableVerb = verb)>>!%disOrEn%Network!
+(ECHO bEnabled = false)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO if verb.name = sDisableVerb then)>>!%disOrEn%Network!
+(ECHO set oDisableVerb = verb)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO next)>>!%disOrEn%Network!
+(ECHO if bEnabled = %trufalse% then)>>!%disOrEn%Network!
+(ECHO o%disOrEn%Verb.DoIt)>>!%disOrEn%Network!
+(ECHO end if)>>!%disOrEn%Network!
+(ECHO wscript.sleep 2000)>>!%disOrEn%Network!
+(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>!%disOrEn%Network!
+(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>!%disOrEn%Network!
+(ECHO Set objFSO = Nothing)>>!%disOrEn%Network!
 CALL :STATS
-cscript %disOrEn%Network.vbs
+START /B /WAIT CMD /C cscript //B //NoLogo !%disOrEn%Network!
 GOTO :EOF
 REM --------------END DISABLE/ENABLE CONNECTION FOR WINXP----------------
 
@@ -1533,7 +1533,7 @@ GOTO :EOF
 
 
 :SelfUpdate_Error
-%NoECHO%MODE CON LINES=120
+%NoECHO%::MODE CON LINES=120
 REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%ECHO Self-Update has encountered a critical error and cannot continue
 %NoECHO%ECHO.
