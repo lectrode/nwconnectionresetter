@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r144
+	SET rvsn=r145
 REM Branch:
 	SET Branch=
 
@@ -1443,7 +1443,8 @@ IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_dev
 
 SET SU_HasSVNUpdate=0
 FOR /F "tokens=* DELIMS=" %%u IN ('svn status --trust-server-cert --non-interactive --verbose --show-updates') DO ^
-ECHO %%u |FIND "*">NUL&IF %ERRORLEVEL% EQU 0 SET SU_HasSVNUpdate=1
+ECHO %%u |FIND "*">NUL&IF NOT ERRORLEVEL 1 SET SU_HasSVNUpdate=1
+
 IF %SU_HasSVNUpdate% EQU 0 GOTO :SelfUpdate_AlreadyUp2Date
 
 
