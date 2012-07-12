@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r140
+	SET rvsn=r141
 REM Branch:
 	SET Branch=
 
@@ -1441,7 +1441,7 @@ IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_dev
 
-FOR /F "tokens=* DELIMS=" %%u IN ('svn status --trust-server-cert --verbose --show-updates') DO ^
+FOR /F "tokens=* DELIMS=" %%u IN ('svn status --trust-server-cert --non-interactive --verbose --show-updates') DO ^
 ECHO %%u |FIND "*">NUL&IF ERRORLEVEL 1 GOTO :SelfUpdate_AlreadyUp2Date
 
 :SU_ForceUpdate_dev
@@ -1452,7 +1452,7 @@ ECHO %%u |FIND "*">NUL&IF ERRORLEVEL 1 GOTO :SelfUpdate_AlreadyUp2Date
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO svn update --trust-server-cert)>%updaterfile%
+(ECHO svn update --trust-server-cert --non-interactive)>%updaterfile%
 (ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
@@ -1479,7 +1479,7 @@ IF "!BR_%branchurl%!"=="integrated" SET branchurl=
 SET SU_ERR=302
 SET remoteRepo=http://nwconnectionresetter.googlecode.com/svn/trunk/
 IF NOT "%branchurl%"=="" SET remoteRepo=http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl%/
-FOR /F "tokens=* DELIMS=" %%u IN ('svn info --trust-server-cert %remoteRepo%Network_Resetter.bat') DO ^
+FOR /F "tokens=* DELIMS=" %%u IN ('svn info --trust-server-cert --non-interactive %remoteRepo%Network_Resetter.bat') DO ^
 ECHO %%u |FIND "Last Changed Rev">NUL&IF NOT ERRORLEVEL 1 SET SU_InLine=%%u
 FOR /F "tokens=4 DELIMS= " %%u IN ("%SU_InLine%") DO SET remotevsn=%%u
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
@@ -1503,8 +1503,8 @@ CALL :GET_Randomfoldername checkoutfolder
 CALL :GET_Randomfilename NR_Update .bat
 
 SET SU_ERR=303
-IF "%Branch%"=="" svn checkout --trust-server-cert http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%"
-IF NOT "%Branch%"=="" svn checkout --trust-server-cert http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%"
+IF "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%"
+IF NOT "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%"
 IF NOT EXIST "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" GOTO :SelfUpdate_Error
 SET SU_ERR=304
 MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%"
