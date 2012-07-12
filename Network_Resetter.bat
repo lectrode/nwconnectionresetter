@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r136
+	SET rvsn=r137
 REM Branch:
 	SET Branch=
 
@@ -134,14 +134,13 @@ SET CONNFIX=0
 SET ROUTEFIX=0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
-SET currently=
-SET currently2=
-SET SpecificStatus=
 SET delaymins=
 IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
 IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
+
+CALL :RESETCURRENTLY
 
 
 IF "%StartDate%"=="" SET StartDate=%DATE% %TIME%
@@ -200,15 +199,27 @@ IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
 
 GOTO :MAIN_START
 
+
+
+
+REM **************************************************************************
+REM *****************************GUI*&*MISC*TOOLS*****************************
+REM **************************************************************************
+
+
 :STATS
 %NoECHO%REM ---------------------PROGRAM STATUS-----------------------
 %NoECHO%SET statsSleep=%1
 %NoECHO%SET STATSSpacer=                                                                                   !
 %NoECHO%REM CALL :GETRUNTIME_LENGTH
+%NoECHO%SET currently=%currently1%%currently2%%currently3%%currently4%%currently5%
 %NoECHO%SET SHOWNETWORK="%NETWORK%"%STATSSpacer%
-%NoECHO%SET SHOWcurrently=%currently%%STATSSpacer%
+%NoECHO%SET SHOWcurrently1=%currently1%%STATSSpacer%
 %NoECHO%SET SHOWcurrently2=%currently2%%STATSSpacer%
-%NoECHO%SET SHOWSpecificStatus=%SpecificStatus%%STATSSpacer%
+%NoECHO%SET SHOWcurrently3=%currently3%%STATSSpacer%
+%NoECHO%SET SHOWcurrently4=%currently4%%STATSSpacer%
+%NoECHO%SET SHOWcurrently5=%currently5%%STATSSpacer%
+%NoECHO%SET SHOWTimerStatus=%TimerStatus%%STATSSpacer%
 %NoECHO%SET SHOWFixMode=                 
 %NoECHO%IF x%Using_Fixes%==x0 SET SHOWFixMode=-Not using fixes-
 %NoECHO%IF "%confixed%"=="" SET confixed=0
@@ -230,15 +241,18 @@ GOTO :MAIN_START
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^| %SHOWFixMode% ^|%SHOWconfixed%*
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
-								ECHO  *                                                                            *
+										ECHO  *                                                                            *
 %NoECHO%IF NOT "%NETWORK%"==""			ECHO  * Connection: %SHOWNETWORK:~0,63%*
 %NoECHO%IF NOT "%NETWORK%"==""			ECHO  *                                                                            *
-%NoECHO%IF NOT "%currently%"==""		ECHO  * Current State: %SHOWcurrently:~0,60%*
+%NoECHO%IF NOT "%currently1%"==""		ECHO  * Current State: %SHOWcurrently1:~0,60%*
 %NoECHO%IF NOT "%currently2%"==""		ECHO  *                %SHOWcurrently2:~0,60%*
+%NoECHO%IF NOT "%currently3%"==""		ECHO  *                %SHOWcurrently3:~0,60%*
+%NoECHO%IF NOT "%currently4%"==""		ECHO  *                %SHOWcurrently4:~0,60%*
+%NoECHO%IF NOT "%currently5%"==""		ECHO  *                %SHOWcurrently5:~0,60%*
 %NoECHO%IF NOT "%currently%"==""		ECHO  *                                                                            *
-%NoECHO%IF NOT "%SpecificStatus%"==""	ECHO  * %SHOWSpecificStatus:~0,75%*
-%NoECHO%IF NOT "%SpecificStatus%"==""	ECHO  *                                                                            *
-								ECHO  ******************************************************************************
+%NoECHO%IF NOT "%TimerStatus%"==""		ECHO  * %SHOWTimerStatus:~0,75%*
+%NoECHO%IF NOT "%TimerStatus%"==""		ECHO  *                                                                            *
+										ECHO  ******************************************************************************
 
 %NoECHO%IF "%SLWMSG%"=="1" CALL :SLEEP %statsSleep%
 %NoECHO%IF NOT "%SLWMSG%"=="1" IF NOT "%statsSleep%"=="" CALL :SLEEP %statsSleep%
@@ -257,6 +271,17 @@ GOTO :EOF
 REM ------------------------END PROGRAM SLEEP---------------------
 
 
+:RESETCURRENTLY
+SET currently=
+SET currently1=
+SET currently2=
+SET currently3=
+SET currently4=
+SET currently5=
+SET TimerStatus=
+GOTO :EOF
+
+
 :HEADER
 REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
@@ -270,58 +295,6 @@ REM Settings header. Used when configuring settings.
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO.
 GOTO :EOF
-
-
-REM -----------------END INITIALIZE PROGRAM------------------
-
-:MAIN_START
-REM ------------------TO FIX OR NOT TO FIX-------------------
-IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
-REM ----------------END TO FIX OR NOT TO FIX-----------------
-
-
-REM -------------INITIAL NETWORK CONNECTION TEST-------------
-REM BRANCH (SUCCESS || FIX)
-REM Determine if connection needs to be fixed
-
-IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :MAINNETTEST_FAIL
-
-REM TEST CONNECTION AND INTERNET ACCESS
-CALL :TEST_CONNECTION
-IF %isConnected%==0 GOTO :MAINCONNTEST_FAIL
-IF %isConnected%==1 GOTO :MAINCONNTEST_SUCCESS
-
-:MAINCONNTEST_SUCCESS
-CALL :TEST_INTERNET isConnected
-IF %isConnected%==0 GOTO :MAINNETTEST_FAIL
-IF %isConnected%==1 GOTO :SUCCESS
-IF %isConnected%==2 GOTO :MAINNETTEST_UNREACH
-
-
-:MAINCONNTEST_FAIL
-CALL :DISCONNECTION_DETECTED
-SET /A CONNFIX+=1
-IF %CONNFIX% GTR %NUMCONNFIXES% GOTO :FAILED
-CALL :CONNFIX%CONNFIX%
-GOTO :MAIN_START
-
-:MAINNETTEST_FAIL
-CALL :DISCONNECTION_DETECTED
-SET /A NETFIX+=1
-IF %NETFIX% GTR %NUMNETFIXES% GOTO :FAILED
-CALL :NETFIX%NETFIX%
-GOTO :MAIN_START
-
-:MAINNETTEST_UNREACH
-IF NOT "%USE_RESET_ROUTE_TABLE%"=="1" GOTO :MAINNETTEST_FAIL
-CALL :DISCONNECTION_DETECTED
-SET ROUTEFIX+=1
-IF %ROUTEFIX% GTR 1 GOTO :FAILED
-CALL :FIXUNREACHABLE
-GOTO :MAIN_START
-
-REM -----------END INITIAL NETWORK CONNECTION TEST----------
-
 
 
 
@@ -457,6 +430,59 @@ SET RUNTIMEL=%RUNTIMEL%%cHOUR%:%cMINUTE%:%cSECOND%
 GOTO :EOF
 
 
+REM -----------------END INITIALIZE PROGRAM------------------
+
+:MAIN_START
+REM ------------------TO FIX OR NOT TO FIX-------------------
+IF %Using_Fixes%==0 GOTO :CHECK_CONNECTION_ONLY
+REM ----------------END TO FIX OR NOT TO FIX-----------------
+
+
+REM -------------INITIAL NETWORK CONNECTION TEST-------------
+REM BRANCH (SUCCESS || FIX)
+REM Determine if connection needs to be fixed
+
+IF %SKIP_INITIAL_NTWK_TEST%==1 GOTO :MAINNETTEST_FAIL
+
+REM TEST CONNECTION AND INTERNET ACCESS
+CALL :TEST_CONNECTION
+IF %isConnected%==0 GOTO :MAINCONNTEST_FAIL
+IF %isConnected%==1 GOTO :MAINCONNTEST_SUCCESS
+
+:MAINCONNTEST_SUCCESS
+CALL :TEST_INTERNET isConnected
+IF %isConnected%==0 GOTO :MAINNETTEST_FAIL
+IF %isConnected%==1 GOTO :SUCCESS
+IF %isConnected%==2 GOTO :MAINNETTEST_UNREACH
+
+
+:MAINCONNTEST_FAIL
+CALL :DISCONNECTION_DETECTED
+SET /A CONNFIX+=1
+IF %CONNFIX% GTR %NUMCONNFIXES% GOTO :FAILED
+CALL :CONNFIX%CONNFIX%
+GOTO :MAIN_START
+
+:MAINNETTEST_FAIL
+CALL :DISCONNECTION_DETECTED
+SET /A NETFIX+=1
+IF %NETFIX% GTR %NUMNETFIXES% GOTO :FAILED
+CALL :NETFIX%NETFIX%
+GOTO :MAIN_START
+
+:MAINNETTEST_UNREACH
+IF NOT "%USE_RESET_ROUTE_TABLE%"=="1" GOTO :MAINNETTEST_FAIL
+CALL :DISCONNECTION_DETECTED
+SET ROUTEFIX+=1
+IF %ROUTEFIX% GTR 1 GOTO :FAILED
+CALL :FIXUNREACHABLE
+GOTO :MAIN_START
+
+REM -----------END INITIAL NETWORK CONNECTION TEST----------
+
+
+
+
 
 :TEST_CONNECTION
 REM ------------------TEST INTERNET CONNECTION-------------------
@@ -467,9 +493,9 @@ SET isConnected=0
 
 
 :CHECK_CONNECTED
-SET currently=Checking for connectivity...
+SET currently1=Checking for connectivity...
 SET currently2=[Currently Disconnected]
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 %NoECHO%IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
 FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
@@ -480,9 +506,9 @@ IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
 GOTO :CHECK_CONNECTED
 
 :CHECK_CONNECTED_FAILED
-SET currently=Connectivity test failed
+SET currently1=Connectivity test failed
 SET currently2=[Currently Disconnected]
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 SET isConnected=0
 GOTO :EOF
@@ -494,9 +520,9 @@ SET NumStalls=0
 
 
 :TEST_INIT
-SET currently=Testing Internet Connection...
+SET currently1=Testing Internet Connection...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 IF %DEBUGN%==1 GOTO :TEST_FAILED
 
@@ -639,9 +665,9 @@ SET /A main_tests=main_tests+1
 
 IF %SLWMSG%==1 CALL :SLEEP
 
-SET currently=Internet Connection not detected
+SET currently1=Internet Connection not detected
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 SET isConnected=0
@@ -652,9 +678,9 @@ GOTO :EOF
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET currently=Target sites are unreachable.
+SET currently1=Target sites are unreachable.
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 
 SET isConnected=2
@@ -664,9 +690,9 @@ GOTO :EOF
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET currently=Unable to varify internet connectivity. This is a
+SET currently1=Unable to varify internet connectivity. This is a
 SET currently2=poor quality connection. Internet browsing may be slow.
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 
 SET isConnected=1
@@ -676,9 +702,9 @@ GOTO :EOF
 IF %SLWMSG%==1 CALL :SLEEP
 IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
-SET currently=Unable to varify internet connectivity. You may need
+SET currently1=Unable to varify internet connectivity. You may need
 SET currently2=to long in via a browser for full network access.
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 
 SET isConnected=1
@@ -765,9 +791,9 @@ REM -----------------END FIX INTERNET CONNECTION------------------
 REM -------------------FIX: RESET IP ADDRESS----------------------
 REM Fix internet connection by reseting the IP address
 
-SET currently=Releasing IP Address
+SET currently1=Releasing IP Address
 SET currently2=*May take a couple minutes*
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 REM Release IP Address
@@ -775,18 +801,18 @@ IF %DEBUGN%==0 IPCONFIG /RELEASE >NUL
 
 
 REM Flush DNS Cache
-SET currently=Flushing DNS Cache
+SET currently1=Flushing DNS Cache
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 IF %DEBUGN%==0 IPCONFIG /FLUSHDNS >NUL
 
 
 REM Renew IP Address
-SET currently=Renewing IP Address
+SET currently1=Renewing IP Address
 SET currently2=*May take a couple minutes*
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
@@ -819,9 +845,9 @@ REM Disable Network, Wait, Enable Network
 REM Disable network connection
 CALL :DISABLE_NW
 
-SET currently=Waiting to re-enable [%NETWORK%]
+SET currently1=Waiting to re-enable [%NETWORK%]
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 
 REM Wait specified time
 SET delaymins=%MINUTES%
@@ -931,7 +957,7 @@ REM (always 2 digits)
 IF %scnds% LEQ 9 SET scnds=0%scnds%
 
 REM Update TimeStamp
-SET SpecificStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
+SET TimerStatus=Time Left:  %hrs%%mins%%scnds% of %HOURS%%MINUTES2%%SECONDS%
 
 REM Display updated TimeStamp
 CALL :STATS
@@ -952,18 +978,18 @@ REM ---------------------END PROGRAM TIMER------------------------
 REM -----------------DISABLE NETWORK CONNECTION-------------------
 REM Determine OS and disable via a compatible method
 
-SET currently=Disabling [%NETWORK%]...
+SET currently1=Disabling [%NETWORK%]...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS DIS
 
-SET currently=[%NETWORK%] Disabled
+SET currently1=[%NETWORK%] Disabled
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 GOTO :EOF
 REM ---------------END DISABLE NETWORK CONNECTION-----------------
@@ -973,9 +999,9 @@ REM ---------------END DISABLE NETWORK CONNECTION-----------------
 REM ------------------ENABLE NETWORK CONNECTION-------------------
 REM Determine OS and enable via a compatible method
 
-SET currently=Enabling [%NETWORK%]
+SET currently1=Enabling [%NETWORK%]
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 
 REM TEST_NETWORK_NAME (EXIT || RETURN)
@@ -983,9 +1009,9 @@ IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
 IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
 IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS EN
 
-SET currently=[%NETWORK%] Enabled
+SET currently1=[%NETWORK%] Enabled
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 GOTO :EOF
 REM ----------------END ENABLE NETWORK CONNECTION-----------------
@@ -1070,9 +1096,9 @@ REM --------------END DISABLE/ENABLE CONNECTION FOR WINXP----------------
 REM ---------------------RESTART PROGRAM--------------------------
 :RESTART_PROGRAM
 REM Self restart
-SET currently=Restarting Program...
+SET currently1=Restarting Program...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 SET restartingProgram=1
 START CMD /C "%THISFILENAMEPATH%"
@@ -1095,9 +1121,9 @@ REM --------------------------------------------------------------
 :SYSTEM_UNSUPPORTED
 REM --------------UNSUPPORTED OPERATING SYSTEM--------------------
 REM EXIT
-SET currently=This Operating System is not currently supported.
+SET currently1=This Operating System is not currently supported.
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO Press any key to EXIT...
 PAUSE>NUL
@@ -1108,20 +1134,20 @@ REM ------------END UNSUPPORTED OPERATING SYSTEM------------------
 :CHECK_CONNECTION_ONLY
 REM ---------CHECK INTERNET CONNECION ONLY (NO FIXES)-------------
 REM SAFE BRANCH (GOTO ( CHECK_CONNECTION_ONLY || EXIT ) )
-SET currently=Set to check connection only
+SET currently1=Set to check connection only
 SET currently2= (will not fix connection if not connected)
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 CALL :TEST_INTERNET isConnected
 IF %isConnected%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS
 GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
-SET currently=Currently Connected to the Internet.
+SET currently1=Currently Connected to the Internet.
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO Press any key to return to main menu...
@@ -1133,7 +1159,7 @@ GOTO :TOP
 SET /A TestsSinceUpdate+=1
 IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
-SET currently=Waiting to re-check Internet Connection...
+SET currently1=Waiting to re-check Internet Connection...
 SET currently2=Last check: Connected
 CALL :STATS
 SET /A delaymins=CHECK_DELAY
@@ -1145,9 +1171,9 @@ GOTO :CHECK_CONNECTION_ONLY
 :CHECK_CONNECTION_ONLY_FAIL
 SET /A TestsSinceUpdate+=1
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
-SET currently=NOT Connected to the Internet.
+SET currently1=NOT Connected to the Internet.
 SET currently2=No fixes are set to be used.
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO Press any key to return to main menu...
@@ -1155,9 +1181,9 @@ PAUSE>NUL
 GOTO :TOP
 
 :CHECK_CONNECTION_ONLY_FAIL_CONTINUOUS
-SET currently=Waiting to re-check Internet Connection...
+SET currently1=Waiting to re-check Internet Connection...
 SET currently2=Last check: Not Connected
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 SET /A delaymins=CHECK_DELAY
 CALL :WAIT
@@ -1174,9 +1200,9 @@ SET NETFIX=0
 SET ROUTEFIX=0
 SET /A TestsSinceUpdate+=1
 IF %CONTINUOUS%==1 GOTO :FAILED_CONTINUOUS
-SET currently=Unable to Connect to Internet.
+SET currently1=Unable to Connect to Internet.
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 IF %AUTO_RETRY%==1 GOTO :MAIN_START
 ECHO What would you like to do?
@@ -1198,9 +1224,9 @@ REM -----------------END FIX ATTEMPT FAILED-----------------------
 :FAILED_CONTINUOUS
 REM ----------------FIX ATTEMPT FAILED (RETRY)--------------------
 REM GOTO FIX
-SET currently=Unable to Connect to Internet (Retrying...)
+SET currently1=Unable to Connect to Internet (Retrying...)
 SET currently2=
-SET SpecificStatus= 
+SET TimerStatus= 
 CALL :STATS 3
 GOTO :MAIN_START
 REM --------------END FIX ATTEMPT FAILED (RETRY)------------------
@@ -1217,14 +1243,14 @@ SET CONNFIX=0
 SET NETFIX=0
 SET ROUTEFIX=0
 
-SET currently=Successfully Connected to Internet.
+SET currently1=Successfully Connected to Internet.
 SET /A TestsSinceUpdate+=1
 IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO If you still cannot access the internet, you may need
@@ -1239,9 +1265,9 @@ REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
 :SUCCESS_CONTINUOUS
 REM -------------FIX ATTEMPT SUCCEEDED (RECHECK)------------------
 REM BRANCH (SUCCESS || FIX)
-SET currently=Waiting to re-check Internet Connection...
+SET currently1=Waiting to re-check Internet Connection...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 SET /A delaymins=CHECK_DELAY
 CALL :WAIT
 GOTO :MAIN_START
@@ -1265,9 +1291,9 @@ REM UPDATECHANNEL: 1=stable 2=beta 3=dev
 %NoECHO%IF "%UPDATECHANNEL%"=="1" SET SU_GUI_UPDATECHANNEL=Stable
 %NoECHO%IF "%UPDATECHANNEL%"=="2" SET SU_GUI_UPDATECHANNEL=Beta
 %NoECHO%IF "%UPDATECHANNEL%"=="3" SET SU_GUI_UPDATECHANNEL=Dev
-%NoECHO%SET currently=%currently% 
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Initializing...
+%NoECHO%IF NOT "%currently1%"=="" SET currently2=-
+%NoECHO%SET currently3=Self Update [%SU_GUI_UPDATECHANNEL%]
+%NoECHO%SET currently4=Initializing...
 %NoECHO%CALL :STATS
 SET rvsnchk=%rvsn:.=%
 SET rvsnchk=%rvsnchk:_=%
@@ -1283,9 +1309,8 @@ IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
-%NoECHO%SET currently=%currently% 
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
+
+%NoECHO%SET currently4=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 SET webdowntimeout=15
@@ -1306,9 +1331,9 @@ SET SU_ERR=102
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
 REM Compare versions
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Comparing versions...
+
+
+%NoECHO%SET currently4=Comparing versions...
 %NoECHO%CALL :STATS
 
 SET remotevsn=%remotevsn:.=%
@@ -1318,9 +1343,9 @@ IF NOT %rvsnchk% LSS %remotevsn% GOTO :SelfUpdate_AlreadyUp2date
 
 REM Download new version
 :SU_ForceUpdate
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Downloading latest %SU_GUI_UPDATECHANNEL% version
+
+
+%NoECHO%SET currently4=Downloading latest %SU_GUI_UPDATECHANNEL% version
 %NoECHO%CALL :STATS
 
 IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
@@ -1331,18 +1356,18 @@ SET DLFileName=Network_Resetter_Update.txt
 CALL :SelfUpdate_DLFile
 
 REM Verify file contents
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Verifying downloaded file...
+
+
+%NoECHO%SET currently4=Verifying downloaded file...
 %NoECHO%CALL :STATS
 
 SET SU_ERR=103
 CALL :SelfUpdate_VerifyFileContents "%THISFILEDIR%%DLFileName%"
 IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
 
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Updating script...
+
+
+%NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfilename updaterfile .bat
@@ -1396,9 +1421,9 @@ GOTO :EOF
 
 
 :SelfUpdate_dev
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Initializing...
+
+
+%NoECHO%SET currently4=Initializing...
 %NoECHO%CALL :STATS
 
 REM Check SVN installed:
@@ -1409,9 +1434,9 @@ REM Valid working copy
 svn info>NUL
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
+
+
+%NoECHO%SET currently4=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_dev
@@ -1420,9 +1445,9 @@ FOR /F "tokens=* DELIMS=" %%u IN ('svn status --verbose --show-updates') DO ^
 ECHO %%u |FIND "*">NUL&IF ERRORLEVEL 1 GOTO :SelfUpdate_AlreadyUp2Date
 
 :SU_ForceUpdate_dev
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Updating script...
+
+
+%NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfilename updaterfile .bat
@@ -1435,9 +1460,9 @@ START CMD /C "%THISFILEDIR%%updaterfile%"
 EXIT
 
 :SU_UpdateByCheckout
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Retrieving local and remote versions...
+
+
+%NoECHO%SET currently4=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_UBC
@@ -1459,9 +1484,9 @@ ECHO %%u |FIND "Last Changed Rev">NUL&IF NOT ERRORLEVEL 1 SET SU_InLine=%%u
 FOR /F "tokens=4 DELIMS= " %%u IN ("%SU_InLine%") DO SET remotevsn=%%u
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
 
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Comparing versions...
+
+
+%NoECHO%SET currently4=Comparing versions...
 %NoECHO%CALL :STATS
 
 SET remotevsn=%remotevsn:.=%
@@ -1469,9 +1494,9 @@ SET remotevsn=%remotevsn:_=%
 IF %rvsnchk% GEQ %remotevsn% GOTO :SelfUpdate_AlreadyUp2Date
 
 :SU_ForceUpdate_UBC
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Checking out latest version...
+
+
+%NoECHO%SET currently4=Checking out latest version...
 %NoECHO%CALL :STATS
 
 CALL :GET_Randomfoldername checkoutfolder
@@ -1525,15 +1550,16 @@ GOTO :EOF
 
 :SelfUpdate_AlreadyUp2date
 REM Already up to date
-%NoECHO%SET currently=%currently%
-%NoECHO%SET currently2=Self Update [%SU_GUI_UPDATECHANNEL%]
-%NoECHO%SET SpecificStatus=Script is already up to date
+
+
+%NoECHO%SET currently4=Script is already up to date
 %NoECHO%CALL :STATS 3
+CALL :RESETCURRENTLY
 GOTO :EOF
 
 
 :SelfUpdate_Error
-%NoECHO%::MODE CON LINES=120
+::%NoECHO%MODE CON LINES=120
 REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%ECHO Self-Update has encountered a critical error and cannot continue
 %NoECHO%ECHO.
@@ -1570,8 +1596,9 @@ REM Could not self-update [ERR:%SU_ERR%]
 %NoECHO%IF %SU_ERR%==305 ECHO ERR:%SU_ERR% Could not start temporary script file
 %NoECHO%ECHO.
 IF %CONTINUOUS%==0 PAUSE
-IF %CONTINUOUS%==1 ECHO Press Ctrl+S to pause script...(will continue in some seconds)
+IF %CONTINUOUS%==1 ECHO Script will continue in some seconds
 IF %CONTINUOUS%==1 CALL :SLEEP 5
+CALL :RESETCURRENTLY
 GOTO :EOF
 
 :SU_ERRSOL_READWRITE
@@ -1612,9 +1639,9 @@ REM --------------------------------------------------------------
 
 :DETECT_ADMIN_RIGHTS
 REM ----------------------DETECT ADMIN RIGHTS---------------------
-SET currently=Checking if script has administrative
-SET currently2=privileges...
-SET SpecificStatus=
+SET currently1=Checking if script has administrative privileges...
+SET currently2=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET ISADMIN=0
 IF %DEBUGN%==0 AT > NUL
@@ -1627,7 +1654,7 @@ REM --------------------END DETECT ADMIN RIGHTS-------------------
 IF %ISADMIN%==1 GOTO :EOF
 IF %USE_NETWORK_RESET%==0 IF %USE_NETWORK_RESET_FAST%==0 GOTO :EOF
 CALL :HEADER
-ECHO Warning! This program does not have administrative privileges!
+ECHO Warning! This script was not run with administrative privileges!
 IF %ISADMIN%==0 IF "%OMIT_USER_INPUT%"=="1" ECHO Functions that require admin rights will be disabled&CALL :SLEEP 5&GOTO :EOF
 REM Functions that require admin rights:
 REM -WinXP: Temporary VBS file cannot enable or disable the adapter on limited account
@@ -1647,7 +1674,7 @@ ECHO What would you like to do?
 ECHO.
 								ECHO Temporarily disable these functions and continue    [T]
 IF NOT "%SETNFileDir%"=="TEMP"	ECHO Change these settings and continue                  [C]
-								ECHO Don't do anything and close this program            [X]
+								ECHO Don't do anything and close this script             [X]
 SET usrInput=
 IF NOT "%SETNFileDir%"=="TEMP" SET /P usrInput=[T/C/X] 
 IF "%SETNFileDir%"=="TEMP" SET /P usrInput=[T/X] 
@@ -1672,9 +1699,9 @@ REM SAFE BRANCH (EXIT || RETURN)
 REM RETURN (winVistaOrNewer (1 || 0) )
 REM Detect OS and return compatibility
 
-SET currently=Checking if Operating System is supported...
+SET currently1=Checking if Operating System is supported...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
 REM Get OS name
@@ -1697,9 +1724,9 @@ IF %ERRORLEVEL% == 0 GOTO :NewVer
 
 :UNSUPPORTED
 REM INTERNAL BRANCH (RUN_ON_SUPPORTED || SYSTEM_UNSUPPORTED)
-SET currently=Operating System is unsupported
+SET currently1=Operating System is unsupported
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO.
@@ -1712,18 +1739,18 @@ GOTO :SYSTEM_UNSUPPORTED
 
 :OldVer
 REM RETURN winVistaOrNewer (0)
-SET currently=Operating System is supported
+SET currently1=Operating System is supported
 SET currently2=(WindowsXP)
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=0
 GOTO :EOF
 
 :NewVer
 REM RETURN winVistaOrNewer (1)
-SET currently=Operating System is supported
+SET currently1=Operating System is supported
 SET currently2= (%vers%)
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=1
 GOTO :EOF
@@ -1731,14 +1758,14 @@ GOTO :EOF
 
 :RUN_ON_UNSUPPORTED
 REM INTERNAL BRANCH (CONTINUE_RUN_ANYWAY || SYSTEM_UNSUPPORTED)
-SET currently=Attempting to run on UNSUPPORTED Operating System...
+SET currently1=Attempting to run on UNSUPPORTED Operating System...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 IF %OMIT_USER_INPUT%==1 GOTO :CONTINUE_RUN_ANYWAY
 ECHO.
 ECHO.
-ECHO This may cuase unexpected behavior in this program.
+ECHO This may cuase unexpected behavior in this script.
 ECHO Are you sure you want to do this?
 SET /P usrInpt=[y/n] 
 IF "%usrInpt%"=="y" GOTO :CONTINUE_RUN_ANYWAY
@@ -1747,9 +1774,9 @@ GOTO :RUN_ON_UNSUPPORTED
 
 :CONTINUE_RUN_ANYWAY
 REM RETURN winVistaOrNewer (0)
-SET currently=Continuing to run program. OS is treated
+SET currently1=Continuing to run script. OS is treated
 SET currently2=as though it were WindowsXP
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET winVistaOrNewer=0
 GOTO :EOF
@@ -1763,25 +1790,25 @@ REM Copies self to Startup Folder if START_AT_LOGON==1
 REM Else Deletes "NetworkResetterByLectrode.bat" in 
 REM Startup Folder
 
-SET currently=Checking if set to start at user log on...
+SET currently1=Checking if set to start at user log on...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF %START_AT_LOGON%==0 GOTO :DONT_STARTUP
 IF "%SETNFileDir%"=="TEMP" GOTO :EOF
 IF "%SETNFileDir%"=="%THISFILEDIR%" GOTO :EOF
 
-SET currently=Program is set to start at user log on.
+SET currently1=Script is set to start at user log on.
 SET currently2=Copying self to Startup Folder...
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 COPY %THISFILENAME% "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
 GOTO :EOF
 
 :DONT_STARTUP
-SET currently=Program is not set to start at user log on.
+SET currently1=Script is not set to start at user log on.
 SET currently2=Removing copies of self in Startup folder, if any...
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 TYPE NUL > "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
 DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
@@ -1796,9 +1823,9 @@ REM SAFE BRANCH (EXIT || RETURN)
 IF NOT "%~1"=="1" IF %has_tested_ntwk_name_recent% GEQ 1 GOTO :EOF
 SET /A has_tested_ntwk_name_recent+=1
 
-SET currently=Checking if [%NETWORK%]
+SET currently1=Checking if [%NETWORK%]
 SET currently2=is a valid network connection name...
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
 IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
@@ -1815,10 +1842,10 @@ REM %3=max value
 SET varname=%1
 IF %2==%3 SET IntNoLimit=1
 IF NOT %2==%3 SET IntNoLimit=0
-SET currently=Checking if %varname% has a valid 
+SET currently1=Checking if %varname% has a valid 
 SET currently2=value (Integar between %2 and %3)...
 IF IntNoLimit==1 SET currently2=value (an Integar)...
-SET SpecificStatus=
+SET TimerStatus=
 IF NOT "%SHOW_ALL_ALERTS%"=="0" CALL :STATS
 
 IF "0"=="!%varname%!" GOTO :TESTIntVAR_ISNUM
@@ -1836,9 +1863,9 @@ IF %num% GEQ %2 IF %num% LEQ %3 GOTO :EOF
 
 
 :TESTIntVAR_NOTVALID
-SET currently=%varname% does not have a valid value.
+SET currently1=%varname% does not have a valid value.
 SET currently2=Setting %varname% to !%varname%_D!...
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 SET %varname%=!%varname%_D!
 GOTO :EOF
@@ -1849,19 +1876,19 @@ REM --------------------END TEST INTEGAR VALUE--------------------
 :TEST01VAR
 REM ----------------------TEST 0 or 1 VALUE-----------------------
 SET varname=%1
-SET currently=Checking if %varname% has 
+SET currently1=Checking if %varname% has 
 SET currently2=a valid value (0 or 1)...
-SET SpecificStatus=
+SET TimerStatus=
 IF NOT "%SHOW_ALL_ALERTS%"=="0" CALL :STATS
 IF "!%varname%!"=="0" GOTO :EOF
 IF "!%varname%!"=="1" GOTO :EOF
-SET currently=%varname% does not equal 1 or 0
+SET currently1=%varname% does not equal 1 or 0
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
-SET currently=Setting %varname% to !%varname%_D!...
+SET currently1=Setting %varname% to !%varname%_D!...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 SET %varname%=!%varname%_D!
 GOTO :EOF
@@ -1875,9 +1902,9 @@ REM --------------------TEST FIXES VALUES-------------------------
 REM If fixes are disabled, gives option of enable both
 REM or Continue
 
-SET currently=Checking if values for Fixes are valid...
+SET currently1=Checking if values for Fixes are valid...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
 IF %USE_IP_RESET%==1 GOTO :TEST_FIXES_VALS_OK
@@ -1888,16 +1915,16 @@ IF %ISADMIN%==0 GOTO :TEST_FIXES_VALS_AUTO
 
 
 :TEST_FIXES_VALS_INQUERY
-SET currently=All fixes are disabled.
+SET currently1=All fixes are disabled.
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 IF %OMIT_USER_INPUT%==1 GOTO :TEST_FIXES_VALS_AUTO
 ECHO.
 ECHO.
 ECHO Would you like to temporarily enable 3 of the fixes?
 ECHO.
-ECHO [ "n" : Run program but check internet connection only ]
+ECHO [ "n" : Run this script but check internet connection only ]
 ECHO [ "y" : Enable Reset IP, NetworkSlow, NetworkFast fixes ]
 ECHO.
 
@@ -1908,26 +1935,26 @@ GOTO :TEST_FIXES_VALS_INQUERY
 
 
 :TEST_FIXES_VALS_LEAVE
-SET currently=All fixes are disabled. This program will not
+SET currently1=All fixes are disabled. This script will not
 SET currently2=fix the connection if it is unconnected.
-SET SpecificStatus=
+SET TimerStatus=
 SET Using_Fixes=0
 CALL :STATS
 GOTO :EOF
 
 
 :TEST_FIXES_VALS_SET_ENABLE
-SET currently=Setting USE_IP_RESET and USE_NETWORK_RESET to 1
+SET currently1=Setting USE_IP_RESET and USE_NETWORK_RESET to 1
 SET currently2=(enabling both fixes)
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 SET USE_IP_RESET=1
 SET USE_NETWORK_RESET=1
 SET USE_NETWORK_RESET_FAST=1
 SET Using_Fixes=1
-SET currently=Checking validity of Settings...
+SET currently1=Checking validity of Settings...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL STATS
 GOTO :EOF
 
@@ -1947,7 +1974,7 @@ REM ------------------END TEST FIXES VALUES-----------------------
 
 
 :NEED_NETWORK
-REM ---------------PROGRAM NEEDS NETWORK NAME---------------------
+REM ----------------SCRIPT NEEDS NETWORK NAME---------------------
 REM GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
 SET NETWORK_NAMES_NUM=9
 
@@ -1963,9 +1990,9 @@ IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
 IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
 IF %NCNUM%==9 SET NETWORKCOMMON=Local Area Network
 
-SET currently=Could not find [%NETWORK%]
+SET currently1=Could not find [%NETWORK%]
 SET currently2=Testing Common Network Names...
-SET SpecificStatus=Checking [%NETWORKCOMMON%]
+SET TimerStatus=Checking [%NETWORKCOMMON%]
 CALL :STATS
 
 IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORKCOMMON%">NUL
@@ -1976,9 +2003,9 @@ IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 
 :FOUND_CUSTOM_NAME
-SET currently=Found a Network connection match:
+SET currently1=Found a Network connection match:
 SET currently2=[%NETWORKCOMMON%]
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO.
@@ -1994,9 +2021,9 @@ GOTO :FOUND_CUSTOM_NAME
 
 
 :COMMON_NAMES_NOT_FOUND
-SET currently=Could not find [%NETWORK%]
+SET currently1=Could not find [%NETWORK%]
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO.
@@ -2009,15 +2036,15 @@ IF "%usrInpt%"=="y" GOTO :DISPLAY_NETWORK_CONNECTIONS
 GOTO :NEED_NETWORK
 :DISPLAY_NETWORK_CONNECTIONS
 SET currently2=Showing Network Connections...
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
-SET currently=Could not find [%NETWORK%]
+SET currently1=Could not find [%NETWORK%]
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 ECHO.
 ECHO.
@@ -2033,28 +2060,28 @@ GOTO :TEST_NETWORK_NAME
 
 
 :DONT_SET_NETWORK_NAME
-SET currently=The network was not found. This program requires 
+SET currently1=The network was not found. This script requires 
 SET currently2=a valid connection name to run. EXITING...
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 5
 EXIT
 
 :NEED_NETWORK_AUTO
-SET currently=The network was not found. NETWORK_RESET fixes
+SET currently1=The network was not found. NETWORK_RESET fixes
 SET currently2=will be temporarily disabled
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS 3
 SET USE_NETWORK_RESET=0
 SET USE_NETWORK_RESET_FAST=0
 GOTO :EOF
-REM -------------END PROGRAM NEEDS NETWORK NAME-------------------
+REM -------------END SCRIPT NEEDS NETWORK NAME-------------------
 
 
 :SETTINGS_CHECKALL
 REM Initial CHECKS
-SET currently=Checking validity of Settings...
+SET currently1=Checking validity of Settings...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 CALL :TEST01VAR SLWMSG
 CALL :TEST01VAR SHOW_ALL_ALERTS
@@ -2114,7 +2141,7 @@ REM Displays notice for 3 seconds
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
 %NoECHO%ECHO  *                     *Documentation on how to use this                      *
-%NoECHO%ECHO  *                    program can be accessed via Notepad                     *
+%NoECHO%ECHO  *                     script can be accessed via Notepad                     *
 %NoECHO%ECHO  *                                                                            *
 %NoECHO%ECHO  *                                                                            *
 %NoECHO%ECHO  ******************************************************************************
@@ -2130,9 +2157,9 @@ REM ---------------------END PROGRAM INTRO--------------------
 %NoECHO%ECHO.
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
-%NoECHO%ECHO  *          This program is currently set to use internal settings.           *
+%NoECHO%ECHO  *           This script is currently set to use internal settings.           *
 %NoECHO%ECHO  *                                                                            *
-%NoECHO%ECHO  *        To configure settings via the GUI, please open this program         *
+%NoECHO%ECHO  *         To configure settings via the GUI, please open this script         *
 %NoECHO%ECHO  *             with notepad and set USE_ALTERNATE_SETTINGS to 0               *
 %NoECHO%ECHO  *                                                                            *
 %NoECHO%ECHO  ******************************************************************************
@@ -2169,7 +2196,7 @@ SET /P usrInput=[1/2/3/x]
 IF "%usrInput%"=="" GOTO :EOF
 IF "%usrInput%"=="1" SET usrInput=&GOTO :EOF
 IF "%usrInput%"=="2" SET usrInput=&CALL :SETTINGS_SET
-IF "%usrInput%"=="3" SET currently=Manual check for updates...
+IF "%usrInput%"=="3" SET currently1=Manual check for updates...
 IF "%usrInput%"=="3" SET usrInput=&CALL :SelfUpdate
 IF /I "%usrInput%"=="x" EXIT
 GOTO :SETTINGS_OPTION
@@ -2180,8 +2207,8 @@ IF "%SETNFileDir%"=="TEMP" CALL :SETTINGS_CHKCHOOSELOC
 CALL :HEADER
 IF "%SETNFileDir%"=="TEMP" ECHO You have selected Temporary Settings
 IF "%SETNFileDir%"=="TEMP" ECHO.
-IF "%SETNFileDir%"=="TEMP" ECHO Changes made to settings will be lost when program
-IF "%SETNFileDir%"=="TEMP" ECHO is closed.
+IF "%SETNFileDir%"=="TEMP" ECHO Changes made to settings will be lost when this
+IF "%SETNFileDir%"=="TEMP" ECHO script is closed.
 IF "%SETNFileDir%"=="TEMP" ECHO.
 ECHO What would you like to do?
 ECHO -Review all settings                        (1)
@@ -2214,8 +2241,8 @@ SET /A SETNFILECHK+=1
 
 IF EXIST "%AppData%\NWResetter\%SettingsFileName%.BAT" (
 SET FOUNDUSER=1
-CALL "C:\NWResetter\%SettingsFileName%.BAT" LOAD
-SET SETNFileDir=C:\NWResetter\
+CALL "%AppData%\NWResetter\%SettingsFileName%.BAT" LOAD
+SET SETNFileDir=%AppData%\NWResetter\
 SET /A SETNFILECHK+=1
 )
 
@@ -2266,7 +2293,7 @@ ECHO.
 ECHO -Temporary Settings [Don't Save]          [1]
 ECHO -Current user's Application Data folder   [2] [Recommended]
 ECHO -C:\NWResetter\                           [3]
-ECHO -Same folder as this program [Portable]   [4]
+ECHO -Same folder as this script [Portable]    [4]
 ECHO.
 SET usrInput=
 SET /P usrInput=[1/2/3/4] 
@@ -2626,7 +2653,7 @@ SET SETTINGTITLE=SHOW_ALL_ALERTS
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=When set to On, shows more detailed messages.
 SET SETTINGINFO2=NOTE: Regardless of what you set this too, this
-SET SETTINGINFO3=program will always display important messages.
+SET SETTINGINFO3=script will always display important messages.
 )
 IF %1==M5 (
 SET SETTINGTITLE=SHOW_ADVANCED_TESTING
@@ -2639,7 +2666,7 @@ IF %1==M6 (
 SET SETTINGTITLE=SLOW MESSAGES
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=
-SET SETTINGINFO2=When true, program will pause for every message it displays 
+SET SETTINGINFO2=When true, this script will pause for every message it displays 
 SET SETTINGINFO3=to allow the user to read them [run time will be longer]
 SET SETNVAR=SLWMSG
 )
@@ -2653,15 +2680,15 @@ SET SETTINGINFO3=
 IF %1==M8 (
 SET SETTINGTITLE=START_AT_LOGON
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
-SET SETTINGINFO1=Start Program at user log on
-SET SETTINGINFO2=When true, the program will start when you log on.
+SET SETTINGINFO1=Start this script at user log on
+SET SETTINGINFO2=When true, this script will start when you log on.
 SET SETTINGINFO3=NOTE: Not available when running with portable or temp settings
 )
 IF %1==M9 (
 SET SETTINGTITLE=START_MINIMIZED
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Start Minimized
-SET SETTINGINFO2=When true, program will minimize itself when it is run
+SET SETTINGINFO2=When true, this sript will minimize itself when it is run
 SET SETTINGINFO3=
 )
 IF %1==A1 (
@@ -2675,7 +2702,7 @@ IF %1==A2 (
 SET SETTINGTITLE=SKIP_INITIAL_NTWK_TEST
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Skip Initial Network Connection Test
-SET SETTINGINFO2=Select this if you want the program to immediately attempt 
+SET SETTINGINFO2=Select this if you want this script to immediately attempt 
 SET SETTINGINFO3=to fix your connection without testing the connection first
 )
 IF %1==A3 (
@@ -2724,15 +2751,15 @@ SET SETTINGINFO3=Network Connection name does not change
 IF %1==A9 (
 SET SETTINGTITLE=OS_DETECT_OVERRIDE
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Override OS Detection
-SET SETTINGINFO2=This will force the program to continue running on an unsupported OS.
-SET SETTINGINFO3=Doing so may cause the program to exibit unusual behavior.
+SET SETTINGINFO1=Override Operating System Detection
+SET SETTINGINFO2=This will force this script to continue running on an unsupported OS.
+SET SETTINGINFO3=Doing so may cause this script to exibit unusual behavior.
 )
 IF %1==A10 (
 SET SETTINGTITLE=DEBUGGING
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Programmer Tool - Debugging
-SET SETTINGINFO2=Debugging mode disables actual functionality of this program
+SET SETTINGINFO2=Debugging mode disables actual functionality of this script
 SET SETTINGINFO3=
 SET SETNVAR=DEBUGN
 )
@@ -2803,7 +2830,7 @@ GOTO :EOF
 CALL :HEADER
 ECHO  *Normal Run to Fix*
 ECHO.
-ECHO Assumes the user only wishes to run this program when
+ECHO Assumes the user only wishes to run this script when
 ECHO the network connection needs to be fixed 
 ECHO -no connection monitoring
 ECHO -tests connection to make sure it needs to be fixed
@@ -2825,7 +2852,7 @@ GOTO :SETTINGS_VIEW_PRESET01
 CALL :HEADER
 ECHO  *Advanced Run to Fix*
 ECHO.
-ECHO Assumes the user only wishes to run this program when
+ECHO Assumes the user only wishes to run this script when
 ECHO the network connection needs to be fixed 
 ECHO -no connection monitoring
 ECHO -Does NOT check connection before fixing
@@ -2892,11 +2919,11 @@ GOTO :SETTINGS_VIEW_PRESET04
 :SETTINGS_PRESET01
 REM Normal Run to Fix
 SET MINUTES=10
-SET NETWORK=Wireless Network Connection
+::SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=0
 SET AUTO_RETRY=1
 SET AUTOUPDATE=1
-SET UPDATECHANNEL=1
+SET UPDATECHANNEL=%UPDATECHANNEL_D%
 SET CHECKUPDATEFREQ=5
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
@@ -2921,11 +2948,11 @@ GOTO :EOF
 :SETTINGS_PRESET02
 REM Advanced Run to Fix
 SET MINUTES=10
-SET NETWORK=Wireless Network Connection
+::SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=0
 SET AUTO_RETRY=1
 SET AUTOUPDATE=1
-SET UPDATECHANNEL=1
+SET UPDATECHANNEL=%UPDATECHANNEL_D%
 SET CHECKUPDATEFREQ=5
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
@@ -2950,11 +2977,11 @@ GOTO :EOF
 :SETTINGS_PRESET03
 REM Normal Connection Monitoring
 SET MINUTES=10
-SET NETWORK=Wireless Network Connection
+::SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
 SET AUTOUPDATE=1
-SET UPDATECHANNEL=1
+SET UPDATECHANNEL=%UPDATECHANNEL_D%
 SET CHECKUPDATEFREQ=5
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
@@ -2979,11 +3006,11 @@ GOTO :EOF
 :SETTINGS_PRESET04
 REM Advanced Connection Monitoring
 SET MINUTES=10
-SET NETWORK=Wireless Network Connection
+::SET NETWORK=Wireless Network Connection
 SET CONTINUOUS=1
 SET AUTO_RETRY=1
 SET AUTOUPDATE=1
-SET UPDATECHANNEL=1
+SET UPDATECHANNEL=%UPDATECHANNEL_D%
 SET CHECKUPDATEFREQ=5
 SET CHECK_DELAY=1
 SET SHOW_ALL_ALERTS=1
@@ -3015,9 +3042,9 @@ IF "%SETNFileDir%"=="" ECHO Cannot export settings
 IF "%SETNFileDir%"=="" ECHO Press any key to restart the program...
 IF "%SETNFileDir%"=="" PAUSE>NUL
 IF "%SETNFileDir%"=="" GOTO :RESTART_PROGRAM
-SET currently=Exporting Settings...
+SET currently1=Exporting Settings...
 SET currently2=
-SET SpecificStatus=
+SET TimerStatus=
 CALL :STATS
 IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
 TYPE NUL>"%SETNFileDir%%SettingsFileName%.BAT"
