@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r137
+	SET rvsn=r138
 REM Branch:
 	SET Branch=
 
@@ -1313,7 +1313,7 @@ REM Get versions
 %NoECHO%SET currently4=Retrieving local and remote versions...
 %NoECHO%CALL :STATS
 
-SET webdowntimeout=15
+SET webdowntimeout=30
 IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate
 
 SET NeedUpdate=0
@@ -1388,7 +1388,7 @@ IF NOT %DEBUGN%==0 GOTO :EOF
 @ECHO ON
 ECHO NUL>webdown.vbs
 ECHO 'Download Update  >webdown.vbs
-ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
+ECHO Set xPost = CreateObject("WinHttp.WinHttpRequest.5.1") '>>webdown.vbs
 ECHO xpost.open "HEAD", "%DLFilePath%", False '>>webdown.vbs
 ECHO xpost.send '>>webdown.vbs
 ECHO Select Case Cint(xpost.status) '>>webdown.vbs
@@ -1400,14 +1400,14 @@ ECHO    Set xpost = Nothing '>>webdown.vbs
 ECHO      CheckPath = False '>>webdown.vbs
 ECHO End Select '>>webdown.vbs
 ECHO If (CheckPath) Then '>>webdown.vbs
-ECHO Set xPost = CreateObject("Microsoft.XMLHTTP") '>>webdown.vbs
-ECHO xPost.Open "GET","%DLFilePath%",0 '>>webdown.vbs
-ECHO xPost.Send() '>>webdown.vbs
+ECHO Set xPost2 = CreateObject("WinHttp.WinHttpRequest.5.1") '>>webdown.vbs
+ECHO xPost2.Open "GET","%DLFilePath%",0 '>>webdown.vbs
+ECHO xPost2.Send() '>>webdown.vbs
 ECHO Set sGet = CreateObject("ADODB.Stream") '>>webdown.vbs
 ECHO sGet.Mode = 3 '>>webdown.vbs
 ECHO sGet.Type = 1 '>>webdown.vbs
 ECHO sGet.Open() '>>webdown.vbs
-ECHO sGet.Write(xPost.responseBody) '>>webdown.vbs
+ECHO sGet.Write(xPost2.responseBody) '>>webdown.vbs
 ECHO sGet.SaveToFile "%DLFileName%",2 '>>webdown.vbs
 ECHO END IF '>>webdown.vbs
 ECHO Dim objFSO '>>webdown.vbs
