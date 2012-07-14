@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r145
+	SET rvsn=r146
 REM Branch:
 	SET Branch=
 
@@ -1028,61 +1028,62 @@ IF %1==EN SET disOrEn=Enable
 IF %1==EN SET trufalse=false
 IF %1==DIS SET disOrEn=Disable
 IF %1==DIS SET trufalse=true
-CALL :GET_Randomfilename %disOrEn%Network vbs
-SET %disOrEn%Network="%THISFILEDIR%%disOrEn%Network"
-(ECHO Const ssfCONTROLS = 3)>>!%disOrEn%Network!
-(ECHO sConnectionName = "%NETWORK%")>>!%disOrEn%Network!
-(ECHO sEnableVerb = "En&able")>>!%disOrEn%Network!
-(ECHO sDisableVerb = "Disa&ble")>>!%disOrEn%Network!
-(ECHO set shellApp = createobject("shell.application"))>>!%disOrEn%Network!
-(ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS))>>!%disOrEn%Network!
-(ECHO set oNetConnections = nothing)>>!%disOrEn%Network!
-(ECHO for each folderitem in oControlPanel.items)>>!%disOrEn%Network!
-(ECHO   if folderitem.name = "Network Connections" then)>>!%disOrEn%Network!
-(ECHO         set oNetConnections = folderitem.getfolder: exit for)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO next)>>!%disOrEn%Network!
-(ECHO if oNetConnections is nothing then)>>!%disOrEn%Network!
-(ECHO msgbox "Couldn't find 'Network Connections' folder")>>!%disOrEn%Network!
-(ECHO wscript.quit)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO set oLanConnection = nothing)>>!%disOrEn%Network!
-(ECHO for each folderitem in oNetConnections.items)>>!%disOrEn%Network!
-(ECHO if lcase(folderitem.name) = lcase(sConnectionName) then)>>!%disOrEn%Network!
-(ECHO set oLanConnection = folderitem: exit for)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO next)>>!%disOrEn%Network!
-(ECHO Dim objFSO)>>!%disOrEn%Network!
-(ECHO if oLanConnection is nothing then)>>!%disOrEn%Network!
-(ECHO msgbox "Couldn't find %NETWORK%")>>!%disOrEn%Network!
-(ECHO msgbox "This program requires a valid Network Connection name to work properly")>>!%disOrEn%Network!
-(ECHO msgbox "Please close the program and open it with notepad for more information")>>!%disOrEn%Network!
-(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>!%disOrEn%Network!
-(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>!%disOrEn%Network!
-(ECHO Set objFSO = Nothing)>>!%disOrEn%Network!
-(ECHO wscript.quit)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO bEnabled = true)>>!%disOrEn%Network!
-(ECHO set oEnableVerb = nothing)>>!%disOrEn%Network!
-(ECHO set oDisableVerb = nothing)>>!%disOrEn%Network!
-(ECHO s = "Verbs: " & vbcrlf)>>!%disOrEn%Network!
-(ECHO for each verb in oLanConnection.verbs)>>!%disOrEn%Network!
-(ECHO s = s & vbcrlf & verb.name)>>!%disOrEn%Network!
-(ECHO if verb.name = sEnableVerb then)>>!%disOrEn%Network!
-(ECHO set oEnableVerb = verb)>>!%disOrEn%Network!
-(ECHO bEnabled = false)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO if verb.name = sDisableVerb then)>>!%disOrEn%Network!
-(ECHO set oDisableVerb = verb)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO next)>>!%disOrEn%Network!
-(ECHO if bEnabled = %trufalse% then)>>!%disOrEn%Network!
-(ECHO o%disOrEn%Verb.DoIt)>>!%disOrEn%Network!
-(ECHO end if)>>!%disOrEn%Network!
-(ECHO wscript.sleep 2000)>>!%disOrEn%Network!
-(ECHO Set objFSO = CreateObject("Scripting.FileSystemObject"))>>!%disOrEn%Network!
-(ECHO objFSO.DeleteFile WScript.ScriptFullName)>>!%disOrEn%Network!
-(ECHO Set objFSO = Nothing)>>!%disOrEn%Network!
+CALL :GET_Randomfilename %disOrEn%Network .vbs
+@ECHO On
+@ECHO Const ssfCONTROLS = 3 '>!%disOrEn%Network!
+@ECHO sConnectionName = "%NETWORK%" '>>!%disOrEn%Network!
+@ECHO sEnableVerb = "En&able" '>>!%disOrEn%Network!
+@ECHO sDisableVerb = "Disa&ble" '>>!%disOrEn%Network!
+@ECHO set shellApp = createobject("shell.application") '>>!%disOrEn%Network!
+@ECHO set oControlPanel = shellApp.Namespace(ssfCONTROLS) '>>!%disOrEn%Network!
+@ECHO set oNetConnections = nothing '>>!%disOrEn%Network!
+@ECHO for each folderitem in oControlPanel.items '>>!%disOrEn%Network!
+@ECHO   if folderitem.name = "Network Connections" then '>>!%disOrEn%Network!
+@ECHO         set oNetConnections = folderitem.getfolder: exit for '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO next '>>!%disOrEn%Network!
+@ECHO if oNetConnections is nothing then '>>!%disOrEn%Network!
+@ECHO msgbox "Couldn't find 'Network Connections' folder" '>>!%disOrEn%Network!
+@ECHO wscript.quit '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO set oLanConnection = nothing '>>!%disOrEn%Network!
+@ECHO for each folderitem in oNetConnections.items '>>!%disOrEn%Network!
+@ECHO if lcase(folderitem.name) = lcase(sConnectionName) then '>>!%disOrEn%Network!
+@ECHO set oLanConnection = folderitem: exit for '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO next '>>!%disOrEn%Network!
+@ECHO Dim objFSO '>>!%disOrEn%Network!
+@ECHO if oLanConnection is nothing then '>>!%disOrEn%Network!
+@ECHO msgbox "Couldn't find %NETWORK%" '>>!%disOrEn%Network!
+@ECHO msgbox "This program requires a valid Network Connection name to work properly" '>>!%disOrEn%Network!
+@ECHO msgbox "Please close the program and open it with notepad for more information" '>>!%disOrEn%Network!
+@ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>!%disOrEn%Network!
+@ECHO objFSO.DeleteFile WScript.ScriptFullName '>>!%disOrEn%Network!
+@ECHO Set objFSO = Nothing '>>!%disOrEn%Network!
+@ECHO wscript.quit '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO bEnabled = true '>>!%disOrEn%Network!
+@ECHO set oEnableVerb = nothing '>>!%disOrEn%Network!
+@ECHO set oDisableVerb = nothing '>>!%disOrEn%Network!
+@ECHO s = "Verbs: " ^& vbcrlf '>>!%disOrEn%Network!
+@ECHO for each verb in oLanConnection.verbs '>>!%disOrEn%Network!
+@ECHO s = s ^& vbcrlf ^& verb.name '>>!%disOrEn%Network!
+@ECHO if verb.name = sEnableVerb then '>>!%disOrEn%Network!
+@ECHO set oEnableVerb = verb '>>!%disOrEn%Network!
+@ECHO bEnabled = false '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO if verb.name = sDisableVerb then '>>!%disOrEn%Network!
+@ECHO set oDisableVerb = verb '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO next '>>!%disOrEn%Network!
+@ECHO if bEnabled = %trufalse% then '>>!%disOrEn%Network!
+@ECHO o%disOrEn%Verb.DoIt '>>!%disOrEn%Network!
+@ECHO end if '>>!%disOrEn%Network!
+@ECHO wscript.sleep 2000 '>>!%disOrEn%Network!
+@ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>!%disOrEn%Network!
+@ECHO objFSO.DeleteFile WScript.ScriptFullName '>>!%disOrEn%Network!
+@ECHO Set objFSO = Nothing '>>!%disOrEn%Network!
+%NOECHO%@ECHO Off
 CALL :STATS
 START /B /WAIT CMD /C cscript //B //NoLogo !%disOrEn%Network!
 GOTO :EOF
@@ -1319,11 +1320,12 @@ IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate
 SET NeedUpdate=0
 SET remotevsn=
 SET DLFilePath=%remoteserver%cur
-SET DLFileName=cur.bat
+CALL :GET_Randomfilename remotecur .bat
+SET DLFileName=%remotecur%
 CALL :SelfUpdate_DLFile
 SET SU_ERR=101
-IF NOT EXIST %THISFILEDIR%%DLFileName% GOTO :SelfUpdate_Error
-CALL %THISFILEDIR%%DLFileName%
+IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
+CALL "%THISFILEDIR%%DLFileName%"
 IF NOT "!BR_%branchurl%!"=="integrated" IF NOT "%Branch%"=="" GOTO :SelfUpdate_dev
 IF "%UPDATECHANNEL%"=="1" SET remotevsn=%stablevsn%
 IF "%UPDATECHANNEL%"=="2" SET remotevsn=%betavsn%
@@ -1352,7 +1354,8 @@ IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%remoteserver%Network_Resetter_Stable
 IF "%UPDATECHANNEL%"=="2" SET DLFilePath=%remoteserver%Network_Resetter_Beta
 REM IF "%UPDATECHANNEL%"=="1" SET DLFilePath=%stablefile%
 REM IF "%UPDATECHANNEL%"=="2" SET DLFilePath=%betafile%
-SET DLFileName=Network_Resetter_Update.txt
+CALL :GET_Randomfilename updaterDLfile .txt
+SET DLFileName=%updaterDLfile%
 CALL :SelfUpdate_DLFile
 
 REM Verify file contents
@@ -1385,36 +1388,35 @@ CALL "%THISFILEDIR%%updaterfile%"&EXIT
 :SelfUpdate_DLFile
 IF "%DLFilePath%"=="" GOTO :EOF
 IF NOT %DEBUGN%==0 GOTO :EOF
-@ECHO ON
-ECHO NUL>webdown.vbs
-ECHO 'Download Update  >webdown.vbs
-ECHO Set xPost = CreateObject("WinHttp.WinHttpRequest.5.1") '>>webdown.vbs
-ECHO xpost.open "HEAD", "%DLFilePath%", False '>>webdown.vbs
-ECHO xpost.send '>>webdown.vbs
-ECHO Select Case Cint(xpost.status) '>>webdown.vbs
-ECHO    Case 200, 202, 302 '>>webdown.vbs
-ECHO      Set xpost = Nothing '>>webdown.vbs
-ECHO      CheckPath = True '>>webdown.vbs
-ECHO    Case Else '>>webdown.vbs
-ECHO    Set xpost = Nothing '>>webdown.vbs
-ECHO      CheckPath = False '>>webdown.vbs
-ECHO End Select '>>webdown.vbs
-ECHO If (CheckPath) Then '>>webdown.vbs
-ECHO Set xPost2 = CreateObject("WinHttp.WinHttpRequest.5.1") '>>webdown.vbs
-ECHO xPost2.Open "GET","%DLFilePath%",0 '>>webdown.vbs
-ECHO xPost2.Send() '>>webdown.vbs
-ECHO Set sGet = CreateObject("ADODB.Stream") '>>webdown.vbs
-ECHO sGet.Mode = 3 '>>webdown.vbs
-ECHO sGet.Type = 1 '>>webdown.vbs
-ECHO sGet.Open() '>>webdown.vbs
-ECHO sGet.Write(xPost2.responseBody) '>>webdown.vbs
-ECHO sGet.SaveToFile "%DLFileName%",2 '>>webdown.vbs
-ECHO END IF '>>webdown.vbs
-ECHO Dim objFSO '>>webdown.vbs
-ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>webdown.vbs
-ECHO objFSO.DeleteFile WScript.ScriptFullName '>>webdown.vbs
-ECHO Set objFSO = Nothing '>>webdown.vbs
-START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo webdown.vbs
+CALL :GET_Randomfilename webdown .vbs
+@ECHO 'Download Update  '>%webdown%
+@ECHO Set xPost = CreateObject("WinHttp.WinHttpRequest.5.1") '>>%webdown%
+@ECHO xpost.open "HEAD", "%DLFilePath%", False '>>%webdown%
+@ECHO xpost.send '>>%webdown%
+@ECHO Select Case Cint(xpost.status) '>>%webdown%
+@ECHO    Case 200, 202, 302 '>>%webdown%
+@ECHO      Set xpost = Nothing '>>%webdown%
+@ECHO      CheckPath = True '>>%webdown%
+@ECHO    Case Else '>>%webdown%
+@ECHO    Set xpost = Nothing '>>%webdown%
+@ECHO      CheckPath = False '>>%webdown%
+@ECHO End Select '>>%webdown%
+@ECHO If (CheckPath) Then '>>%webdown%
+@ECHO Set xPost2 = CreateObject("WinHttp.WinHttpRequest.5.1") '>>%webdown%
+@ECHO xPost2.Open "GET","%DLFilePath%",0 '>>%webdown%
+@ECHO xPost2.Send() '>>%webdown%
+@ECHO Set sGet = CreateObject("ADODB.Stream") '>>%webdown%
+@ECHO sGet.Mode = 3 '>>%webdown%
+@ECHO sGet.Type = 1 '>>%webdown%
+@ECHO sGet.Open() '>>%webdown%
+@ECHO sGet.Write(xPost2.responseBody) '>>%webdown%
+@ECHO sGet.SaveToFile "%DLFileName%",2 '>>%webdown%
+@ECHO END IF '>>%webdown%
+@ECHO Dim objFSO '>>%webdown%
+@ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>%webdown%
+@ECHO objFSO.DeleteFile WScript.ScriptFullName '>>%webdown%
+@ECHO Set objFSO = Nothing '>>%webdown%
+START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo %webdown%
 %NoECHO%@ECHO off
 GOTO :EOF
 
@@ -1708,15 +1710,12 @@ SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 
 REM Get OS name
-VER | FIND "2003" > NUL
-IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
-VER | FIND "XP" > NUL
-IF %ERRORLEVEL% == 0 GOTO :OLDVER
-VER | FIND "2000" > NUL
-IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
-VER | FIND "NT" > NUL
-IF %ERRORLEVEL% == 0 GOTO :UNSUPPORTED
 FOR /F "tokens=3*" %%i IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName ^| Find "ProductName"') DO set vers=%%i %%j
+IF "%vers%"=="" GOTO :UNSUPPORTED
+ECHO %vers% | FIND "Windows XP" > NUL
+IF %ERRORLEVEL% == 0 GOTO :OLDVER
+ECHO %vers% | FIND "Windows Server 2003" > NUL
+IF %ERRORLEVEL% == 0 GOTO :OLDVER
 ECHO %vers% | find "Windows 7" > NUL
 IF %ERRORLEVEL% == 0 GOTO :NewVer
 ECHO %vers% | find "Windows Server 2008" > NUL
@@ -1805,7 +1804,7 @@ SET currently1=Script is set to start at user log on.
 SET currently2=Copying self to Startup Folder...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-COPY %THISFILENAME% "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
+COPY %THISFILENAME% "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
 GOTO :EOF
 
 :DONT_STARTUP
@@ -1813,8 +1812,8 @@ SET currently1=Script is not set to start at user log on.
 SET currently2=Removing copies of self in Startup folder, if any...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-TYPE NUL > "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
-DEL /F /Q "%systemdrive%\Documents and Settings\%USERNAME%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
+TYPE NUL > "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
+DEL /F /Q "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
 
 GOTO :EOF
 REM ------------------END CHECK START AT LOG ON-------------------
@@ -2235,10 +2234,10 @@ GOTO :SETTINGS_SET
 :SETTINGS_CHECKFILE
 SET SETNFILECHK=0
 
-IF EXIST "C:\NWResetter\%SettingsFileName%.BAT" (
+IF EXIST "%SystemDrive%\NWResetter\%SettingsFileName%.BAT" (
 SET FOUNDLOCAL=1
-CALL "C:\NWResetter\%SettingsFileName%.BAT" LOAD
-SET SETNFileDir=C:\NWResetter\
+CALL "%SystemDrive%\NWResetter\%SettingsFileName%.BAT" LOAD
+SET SETNFileDir=%SystemDrive%\NWResetter\
 SET /A SETNFILECHK+=1
 )
 
@@ -2269,7 +2268,7 @@ REM Multiple settings files
 CALL :HEADER
 ECHO Multiple setting files were found. Which one
 ECHO would you like to use?
-IF NOT "%FOUNDLOCAL%"=="" ECHO -Local [C:\NWResetter]               [L]
+IF NOT "%FOUNDLOCAL%"=="" ECHO -Local [%SystemDrive%\NWResetter]               [L]
 IF NOT "%FOUNDUSER%"==""  ECHO -User  [Appdata\NWResetter]          [U]
 IF NOT "%FOUNDPORT%"==""  ECHO -Portable [Same folder as main file] [P]
 SET usrInput=
@@ -2278,7 +2277,7 @@ IF NOT "%FOUNDPORT%"=="" IF /I "%usrInput%"=="P" SET SETNFileDir=%THISFILEDIR%
 IF NOT "%FOUNDPORT%"=="" IF /I "%usrInput%"=="P" SET usrInput=&GOTO :EOF
 IF NOT "%FOUNDUSER%"=="" IF /I "%usrInput%"=="U" SET SETNFileDir=%Appdata%\NWResetter\
 IF NOT "%FOUNDUSER%"=="" IF /I "%usrInput%"=="U" SET usrInput=&GOTO :EOF
-IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" SET SETNFileDir=C:\NWResetter\
+IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" SET SETNFileDir=%SystemDrive%\NWResetter\
 IF NOT "%FOUNDLOCAL%"=="" IF /I "%usrInput%"=="L" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_CHECKFILE_MULTIPLE
 
@@ -2295,7 +2294,7 @@ ECHO Where would you like to save the settings?
 ECHO.
 ECHO -Temporary Settings [Don't Save]          [1]
 ECHO -Current user's Application Data folder   [2] [Recommended]
-ECHO -C:\NWResetter\                           [3]
+ECHO -%SystemDrive%\NWResetter\                           [3]
 ECHO -Same folder as this script [Portable]    [4]
 ECHO.
 SET usrInput=
@@ -2324,8 +2323,8 @@ GOTO :EOF
 
 :SETTINGS_CHANGESETTINGLOCATION_LOC
 REM CALL :SETTINGS_RESET2DEFAULT
-MD "C:\NWResetter"
-SET SETNFileDir=C:\NWResetter\
+MD "%SystemDrive%\NWResetter"
+SET SETNFileDir=%SystemDrive%\NWResetter\
 CALL :SETTINGS_EXPORT
 CALL :SETTINGS_SET
 GOTO :EOF
