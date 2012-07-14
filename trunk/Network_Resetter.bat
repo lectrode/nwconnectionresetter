@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r146
+	SET rvsn=r147
 REM Branch:
 	SET Branch=
 
@@ -135,6 +135,7 @@ SET ROUTEFIX=0
 SET restartingProgram=
 SET has_tested_ntwk_name_recent=0
 SET delaymins=
+SET LastTitle=
 IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
 IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
@@ -224,7 +225,7 @@ REM **************************************************************************
 %NoECHO%IF x%Using_Fixes%==x0 SET SHOWFixMode=-Not using fixes-
 %NoECHO%IF "%confixed%"=="" SET confixed=0
 %NoECHO%REM SET SHOWconfixed=                %confixed% in %RUNTIMEL%
-%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%IF NOT "%Lastconfixed%"=="%confixed%" CALL :CENTERTEXT 27 SHOWconfixed %confixed%
 %NoECHO%SET LastTitle=%THISTITLE%
 %NoECHO%SET Lastconfixed=%confixed%
@@ -286,7 +287,7 @@ GOTO :EOF
 REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
 %NoECHO%CLS
-%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 75 SHOWTitle ****** %THISTITLE% ******
+%NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%SET LastTitle=%THISTITLE%
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
@@ -302,14 +303,16 @@ GOTO :EOF
 SET TTLSPACE=%1
 SET VAR2SET=%2
 SET TEXT=
+SET INCNUM=0
+SET NUMCHECK=
+SET HALFSPACE=
+SET PARAMSPACE=
 :CENTERTEXT_GETALLTEXT
 IF NOT "%3"=="" SET TEXT=%TEXT%%PARAMSPACE%%3
 IF NOT "%3"=="" SET PARAMSPACE= &SHIFT&GOTO :CENTERTEXT_GETALLTEXT
 CALL :StrLength STRLEN %TEXT%
 
-
 SET /A HALFSPACE=(TTLSPACE-STRLEN)/2
-SET INCNUM=0
 :ADDSPACEFRONT
 SET /A INCNUM+=1
 SET TEXT= %TEXT%
@@ -330,6 +333,7 @@ GOTO :EOF
 
 :StrLength
 ::StrLength(retVal,string)
+SET PARAMSPACE=
 SET StrLenVar=%1
 :StrLength_GETALLTEXT
 IF NOT "%2"=="" SET #=%#%%PARAMSPACE%%2
@@ -1376,10 +1380,10 @@ IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
 CALL :GET_Randomfilename updaterfile .bat
 
 @ECHO ON
-(ECHO DEL "%THISFILENAMEPATH%")>%updaterfile%
-(ECHO REN "%THISFILEDIR%%DLFileName%" "%THISFILENAME%")>>%updaterfile%
-(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
-(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+@ECHO DEL "%THISFILENAMEPATH%" >%updaterfile%
+@ECHO REN "%THISFILEDIR%%DLFileName%" "%THISFILENAME%" >>%updaterfile%
+@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%" >>%updaterfile%
+@ECHO DEL /F/S/Q "%%~dpnx0" >>%updaterfile%
 %NoECHO%@ECHO OFF
 CALL "%THISFILEDIR%%updaterfile%"&EXIT
 
@@ -1389,6 +1393,7 @@ CALL "%THISFILEDIR%%updaterfile%"&EXIT
 IF "%DLFilePath%"=="" GOTO :EOF
 IF NOT %DEBUGN%==0 GOTO :EOF
 CALL :GET_Randomfilename webdown .vbs
+@ECHO On
 @ECHO 'Download Update  '>%webdown%
 @ECHO Set xPost = CreateObject("WinHttp.WinHttpRequest.5.1") '>>%webdown%
 @ECHO xpost.open "HEAD", "%DLFilePath%", False '>>%webdown%
@@ -1416,8 +1421,8 @@ CALL :GET_Randomfilename webdown .vbs
 @ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>%webdown%
 @ECHO objFSO.DeleteFile WScript.ScriptFullName '>>%webdown%
 @ECHO Set objFSO = Nothing '>>%webdown%
-START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo %webdown%
 %NoECHO%@ECHO off
+START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo %webdown%
 GOTO :EOF
 
 
