@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r150
+	SET rvsn=r151
 REM Branch:
 	SET Branch=
 
@@ -173,7 +173,8 @@ ECHO.....
 ECHO......
 CALL :SETTINGS_CHECKFILE
 CALL :DETECT_ADMIN_RIGHTS silent
-IF "%INITPARAMS%"=="STARTUP" GOTO :AFTCALLCHECKSETNFILE
+IF "%INITPARAMS%"=="STARTUP" SET LauchedByStartUp=1
+IF "%LaunchedByStartUp%"=="1" GOTO :AFTCALLCHECKSETNFILE
 CALL :SETTINGS_OPTION
 
 
@@ -1367,12 +1368,14 @@ IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
 %NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
+IF "%LaunchedByStartup%"=="1" SET StartingParams= STARTUP
+
 CALL :GET_Randomfilename updaterfile .bat
 
 @ECHO ON
 @ECHO DEL "%THISFILENAMEPATH%" >%updaterfile%
 @ECHO REN "%THISFILEDIR%%DLFileName%" "%THISFILENAME%" >>%updaterfile%
-@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%" >>%updaterfile%
+@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%StartingParams%" >>%updaterfile%
 @ECHO DEL /F/S/Q "%%~dpnx0" >>%updaterfile%
 %NoECHO%@ECHO OFF
 CALL "%THISFILEDIR%%updaterfile%"&EXIT
@@ -1454,10 +1457,12 @@ IF %SU_HasSVNUpdate% EQU 0 GOTO :SelfUpdate_AlreadyUp2Date
 %NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
+IF "%LaunchedByStartup%"=="1" SET StartingParams= STARTUP
+
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO svn update --trust-server-cert --non-interactive)>%updaterfile%
-(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%")>>%updaterfile%
+(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%StartingParams%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
 START CMD /C "%THISFILEDIR%%updaterfile%"
