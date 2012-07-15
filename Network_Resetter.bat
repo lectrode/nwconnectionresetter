@@ -192,8 +192,6 @@ CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
 
-SET DONEINIT=::
-
 GOTO :MAIN_START
 
 
@@ -284,6 +282,7 @@ REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
 %NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%SET LastTitle=%THISTITLE%
+SET DONEINIT=::
 %NoECHO%CLS
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
