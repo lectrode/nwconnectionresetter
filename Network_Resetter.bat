@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r156
+	SET rvsn=r157
 REM Branch:
 	SET Branch=
 
@@ -1436,6 +1436,8 @@ GOTO :EOF
 
 %NoECHO%SET currently4=Initializing...
 %NoECHO%CALL :STATS
+
+SET SU_Cur_Valid=1
 
 REM Check SVN installed:
 SET SU_ERR=201
