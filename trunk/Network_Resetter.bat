@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r155
+	SET rvsn=r156
 REM Branch:
 	SET Branch=
 
@@ -1568,7 +1568,7 @@ SET SU_Cur_Valid=1
 IF NOT EXIST "%*" SET SU_Cur_Valid=0&GOTO :EOF
 SET SU_Cur_numlines=0
 FOR /F "tokens=* DELIMS=" %%c IN (%*) DO SET /A SU_Cur_numlines+=1
-IF %SU_Cur_numlines% LEQ 3 SET SU_Cur_Valid=0
+IF %SU_Cur_numlines% LEQ 3 SET SU_Cur_Valid=0&DEL /F /S /Q "%*"
 GOTO :EOF
 
 
