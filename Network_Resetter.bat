@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r148
+	SET rvsn=r149
 REM Branch:
 	SET Branch=
 
@@ -161,15 +161,21 @@ REM IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
 REM IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
 REM :AFTSETTIME
 
-CALL :DETECT_ADMIN_RIGHTS
-
 CALL :SETTINGS_SETDEFAULT
 IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
 IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
 IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
+CALL :PROGRAM_INTRO
+ECHO..
+ECHO...
+ECHO....
+ECHO.....
+ECHO......
 CALL :SETTINGS_CHECKFILE
-IF "%INITPARAMS%"=="" IF NOT "%SetnBeenSet%"=="1" IF "%CONTINUOUS%"=="0" CALL :SETTINGS_OPTION
-IF "%INITPARAMS%"=="SETTINGS" IF NOT "%SetnBeenSet%"=="1" CALL :SETTINGS_OPTION
+CALL :DETECT_ADMIN_RIGHTS silent
+IF "%INITPARAMS%"=="STARTUP" GOTO :AFTCALLCHECKSETNFILE
+CALL :SETTINGS_OPTION
+
 
 :AFTCALLCHECKSETNFILE
 
@@ -180,22 +186,6 @@ REM exports the settings.
 CALL :SETTINGS_EXPORT
 
 CALL :CHECK_NEED_ADMIN
-
-
-REM Restart itself minimized if set to do so
-IF "%restartingProgram%"=="" IF "%START_MINIMIZED%"=="1" IF "%MINIMIZED%"=="" IF "%INITPARAMS%"=="" (
-	SET MINIMIZED=1
-	START /MIN CMD /C "%~dpnx0"
-	EXIT
-)
-
-REM Copy to startup folder if set to start when 
-REM user logs on
-CALL :CHECK_START_AT_LOGON
-
-REM Display program introduction
-IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :PROGRAM_INTRO
-IF "%USE_ALTERNATE_SETTINGS%"=="0" IF NOT "%MINIMIZED%"=="1" CALL :PROGRAM_INTRO
 
 
 GOTO :MAIN_START
@@ -286,9 +276,9 @@ GOTO :EOF
 :HEADER
 REM Settings header. Used when configuring settings.
 %NoECHO%@ECHO OFF
-%NoECHO%CLS
 %NoECHO%IF NOT "%LastTitle%"=="%THISTITLE%" CALL :CENTERTEXT 74 SHOWTitle ****** %THISTITLE% ******
 %NoECHO%SET LastTitle=%THISTITLE%
+%NoECHO%CLS
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
 %NoECHO%ECHO  * %SHOWTitle% *
@@ -1665,11 +1655,12 @@ REM --------------------------------------------------------------
 
 
 :DETECT_ADMIN_RIGHTS
+IF "%1"=="silent" SET ADMIN_NOECHO=::
 REM ----------------------DETECT ADMIN RIGHTS---------------------
-SET currently1=Checking if script has administrative privileges...
-SET currently2=
-SET TimerStatus=
-IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
+%ADMIN_NOECHO%SET currently1=Checking if script has administrative privileges...
+%ADMIN_NOECHO%SET currently2=
+%ADMIN_NOECHO%SET TimerStatus=
+%ADMIN_NOECHO%IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET ISADMIN=0
 IF %DEBUGN%==0 AT > NUL
 IF NOT ERRORLEVEL 1 SET ISADMIN=1
@@ -1823,15 +1814,19 @@ IF "%SETNFileDir%"=="TEMP" GOTO :EOF
 IF "%SETNFileDir%"=="%THISFILEDIR%" GOTO :EOF
 
 SET currently1=Script is set to start at user log on.
-SET currently2=Copying self to Startup Folder...
+SET currently2=Creating Launcher in Startup Folder...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-COPY %THISFILENAME% "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
+IF "%START_MINIMIZED%"=="1" SET CSAL_MIN= /MIN
+SET StartupFile=%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat
+ECHO @IF NOT EXIST "%THISFILENAMEPATH%" @DEL /F /S /Q "%%~dpnx0"^&EXIT >"%StartupFile%"
+ECHO @START%CSAL_MIN% "" /D "%THISFILEDIR%" "%THISFILENAMEPATH%" STARTUP  >>"%StartupFile%"
+
 GOTO :EOF
 
 :DONT_STARTUP
 SET currently1=Script is not set to start at user log on.
-SET currently2=Removing copies of self in Startup folder, if any...
+SET currently2=Removing Launcher in Startup folder, if any...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 TYPE NUL > "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
@@ -2144,6 +2139,7 @@ CALL :TEST01VAR SHOW_ADVANCED_TESTING
 CALL :TEST01VAR SKIP_INITIAL_NTWK_TEST
 CALL :TEST01VAR TREAT_TIMEOUTS_AS_DISCONNECT
 CALL :TEST01VAR ONLY_ONE_NETWORK_NAME_TEST
+CALL :CHECK_START_AT_LOGON
 GOTO :EOF
 
 
@@ -2161,7 +2157,7 @@ REM --------------------------------------------------------------
 
 :PROGRAM_INTRO
 REM ----------------------PROGRAM INTRO----------------------
-REM Displays notice for 3 seconds
+REM Displays notice for 2 seconds
 %NoECHO%CLS
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO  *                                                                            *
@@ -2172,7 +2168,7 @@ REM Displays notice for 3 seconds
 %NoECHO%ECHO  ******************************************************************************
 %NoECHO%ECHO.
 %NoECHO%ECHO.
-%NoECHO%CALL :SLEEP
+%NoECHO%CALL :SLEEP 2
 GOTO :EOF
 REM ---------------------END PROGRAM INTRO--------------------
 
