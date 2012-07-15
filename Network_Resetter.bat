@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r165
+	SET rvsn=r166
 REM Branch:
 	SET Branch=
 
@@ -2062,6 +2062,7 @@ ECHO.
 IF %OMIT_USER_INPUT%==1 SET NETWORK=%NETWORKCOMMON%
 IF %OMIT_USER_INPUT%==1 GOTO :EOF
 ECHO Would you like to reset and/or monitor this network connection?
+SET usrInpt=
 SET /P usrInpt=[y/n]
 IF "%usrInpt%"=="n" IF %NCNUM% LSS %NETWORK_NAMES_NUM% GOTO :NEED_NETWORK
 IF "%usrInpt%"==""  SET usrInpt=y
