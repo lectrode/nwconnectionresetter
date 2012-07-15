@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r149
+	SET rvsn=r150
 REM Branch:
 	SET Branch=
 
@@ -1385,6 +1385,7 @@ IF NOT %DEBUGN%==0 GOTO :EOF
 CALL :GET_Randomfilename webdown .vbs
 @ECHO On
 @ECHO 'Download Update  '>%webdown%
+@ECHO Dim xPost '>>%webdown%
 @ECHO Set xPost = CreateObject("WinHttp.WinHttpRequest.5.1") '>>%webdown%
 @ECHO xpost.open "HEAD", "%DLFilePath%", False '>>%webdown%
 @ECHO xpost.send '>>%webdown%
@@ -1397,6 +1398,7 @@ CALL :GET_Randomfilename webdown .vbs
 @ECHO      CheckPath = False '>>%webdown%
 @ECHO End Select '>>%webdown%
 @ECHO If (CheckPath) Then '>>%webdown%
+@ECHO Dim xPost2 '>>%webdown%
 @ECHO Set xPost2 = CreateObject("WinHttp.WinHttpRequest.5.1") '>>%webdown%
 @ECHO xPost2.Open "GET","%DLFilePath%",0 '>>%webdown%
 @ECHO xPost2.Send() '>>%webdown%
@@ -1406,7 +1408,9 @@ CALL :GET_Randomfilename webdown .vbs
 @ECHO sGet.Open() '>>%webdown%
 @ECHO sGet.Write(xPost2.responseBody) '>>%webdown%
 @ECHO sGet.SaveToFile "%DLFileName%",2 '>>%webdown%
+@ECHO Set xPost2 = Nothing '>>%webdown%
 @ECHO END IF '>>%webdown%
+@ECHO Set xPost = Nothing '>>%webdown%
 @ECHO Dim objFSO '>>%webdown%
 @ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>%webdown%
 @ECHO objFSO.DeleteFile WScript.ScriptFullName '>>%webdown%
