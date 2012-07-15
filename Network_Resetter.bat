@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r161
+	SET rvsn=r163
 REM Branch:
 	SET Branch=
 
