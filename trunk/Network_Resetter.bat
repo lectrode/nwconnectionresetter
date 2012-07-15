@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r153
+	SET rvsn=r154
 REM Branch:
 	SET Branch=
 
@@ -174,8 +174,7 @@ ECHO.....
 ECHO......
 CALL :SETTINGS_CHECKFILE
 CALL :DETECT_ADMIN_RIGHTS silent
-IF "%INITPARAMS%"=="STARTUP" SET LauchedByStartUp=1
-IF "%LaunchedByStartUp%"=="1" GOTO :AFTCALLCHECKSETNFILE
+IF "%INITPARAMS%"=="STARTUP" GOTO :AFTCALLCHECKSETNFILE
 
 REM Temporary check so older scripts will not have their continous checks interrupted
 IF NOT "%maxconchks%"=="" IF "%CONTINUOUS%"=="1" GOTO :AFTCALLCHECKSETNFILE
