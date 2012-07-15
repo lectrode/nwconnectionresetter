@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r158
+	SET rvsn=r159
 REM Branch:
 	SET Branch=
 
@@ -1468,9 +1468,9 @@ IF %SU_HasSVNUpdate% EQU 0 GOTO :SelfUpdate_AlreadyUp2Date
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO svn update --trust-server-cert --non-interactive)>%updaterfile%
-(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%STARTUPPARAMS%")>>%updaterfile%
-(ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
+@ECHO svn update --trust-server-cert --non-interactive >%updaterfile%
+@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%STARTUPPARAMS%" >>%updaterfile%
+@ECHO DEL /F/S/Q "%%~dpnx0" >>%updaterfile%
 %NoECHO%@ECHO OFF
 START CMD /C "%THISFILEDIR%%updaterfile%"
 EXIT
@@ -1493,6 +1493,7 @@ IF NOT "%branch%"=="" CALL :SU_VerifyCur %THISFILEDIR%%DLFileName%
 IF NOT "%branch%"=="" IF %SU_Cur_Valid%==0 GOTO :SelfUpdate_Error
 IF NOT "%branch%"=="" CALL "%THISFILEDIR%%DLFileName%"
 IF "!BR_%branchurl%!"=="integrated" SET branchurl=
+
 
 SET SU_ERR=302
 SET remoteRepo=http://nwconnectionresetter.googlecode.com/svn/trunk/
@@ -1520,11 +1521,11 @@ CALL :GET_Randomfoldername checkoutfolder
 CALL :GET_Randomfilename NR_Update .bat
 
 SET SU_ERR=303
-IF "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%"
-IF NOT "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%"
+IF "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%">NUL
+IF NOT "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%">NUL
 IF NOT EXIST "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" GOTO :SelfUpdate_Error
 SET SU_ERR=304
-MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%"
+MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%">NUL
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 SET SU_UBC_DelfolAttempts=0
 :SU_UBC_RetryDelFol
@@ -1534,9 +1535,9 @@ IF EXIST "%THISFILEDIR%%checkoutfolder%/"NUL IF NOT %SU_UBC_DelfolAttempts% GTR 
 
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
-(ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "%THISFILENAMEPATH%")>"%THISFILEDIR%%updaterfile%"
-(ECHO START CMD /C "%THISFILENAMEPATH%")>>"%THISFILEDIR%%updaterfile%"
-(ECHO DEL /F/S/Q "%%~dpnx0")>>"%THISFILEDIR%%updaterfile%"
+@ECHO MOVE /Y "%THISFILEDIR%%NR_Update%" "%THISFILENAMEPATH%" >"%THISFILEDIR%%updaterfile%"
+@ECHO START CMD /C "%THISFILENAMEPATH%" >>"%THISFILEDIR%%updaterfile%"
+@ECHO DEL /F/S/Q "%%~dpnx0" >>"%THISFILEDIR%%updaterfile%"
 %NoECHO%@ECHO OFF
 SET SU_ERR=305
 START CMD /C "%THISFILEDIR%%updaterfile%"&EXIT
