@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r163
+	SET rvsn=r164
 REM Branch:
 	SET Branch=
 
@@ -141,6 +141,7 @@ IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
 SET STARTUPPARAMS=
+SET DONEINIT=
 
 CALL :RESETCURRENTLY
 
