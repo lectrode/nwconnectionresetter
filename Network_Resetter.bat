@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r151
+	SET rvsn=r152
 REM Branch:
 	SET Branch=
 
@@ -140,6 +140,7 @@ IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
 IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
 SET NCNUM=0
 SET INITPARAMS=%1
+SET STARTUPPARAMS=
 
 CALL :RESETCURRENTLY
 
@@ -1140,8 +1141,8 @@ GOTO :CHECK_CONNECTION_ONLY_FAIL
 
 :CHECK_CONNECTION_ONLY_SUCCESS
 SET currently1=Currently Connected to the Internet.
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 IF %CONTINUOUS%==1 GOTO :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
+IF %AUTOUPDATE%==1 CALL :SelfUpdate
 SET currently2=
 SET TimerStatus=
 CALL :STATS
@@ -1152,6 +1153,7 @@ GOTO :TOP
 
 
 :CHECK_CONNECTION_ONLY_SUCCESS_CONTINUOUS
+SET STARTUPPARAMS= STARTUP
 SET /A TestsSinceUpdate+=1
 IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
 IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
@@ -1240,11 +1242,9 @@ SET NETFIX=0
 SET ROUTEFIX=0
 
 SET currently1=Successfully Connected to Internet.
-SET /A TestsSinceUpdate+=1
-IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
-IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
+
 IF %CONTINUOUS%==1 GOTO :SUCCESS_CONTINUOUS
+IF %AUTOUPDATE%==1 CALL :SelfUpdate
 SET currently2=
 SET TimerStatus=
 CALL :STATS
@@ -1261,6 +1261,11 @@ REM ----------------END FIX ATTEMPT SUCCEEDED---------------------
 :SUCCESS_CONTINUOUS
 REM -------------FIX ATTEMPT SUCCEEDED (RECHECK)------------------
 REM BRANCH (SUCCESS || FIX)
+SET STARTUPPARAMS= STARTUP
+SET /A TestsSinceUpdate+=1
+IF %TestsSinceUpdate% GTR %CHECKUPDATEFREQ% SET TestsSinceUpdate=0
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==1 IF %TestsSinceUpdate%==0 CALL :SelfUpdate
+IF %AUTOUPDATE%==1 IF %CONTINUOUS%==0 CALL :SelfUpdate
 SET currently1=Waiting to re-check Internet Connection...
 SET currently2=
 SET TimerStatus=
@@ -1368,14 +1373,12 @@ IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
 %NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
-IF "%LaunchedByStartup%"=="1" SET StartingParams= STARTUP
-
 CALL :GET_Randomfilename updaterfile .bat
 
 @ECHO ON
 @ECHO DEL "%THISFILENAMEPATH%" >%updaterfile%
 @ECHO REN "%THISFILEDIR%%DLFileName%" "%THISFILENAME%" >>%updaterfile%
-@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%StartingParams%" >>%updaterfile%
+@ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%STARTUPPARAMS%" >>%updaterfile%
 @ECHO DEL /F/S/Q "%%~dpnx0" >>%updaterfile%
 %NoECHO%@ECHO OFF
 CALL "%THISFILEDIR%%updaterfile%"&EXIT
@@ -1457,12 +1460,10 @@ IF %SU_HasSVNUpdate% EQU 0 GOTO :SelfUpdate_AlreadyUp2Date
 %NoECHO%SET currently4=Updating script...
 %NoECHO%CALL :STATS
 
-IF "%LaunchedByStartup%"=="1" SET StartingParams= STARTUP
-
 CALL :GET_Randomfilename updaterfile .bat
 @ECHO ON
 (ECHO svn update --trust-server-cert --non-interactive)>%updaterfile%
-(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%StartingParams%")>>%updaterfile%
+(ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%STARTUPPARAMS%")>>%updaterfile%
 (ECHO DEL /F/S/Q "%%~dpnx0")>>%updaterfile%
 %NoECHO%@ECHO OFF
 START CMD /C "%THISFILEDIR%%updaterfile%"
