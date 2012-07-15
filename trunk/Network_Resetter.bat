@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r147
+	SET rvsn=r148
 REM Branch:
 	SET Branch=
 
@@ -1479,7 +1479,8 @@ IF NOT %lastUPDATECHANNEL%==%UPDATECHANNEL% GOTO :SU_ForceUpdate_UBC
 
 IF NOT "%branch%"=="" SET webdowntimeout=15
 IF NOT "%branch%"=="" SET DLFilePath=%remoteserver%cur
-IF NOT "%branch%"=="" SET DLFileName=cur.bat
+IF NOT "%branch%"=="" CALL :GET_Randomfilename remotecur .bat
+IF NOT "%branch%"=="" SET DLFileName=%remotecur%
 IF NOT "%branch%"=="" CALL :SelfUpdate_DLFile
 SET SU_ERR=301
 IF NOT "%branch%"=="" IF NOT EXIST "%THISFILEDIR%%DLFileName%" GOTO :SelfUpdate_Error
@@ -1493,7 +1494,6 @@ FOR /F "tokens=* DELIMS=" %%u IN ('svn info --trust-server-cert --non-interactiv
 ECHO %%u |FIND "Last Changed Rev">NUL&IF NOT ERRORLEVEL 1 SET SU_InLine=%%u
 FOR /F "tokens=4 DELIMS= " %%u IN ("%SU_InLine%") DO SET remotevsn=%%u
 IF "%remotevsn%"=="" GOTO :SelfUpdate_Error
-
 
 
 %NoECHO%SET currently4=Comparing versions...
@@ -1614,29 +1614,46 @@ GOTO :EOF
 :SU_ERRSOL_READWRITE
 ECHO ^>Please make sure you have read/write access to the
 ECHO  location this script is in.
+ECHO.
 GOTO :EOF
 
 :SU_ERRSOL_NET
 ECHO ^>Please make sure you are connected to the internet.
 ECHO ^>You may need to manually update this script if your 
 ECHO  connection quality is poor
+ECHO.
 GOTO :EOF
 
 :SU_ERRSOL_TIMEOUT
 ECHO ^>With slower connections please configure the Self-Update
 ECHO  to use a longer timeout.
+ECHO.
 GOTO :EOF
 
 :SU_ERRSOL_CHANGEDFORMAT
 ECHO ^>You may need to manually update this script if the
 ECHO  update method has changed.
+ECHO.
 GOTO :EOF
 
 :SU_ERRSOL_SVN
+CALL :RESETCURRENTLY
+CALL :HEADER
 ECHO ^>This channel requires that you have SVN tools installed
 ECHO  You may need to install/reinstall SVN and make sure the
 ECHO command line tools are also installed.
-GOTO :EOF
+ECHO.
+IF "%CONTINUOUS%"=="1" GOTO :EOF
+ECHO Would you like to change the update channel you are on?
+ECHO Change to Stable        [1]
+ECHO Change to BETA          [2] [Recommended]
+ECHO Stay  on  DEV           [3]
+SET /P usrInput=[1/2/3] 
+IF "%usrInput%"=="" SET usrInput=2
+IF "%usrInput%"=="1" SET UPDATECHANNEL=1&CALL :SETTINGS_EXPORTONLY&CALL :RESETCURRETLY&GOTO :SelfUpdate
+IF "%usrInput%"=="2" SET UPDATECHANNEL=2&CALL :SETTINGS_EXPORTONLY&CALL :RESETCURRETLY&GOTO :SelfUpdate
+IF "%usrInput%"=="3" GOTO :EOF
+GOTO :SU_ERRSOL_SVN
 
 
 
@@ -2021,6 +2038,7 @@ IF %OMIT_USER_INPUT%==1 GOTO :EOF
 ECHO Would you like to reset and/or monitor this network connection?
 SET /P usrInpt=[y/n]
 IF "%usrInpt%"=="n" IF %NCNUM% LSS %NETWORK_NAMES_NUM% GOTO :NEED_NETWORK
+IF "%usrInpt%"=="" SET usrInpt=y
 IF "%usrInpt%"=="y" SET NETWORK=%NETWORKCOMMON%
 IF "%usrInpt%"=="y" CALL :SETTINGS_EXPORT
 IF "%usrInpt%"=="y" GOTO :EOF
@@ -2119,8 +2137,8 @@ CALL :TESTIntVAR CHECK_DELAY 0 99999999
 CALL :TESTIntVAR UPDATECHANNEL 1 3
 CALL :TESTIntVAR CHECKUPDATEFREQ 0 99999999
 CALL :TEST01VAR USELOGGING
-CALL :TEST01VAR START_AT_LOGON
 CALL :TEST01VAR START_MINIMIZED
+CALL :TEST01VAR START_AT_LOGON
 CALL :TEST01VAR AUTO_RETRY
 CALL :TEST01VAR SHOW_ADVANCED_TESTING
 CALL :TEST01VAR SKIP_INITIAL_NTWK_TEST
@@ -2361,7 +2379,7 @@ ECHO.
 ECHO Would you like to choose a place to save your settings?
 SET usrInput=
 SET /P usrInput=[y/n] 
-IF /I "%usrInput%"=="" GOTO :SETTINGS_CHANGESETTINGLOCATION
+IF /I "%usrInput%"=="" SET usrInput=y
 IF /I "%usrInput%"=="Y" SET usrInput=&GOTO :SETTINGS_CHANGESETTINGLOCATION
 IF /I "%usrInput%"=="N" SET usrInput=&GOTO :EOF
 GOTO :SETTINGS_CHKCHOOSELOC
@@ -3041,6 +3059,7 @@ GOTO :EOF
 
 :SETTINGS_EXPORT
 CALL :SETTINGS_CHECKALL
+:SETTINGS_EXPORTONLY
 IF "%SETNFileDir%"=="TEMP" GOTO :EOF
 IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :EOF
 CALL :HEADER
