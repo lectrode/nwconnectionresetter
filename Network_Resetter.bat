@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r166
+	SET rvsn=r167
 REM Branch:
 	SET Branch=
 
@@ -92,108 +92,30 @@ SET USE_RESET_ROUTE_TABLE=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT=0
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
-SET DEBUGN=0
 
 
 
 REM *************Main Code**************
 
+::PROGRAMMER TOOLS
+::set NoECHO to :: to show raw commands
+SET NoECHO=
+
+SET SIMULATE=0
+SET SIMULATE_CONTESTFAIL=0
+
+::1=TEST_FAILED,2=TEST_UNREACHED,3=TEST_EXCEEDED_TEST_LIMIT,4=TEST_NEED_BROWSER,5=TEST_SUCCEEDED
+SET SIMULATE_NETTEST=0
 
 REM -------------------Initialize Program--------------------
-GOTO :PASTINIT
 
-:INITPROG
-SET NoECHO=
-PROMPT :
-%NoECHO%@ECHO OFF
-CLS
-REM Set CMD window size
-%NoECHO%MODE CON COLS=81 LINES=25
-%NoECHO%ECHO.
-%NoECHO%ECHO                             Initializing program...
-GOTO :EOF
-
-:PASTINIT
-IF NOT "%Branch%"=="" SET branchurl=%Branch%&SET Branch=[%Branch%] &CALL :ToLower branchurl
-SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
-TITLE %THISTITLE%
-
-
-IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
-
-REM Set Global Variables
-SETLOCAL ENABLEDELAYEDEXPANSION
-SET SettingsFileName=NWRSettings
 SET THISFILEDIR=%~dp0
 SET THISFILENAME=%~n0.bat
 SET THISFILENAMEPATH=%~dpnx0
-SET NUMCONNFIXES=2
-SET NUMNETFIXES=3
-SET NETFIX=0
-SET CONNFIX=0
-SET ROUTEFIX=0
-SET restartingProgram=
-SET has_tested_ntwk_name_recent=0
-SET delaymins=
-SET LastTitle=
-IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
-IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
-SET NCNUM=0
 SET INITPARAMS=%1
-SET STARTUPPARAMS=
-SET DONEINIT=
 
-CALL :RESETCURRENTLY
+GOTO :INITIALIZE
 
-
-IF "%StartDate%"=="" SET StartDate=%DATE% %TIME%
-REM GOTO :AFTSETTIME
-REM SET iYEAR=%DATE:~-4%
-REM SET iMONTH=%DATE:~4,2%
-REM SET iDAY=%DATE:~7,2%
-REM SET iHOUR=%TIME:~0,2%
-REM SET iMINUTE=%TIME:~3,2%
-REM SET iSECOND=%TIME:~6,2%
-
-REM IF NOT %iYEAR% GEQ 10 SET iYEAR=%iYEAR:~1,1% 
-REM IF NOT %iMONTH% GEQ 10 SET iMONTH=%iMONTH:~1,1%
-REM IF NOT %iDAY% GEQ 10 SET iDAY=%iDAY:~1,1%
-REM IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
-REM IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
-REM IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
-REM :AFTSETTIME
-
-CALL :SETTINGS_SETDEFAULT
-IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
-IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
-IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
-CALL :PROGRAM_INTRO
-%NoECHO%ECHO....
-%NoECHO%ECHO.....
-CALL :SETTINGS_CHECKFILE
-%NoECHO%ECHO......
-%NoECHO%ECHO.......
-CALL :DETECT_ADMIN_RIGHTS silent
-%NoECHO%ECHO........
-%NoECHO%ECHO.........
-IF "%INITPARAMS%"=="STARTUP" GOTO :AFTCALLCHECKSETNFILE
-
-REM Temporary check so older scripts will not have their continous checks interrupted
-IF NOT "%maxconchks%"=="" IF "%CONTINUOUS%"=="1" GOTO :AFTCALLCHECKSETNFILE
-CALL :SETTINGS_OPTION
-SET DONEINIT=::
-
-:AFTCALLCHECKSETNFILE
-
-REM The function SETTINGS_EXPORT checks all setting
-REM values before exporting them.
-REM It checks the values wether or not it actually
-REM exports the settings.
-CALL :SETTINGS_EXPORT
-
-CALL :CHECK_NEED_ADMIN
-
-GOTO :MAIN_START
 
 
 
@@ -232,8 +154,8 @@ REM **************************************************************************
 %NoECHO%								ECHO  *                 http://code.google.com/p/nwconnectionresetter              *
 %NoECHO%								ECHO  *                                                                            *
 %NoECHO%								ECHO  *----------------------------------------------------------------------------*
-%NoECHO%IF "%DEBUGN%"=="1"				ECHO  *          *DEBUGGING ONLY! Set DEBUGN to 0 to reset connection*             *
-%NoECHO%IF "%DEBUGN%"=="1"				ECHO  *----------------------------------------------------------------------------*
+%NoECHO%IF "%SIMULATE%"=="1"			ECHO  *       *SIMULATION ONLY! Set SIMULATE to 0 to enable functionality*         *
+%NoECHO%IF "%SIMULATE%"=="1"			ECHO  *----------------------------------------------------------------------------*
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *  Program started:          ^|  Continuous Mode  ^|     Connection Fixes:     *
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  * %StartDate% ^| %SHOWFixMode% ^|%SHOWconfixed%*
 %NoECHO%IF "%CONTINUOUS%"=="1"			ECHO  *----------------------------------------------------------------------------*
@@ -490,12 +412,15 @@ REM -----------END INITIAL NETWORK CONNECTION TEST----------
 :TEST_CONNECTION
 REM ------------------TEST INTERNET CONNECTION-------------------
 REM RETURN (isConnected= (1 || 0) )
+CALL :RESETCURRENTLY
 SET conchks=0
 SET maxconchks=51
 SET isConnected=0
+IF %SIMULATE%==1 IF %SIMULATE_CONTESTFAIL%==1 GOTO :TEST_CONNECTION_FAILED
+IF %SIMULATE%==1 IF %SIMULATE_CONTESTFAIL%==0 SET isConnected=1&GOTO :EOF
 
 
-:CHECK_CONNECTED
+:TEST_CONNECTION_CHECK
 SET currently1=Checking for connectivity...
 SET currently2=[Currently Disconnected]
 SET TimerStatus=
@@ -505,10 +430,10 @@ FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET c
 ECHO %connect_test% |FIND "Disconnected" >NUL
 IF ERRORLEVEL 1 SET isConnected=1&GOTO :EOF
 SET /A conchks+=1
-IF %conchks% GEQ %maxconchks% GOTO :CHECK_CONNECTED_FAILED
-GOTO :CHECK_CONNECTED
+IF %conchks% GEQ %maxconchks% GOTO :TEST_CONNECTION_FAILED
+GOTO :TEST_CONNECTION_CHECK
 
-:CHECK_CONNECTED_FAILED
+:TEST_CONNECTION_FAILED
 SET currently1=Connectivity test failed
 SET currently2=[Currently Disconnected]
 SET TimerStatus=
@@ -527,8 +452,14 @@ SET currently1=Testing Internet Connection...
 SET currently2=
 SET TimerStatus=
 CALL :STATS
-IF %DEBUGN%==1 GOTO :TEST_FAILED
+IF %SIMULATE%==1 IF %SIMULATE_NETTEST%==1 CALL :TEST_SET_TIME1&GOTO :TEST_FAILED
+IF %SIMULATE%==1 IF %SIMULATE_NETTEST%==2 CALL :TEST_SET_TIME1&GOTO :TEST_UNREACHED
+IF %SIMULATE%==1 IF %SIMULATE_NETTEST%==3 CALL :TEST_SET_TIME1&GOTO :TEST_EXCEEDED_TEST_LIMIT
+IF %SIMULATE%==1 IF %SIMULATE_NETTEST%==4 CALL :TEST_SET_TIME1&GOTO :TEST_NEED_BROWSER
+IF %SIMULATE%==1 IF %SIMULATE_NETTEST%==5 CALL :TEST_SET_TIME1&GOTO :TEST_SUCCEEDED
 
+
+::Initialize Net Test
 SET testwebsitenum=-1
 CALL :TEST_CHANGETESTSITE
 SET founds=0
@@ -541,6 +472,8 @@ SET maxTestLimit=15
 SET /A NumStalls+=1
 SET T_MILI_SMALLEST=300
 
+
+::PING TEST
 :TEST_TESTING
 FOR /F "delims=" %%a IN ('PING -n 1 "%testwebsite%"') DO @SET ping_test=%%a
 
@@ -557,6 +490,51 @@ GOTO :TEST_TIMED_OUT
 
 
 
+
+REM ---------TEST-TOOLS------------
+
+:TEST_INC_TOTALTESTS
+SET /A totalTests+=1
+SET SHOWttlTests=%totalTests%  .
+GOTO :EOF
+
+:TEST_SET_TIME1
+SET T1_DATE=%DATE%
+FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T1_HR=%%t&SET T1_MIN=%%u&SET T1_SEC=%%v&SET T1_MIL=%%w
+SET /A T1_TTLTIME=T1_MIL+(T1_SEC*100)+(T1_MIN*6000)+(T1_HR*360000)
+GOTO :EOF
+
+:TEST_CHANGETESTSITE
+REM Microsoft Sites do NOT work!
+SET TTLSITES=9
+
+IF "%testwebsitenum%"=="-1" (
+	SET /A testwebsitenum=TTLSITES*%RANDOM%/32768+1
+) ELSE (
+	IF %testwebsitenum% GEQ %TTLSITES% (
+		SET testwebsitenum=1
+	) ELSE (
+		SET /A testwebsitenum+=1
+	)
+)
+
+IF "%testwebsitenum%"=="1" SET testwebsite=www.facebook.com
+IF "%testwebsitenum%"=="2" SET testwebsite=www.google.com
+IF "%testwebsitenum%"=="3" SET testwebsite=www.linkedin.com
+IF "%testwebsitenum%"=="4" SET testwebsite=www.yahoo.com
+IF "%testwebsitenum%"=="5" SET testwebsite=www.apple.com
+IF "%testwebsitenum%"=="6" SET testwebsite=www.youtube.com
+IF "%testwebsitenum%"=="7" SET testwebsite=www.ask.com
+IF "%testwebsitenum%"=="8" SET testwebsite=www.baidu.com
+IF "%testwebsitenum%"=="9" SET testwebsite=www.wikipedia.org
+IF "%testwebsite%"=="" GOTO :TEST_CHANGETESTSITE
+GOTO :EOF
+
+
+REM --------END-TEST-TOOLS---------
+
+
+REM ---------PING-RESULTS----------
 
 
 :TEST_CONNECTED
@@ -610,43 +588,13 @@ IF %TREAT_TIMEOUTS_AS_DISCONNECT%==0 IF %times% GEQ %fluke_test_eliminator% GOTO
 IF %totalTests% GEQ %maxTestLimit% GOTO :TEST_EXCEEDED_TEST_LIMIT
 GOTO :TEST_TESTING
 
-:TEST_INC_TOTALTESTS
-SET /A totalTests+=1
-SET SHOWttlTests=%totalTests%  .
-GOTO :EOF
+REM ---------END-PING-RESULTS----------
 
-:TEST_SET_TIME1
-SET T1_DATE=%DATE%
-FOR /F "tokens=1-4* DELIMS=:." %%t IN ("%TIME%") DO SET T1_HR=%%t&SET T1_MIN=%%u&SET T1_SEC=%%v&SET T1_MIL=%%w
-SET /A T1_TTLTIME=T1_MIL+(T1_SEC*100)+(T1_MIN*6000)+(T1_HR*360000)
-GOTO :EOF
 
-:TEST_CHANGETESTSITE
-REM Microsoft Sites do NOT work!
-SET TTLSITES=9
 
-IF "%testwebsitenum%"=="-1" (
-	SET /A testwebsitenum=TTLSITES*%RANDOM%/32768+1
-) ELSE (
-	IF %testwebsitenum% GEQ %TTLSITES% (
-		SET testwebsitenum=1
-	) ELSE (
-		SET /A testwebsitenum+=1
-	)
-)
 
-IF "%testwebsitenum%"=="1" SET testwebsite=www.facebook.com
-IF "%testwebsitenum%"=="2" SET testwebsite=www.google.com
-IF "%testwebsitenum%"=="3" SET testwebsite=www.linkedin.com
-IF "%testwebsitenum%"=="4" SET testwebsite=www.yahoo.com
-IF "%testwebsitenum%"=="5" SET testwebsite=www.apple.com
-IF "%testwebsitenum%"=="6" SET testwebsite=www.youtube.com
-IF "%testwebsitenum%"=="7" SET testwebsite=www.ask.com
-IF "%testwebsitenum%"=="8" SET testwebsite=www.baidu.com
-IF "%testwebsitenum%"=="9" SET testwebsite=www.wikipedia.org
-IF "%testwebsite%"=="" GOTO :TEST_CHANGETESTSITE
-GOTO :EOF
 
+REM ---------TEST-RESULTS-------------
 
 :TEST_FAILED
 REM DEBUGGING || FAILED A TEST
@@ -662,17 +610,12 @@ IF %NumStalls% GEQ 4 SET TH=th
 IF %SHOW_ADVANCED_TESTING%==1 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% ECHO Test Too Fast Detected! Stalling...(%NumStalls%%TH% of Max:%MaxStalls%)
 IF %T_TIMEPAST% LSS %T_MILI_SMALLEST% IF NOT %NumStalls% GEQ %MaxStalls% CALL :SLEEP&GOTO :TEST_INIT
 
-
-
 SET /A main_tests=main_tests+1
-
 IF %SLWMSG%==1 CALL :SLEEP
-
 SET currently1=Internet Connection not detected
 SET currently2=
 SET TimerStatus=
 CALL :STATS
-
 SET isConnected=0
 GOTO :EOF
 
@@ -719,7 +662,13 @@ IF NOT %SLWMSG%==1 IF %SHOW_ADVANCED_TESTING%==1 CALL :SLEEP 1
 
 SET isConnected=1
 GOTO :EOF
+
+REM ---------TEST-RESULTS-------------
+
 REM ----------------END TEST INTERNET CONNECTION-----------------
+
+
+
 
 
 
@@ -800,7 +749,7 @@ SET TimerStatus=
 CALL :STATS
 
 REM Release IP Address
-IF %DEBUGN%==0 IPCONFIG /RELEASE >NUL
+IPCONFIG /RELEASE >NUL
 
 
 REM Flush DNS Cache
@@ -809,7 +758,7 @@ SET currently2=
 SET TimerStatus=
 CALL :STATS
 
-IF %DEBUGN%==0 IPCONFIG /FLUSHDNS >NUL
+IPCONFIG /FLUSHDNS >NUL
 
 
 REM Renew IP Address
@@ -818,7 +767,7 @@ SET currently2=*May take a couple minutes*
 SET TimerStatus=
 CALL :STATS
 
-IF %DEBUGN%==0 IPCONFIG /RENEW >NUL
+IPCONFIG /RENEW >NUL
 
 REM CANNOT TEST HERE
 REM Checking network connection here causes unwanted recursion
@@ -987,8 +936,8 @@ SET TimerStatus=
 CALL :STATS
 
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
-IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
-IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS DIS
+IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" DISABLE
+IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS DIS
 
 SET currently1=[%NETWORK%] Disabled
 SET currently2=
@@ -1009,8 +958,8 @@ CALL :STATS
 
 REM TEST_NETWORK_NAME (EXIT || RETURN)
 IF %ONLY_ONE_NETWORK_NAME_TEST%==0 CALL :TEST_NETWORK_NAME
-IF %DEBUGN%==0 IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
-IF %DEBUGN%==0 IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS EN
+IF %winVistaOrNewer%==1 NETSH INTERFACE SET INTERFACE "%NETWORK%" ENABLE
+IF %winVistaOrNewer%==0 CALL :TOGGLECONNECTION_OLD_OS EN
 
 SET currently1=[%NETWORK%] Enabled
 SET currently2=
@@ -1059,7 +1008,7 @@ CALL :GET_Randomfilename %disOrEn%Network .vbs
 @ECHO if oLanConnection is nothing then '>>!%disOrEn%Network!
 @ECHO msgbox "Couldn't find %NETWORK%" '>>!%disOrEn%Network!
 @ECHO msgbox "This program requires a valid Network Connection name to work properly" '>>!%disOrEn%Network!
-@ECHO msgbox "Please close the program and open it with notepad for more information" '>>!%disOrEn%Network!
+@ECHO msgbox "Please close the script and open it with notepad for more information" '>>!%disOrEn%Network!
 @ECHO Set objFSO = CreateObject("Scripting.FileSystemObject") '>>!%disOrEn%Network!
 @ECHO objFSO.DeleteFile WScript.ScriptFullName '>>!%disOrEn%Network!
 @ECHO Set objFSO = Nothing '>>!%disOrEn%Network!
@@ -1100,12 +1049,12 @@ REM --------------END DISABLE/ENABLE CONNECTION FOR WINXP----------------
 REM ---------------------RESTART PROGRAM--------------------------
 :RESTART_PROGRAM
 REM Self restart
-SET currently1=Restarting Program...
+SET currently1=Restarting Script...
 SET currently2=
 SET TimerStatus=
 CALL :STATS 3
 SET restartingProgram=1
-START CMD /C "%THISFILENAMEPATH%"
+START CMD /C "%THISFILENAMEPATH%"%STARTPARAMS%
 EXIT
 REM -----------------END RESTART PROGRAM--------------------------
 
@@ -1395,7 +1344,6 @@ CALL "%THISFILEDIR%%updaterfile%"&EXIT
 
 :SelfUpdate_DLFile
 IF "%DLFilePath%"=="" GOTO :EOF
-IF NOT %DEBUGN%==0 GOTO :EOF
 CALL :GET_Randomfilename webdown .vbs
 @ECHO On
 @ECHO 'Download Update  '>%webdown%
@@ -1693,7 +1641,7 @@ REM ----------------------DETECT ADMIN RIGHTS---------------------
 %ADMIN_NOECHO%SET TimerStatus=
 %ADMIN_NOECHO%IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 SET ISADMIN=0
-IF %DEBUGN%==0 AT > NUL
+AT > NUL
 IF NOT ERRORLEVEL 1 SET ISADMIN=1
 GOTO :EOF
 REM --------------------END DETECT ADMIN RIGHTS-------------------
@@ -1877,8 +1825,8 @@ SET currently1=Checking if [%NETWORK%]
 SET currently2=is a valid network connection name...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
-IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
+NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
+IF ERRORLEVEL 1 GOTO :NEED_NETWORK
 GOTO :EOF
 REM --------------------END TEST NETWORK NAME---------------------
 
@@ -2045,11 +1993,11 @@ SET currently2=Testing Common Network Names...
 SET TimerStatus=Checking [%NETWORKCOMMON%]
 CALL :STATS
 
-IF %DEBUGN%==0 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORKCOMMON%">NUL
+NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORKCOMMON%">NUL
 SET /A NCNUM+=1
-IF %DEBUGN%==0 IF NOT ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
-IF %DEBUGN%==0 IF ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
-IF %DEBUGN%==0 IF ERRORLEVEL 1 GOTO :NEED_NETWORK
+IF NOT ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
+IF ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
+IF ERRORLEVEL 1 GOTO :NEED_NETWORK
 
 
 :FOUND_CUSTOM_NAME
@@ -2090,7 +2038,7 @@ GOTO :NEED_NETWORK
 SET currently2=Showing Network Connections...
 SET TimerStatus=
 CALL :STATS
-IF %DEBUGN%==0 %SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
+%SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
 
 
 :DONT_DISPLAY_NETWORK_CONNECTIONS
@@ -2137,7 +2085,6 @@ SET TimerStatus=
 CALL :STATS
 CALL :TEST01VAR SLWMSG
 CALL :TEST01VAR SHOW_ALL_ALERTS
-CALL :TEST01VAR DEBUGN
 CALL :TEST01VAR CONTINUOUS
 CALL :TEST01VAR AUTOUPDATE
 CALL :TEST01VAR OS_DETECT_OVERRIDE
@@ -2176,12 +2123,110 @@ GOTO :EOF
 
 
 
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+REM -----------------------INITIALIZING---------------------------
+REM --------------------------------------------------------------
+REM --------------------------------------------------------------
+
+:INITIALIZE
+
+IF NOT "%Branch%"=="" SET branchurl=%Branch%&SET Branch=[%Branch%] &CALL :ToLower branchurl
+SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
+TITLE %THISTITLE%
+
+
+IF "%USE_ALTERNATE_SETTINGS%"=="1" IF NOT "%START_MINIMIZED%"=="1" CALL :USINGALTSETNNOTICE
+
+REM Set Global Variables
+SETLOCAL ENABLEDELAYEDEXPANSION
+SET SettingsFileName=NWRSettings
+SET NUMCONNFIXES=2
+SET NUMNETFIXES=3
+SET NETFIX=0
+SET CONNFIX=0
+SET ROUTEFIX=0
+SET restartingProgram=
+SET has_tested_ntwk_name_recent=0
+SET delaymins=
+SET LastTitle=
+IF "%TestsSinceUpdate%"=="" SET TestsSinceUpdate=-1
+IF "%ProgramMustFix%"=="" SET ProgramMustFix=0
+SET NCNUM=0
+SET STARTUPPARAMS=
+SET DONEINIT=
+
+CALL :RESETCURRENTLY
+
+
+IF "%StartDate%"=="" SET StartDate=%DATE% %TIME%
+REM GOTO :AFTSETTIME
+REM SET iYEAR=%DATE:~-4%
+REM SET iMONTH=%DATE:~4,2%
+REM SET iDAY=%DATE:~7,2%
+REM SET iHOUR=%TIME:~0,2%
+REM SET iMINUTE=%TIME:~3,2%
+REM SET iSECOND=%TIME:~6,2%
+
+REM IF NOT %iYEAR% GEQ 10 SET iYEAR=%iYEAR:~1,1% 
+REM IF NOT %iMONTH% GEQ 10 SET iMONTH=%iMONTH:~1,1%
+REM IF NOT %iDAY% GEQ 10 SET iDAY=%iDAY:~1,1%
+REM IF NOT %iHOUR% GEQ 10 SET iHOUR=%iHOUR:~1,1%
+REM IF NOT %iMINUTE% GEQ 10 SET iMINUTE=%iMINUTE:~1,1%
+REM IF NOT %iSECOND% GEQ 10 SET iSECOND=%iSECOND:~1,1%
+REM :AFTSETTIME
+
+CALL :SETTINGS_SETDEFAULT
+IF NOT "%USE_ALTERNATE_SETTINGS%"=="1" CALL :SETTINGS_RESET2DEFAULT
+IF "%INITPARAMS%"=="RESET" CALL :SETTINGS_RESET
+IF "%USE_ALTERNATE_SETTINGS%"=="1" GOTO :AFTCALLCHECKSETNFILE
+CALL :PROGRAM_INTRO
+%NoECHO%ECHO....
+%NoECHO%ECHO.....
+CALL :SETTINGS_CHECKFILE
+%NoECHO%ECHO......
+%NoECHO%ECHO.......
+CALL :DETECT_ADMIN_RIGHTS silent
+%NoECHO%ECHO........
+%NoECHO%ECHO.........
+IF "%INITPARAMS%"=="STARTUP" GOTO :AFTCALLCHECKSETNFILE
+
+REM Temporary check so older scripts will not have their continous checks interrupted
+IF NOT "%maxconchks%"=="" IF "%CONTINUOUS%"=="1" GOTO :AFTCALLCHECKSETNFILE
+CALL :SETTINGS_OPTION
+SET DONEINIT=::
+
+:AFTCALLCHECKSETNFILE
+
+REM The function SETTINGS_EXPORT checks all setting
+REM values before exporting them.
+REM It checks the values wether or not it actually
+REM exports the settings.
+CALL :SETTINGS_EXPORT
+
+CALL :CHECK_NEED_ADMIN
+
+GOTO :MAIN_START
+
+
+
 
 REM --------------------------------------------------------------
 REM --------------------------------------------------------------
 REM ------------------------MISC-Alerts---------------------------
 REM --------------------------------------------------------------
 REM --------------------------------------------------------------
+
+
+:INITPROG
+PROMPT :
+%NoECHO%@ECHO OFF
+CLS
+REM Set CMD window size
+%NoECHO%MODE CON COLS=81 LINES=25
+%NoECHO%ECHO.
+%NoECHO%ECHO                             Initializing program...
+GOTO :EOF
 
 
 
@@ -2576,7 +2621,6 @@ ECHO -Enable FIX: ResetRoutes     ( 6)   %USE_RESET_ROUTE_TABLE%
 ECHO -Treat Timeout as disconnect ( 7)   %TREAT_TIMEOUTS_AS_DISCONNECT%
 ECHO -One Connection name test    ( 8)   %ONLY_ONE_NETWORK_NAME_TEST%
 ECHO -OS Detection Override       ( 9)   %OS_DETECT_OVERRIDE%
-ECHO -DEBUGN                      (10)   %DEBUGN%
 ECHO.
 SET usrInput=
 SET /P usrInput=[B/U/M/X/1/2/3/4/5/6/7/8/9/10] 
@@ -2810,14 +2854,6 @@ SET SETTINGINFO1=Override Operating System Detection
 SET SETTINGINFO2=This will force this script to continue running on an unsupported OS.
 SET SETTINGINFO3=Doing so may cause this script to exibit unusual behavior.
 )
-IF %1==A10 (
-SET SETTINGTITLE=DEBUGGING
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Programmer Tool - Debugging
-SET SETTINGINFO2=Debugging mode disables actual functionality of this script
-SET SETTINGINFO3=
-SET SETNVAR=DEBUGN
-)
 
 GOTO :EOF
 
@@ -2850,7 +2886,6 @@ SET USE_RESET_ROUTE_TABLE_D=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT_D=1
 SET ONLY_ONE_NETWORK_NAME_TEST_D=1
 SET OS_DETECT_OVERRIDE_D=0
-SET DEBUGN_D=0
 GOTO :EOF
 
 :SETTINGS_RESET2DEFAULT
@@ -2878,7 +2913,6 @@ SET USE_RESET_ROUTE_TABLE=%USE_RESET_ROUTE_TABLE_D%
 SET TREAT_TIMEOUTS_AS_DISCONNECT=%TREAT_TIMEOUTS_AS_DISCONNECT_D%
 SET ONLY_ONE_NETWORK_NAME_TEST=%ONLY_ONE_NETWORK_NAME_TEST_D%
 SET OS_DETECT_OVERRIDE=%OS_DETECT_OVERRIDE_D%
-SET DEBUGN=%DEBUGN_D%
 GOTO :EOF
 
 :SETTINGS_VIEW_PRESET01
@@ -2997,7 +3031,6 @@ SET USE_RESET_ROUTE_TABLE=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT=1
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
-SET DEBUGN=0
 GOTO :EOF
 
 :SETTINGS_PRESET02
@@ -3026,7 +3059,6 @@ SET USE_RESET_ROUTE_TABLE=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT=1
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
-SET DEBUGN=0
 GOTO :EOF
 
 :SETTINGS_PRESET03
@@ -3055,7 +3087,6 @@ SET USE_RESET_ROUTE_TABLE=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT=1
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
-SET DEBUGN=0
 GOTO :EOF
 
 :SETTINGS_PRESET04
@@ -3084,7 +3115,6 @@ SET USE_RESET_ROUTE_TABLE=0
 SET TREAT_TIMEOUTS_AS_DISCONNECT=1
 SET ONLY_ONE_NETWORK_NAME_TEST=1
 SET OS_DETECT_OVERRIDE=0
-SET DEBUGN=0
 GOTO :EOF
 
 :SETTINGS_EXPORT
@@ -3102,7 +3132,7 @@ SET currently1=Exporting Settings...
 SET currently2=
 SET TimerStatus=
 CALL :STATS
-IF "%DEBUGN%"=="1" GOTO :SETTINGS_EXPORT_SKIP
+IF "%SIMULATE%"=="1" GOTO :SETTINGS_EXPORT_SKIP
 TYPE NUL>"%SETNFileDir%%SettingsFileName%.BAT"
 DEL /F "%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO IF "%%1"=="" START /B CMD /C "%THISFILENAMEPATH%" SETTINGS)>>"%SETNFileDir%%SettingsFileName%.BAT"
@@ -3129,7 +3159,6 @@ DEL /F "%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET TREAT_TIMEOUTS_AS_DISCONNECT=^%TREAT_TIMEOUTS_AS_DISCONNECT%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET ONLY_ONE_NETWORK_NAME_TEST=^%ONLY_ONE_NETWORK_NAME_TEST%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 (ECHO SET OS_DETECT_OVERRIDE=^%OS_DETECT_OVERRIDE%)>>"%SETNFileDir%%SettingsFileName%.BAT"
-(ECHO SET DEBUGN=^%DEBUGN%)>>"%SETNFileDir%%SettingsFileName%.BAT"
 :SETTINGS_EXPORT_SKIP
 GOTO :EOF
 
