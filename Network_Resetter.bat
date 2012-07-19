@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r167
+	SET rvsn=r168
 REM Branch:
 	SET Branch=
 
@@ -1038,6 +1038,8 @@ CALL :GET_Randomfilename %disOrEn%Network .vbs
 %NOECHO%@ECHO Off
 CALL :STATS
 START /B /WAIT CMD /C cscript //B //NoLogo !%disOrEn%Network!
+CALL :SLEEP 2
+IF EXIST "!%disOrEn%Network!" DEL /F /S /Q "!%disOrEn%Network!"
 GOTO :EOF
 REM --------------END DISABLE/ENABLE CONNECTION FOR WINXP----------------
 
@@ -1379,6 +1381,8 @@ CALL :GET_Randomfilename webdown .vbs
 @ECHO Set objFSO = Nothing '>>%webdown%
 %NoECHO%@ECHO off
 START /B /WAIT CMD /C cscript //B //T:%webdowntimeout% //NoLogo %webdown%
+CALL :SLEEP 1
+IF EXIST "%webdown%" DEL /F /S /Q "%webdown%"
 GOTO :EOF
 
 
