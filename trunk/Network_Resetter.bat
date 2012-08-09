@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r169
+	SET rvsn=r170
 REM Branch:
 	SET Branch=
 
@@ -1428,8 +1428,7 @@ CALL :GET_Randomfilename updaterfile .bat
 @ECHO START CMD /C "%THISFILEDIR%%THISFILENAME%%STARTUPPARAMS%" >>%updaterfile%
 @ECHO DEL /F/S/Q "%%~dpnx0" >>%updaterfile%
 %NoECHO%@ECHO OFF
-START CMD /C "%THISFILEDIR%%updaterfile%"
-EXIT
+START CMD /C "%THISFILEDIR%%updaterfile%"&EXIT
 
 :SU_UpdateByCheckout
 
@@ -1830,7 +1829,7 @@ SET currently2=is a valid network connection name...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
-IF ERRORLEVEL 1 GOTO :NEED_NETWORK
+IF ERRORLEVEL 1 GOTO :SETTINGS_SETNETWORK
 GOTO :EOF
 REM --------------------END TEST NETWORK NAME---------------------
 
@@ -1975,110 +1974,21 @@ REM ------------------END TEST FIXES VALUES-----------------------
 
 
 
-:NEED_NETWORK
-REM ----------------SCRIPT NEEDS NETWORK NAME---------------------
-REM GOTO (NEED_NETWORK_AUTO || EXIT (COMPLETE || RESTART))
-SET NETWORK_NAMES_NUM=9
-
-
-IF %NCNUM%==0 SET NETWORKCOMMON=Wireless Network Connection
-IF %NCNUM%==1 SET NETWORKCOMMON=Local Area Connection
-IF %NCNUM%==2 SET NETWORKCOMMON=LAN
-IF %NCNUM%==3 SET NETWORKCOMMON=Wireless Network Connection 1
-IF %NCNUM%==4 SET NETWORKCOMMON=Wireless Network Connection 2
-IF %NCNUM%==5 SET NETWORKCOMMON=Wireless Network Connection 3
-IF %NCNUM%==6 SET NETWORKCOMMON=Wireless Network Connection 4
-IF %NCNUM%==7 SET NETWORKCOMMON=Wireless Network Connection 5
-IF %NCNUM%==8 SET NETWORKCOMMON=Wireless Network Connection 6
-IF %NCNUM%==9 SET NETWORKCOMMON=Local Area Network
-
-SET currently1=Could not find [%NETWORK%]
-SET currently2=Testing Common Network Names...
-SET TimerStatus=Checking [%NETWORKCOMMON%]
-CALL :STATS
-
-NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORKCOMMON%">NUL
-SET /A NCNUM+=1
-IF NOT ERRORLEVEL 1 GOTO :FOUND_CUSTOM_NAME
-IF ERRORLEVEL 1 IF %NCNUM% GTR %NETWORK_NAMES_NUM% GOTO :COMMON_NAMES_NOT_FOUND
-IF ERRORLEVEL 1 GOTO :NEED_NETWORK
-
-
-:FOUND_CUSTOM_NAME
-SET currently1=Found a Network connection match:
-SET currently2=[%NETWORKCOMMON%]
-SET TimerStatus=
-CALL :STATS
-ECHO.
-ECHO.
-IF %OMIT_USER_INPUT%==1 SET NETWORK=%NETWORKCOMMON%
-IF %OMIT_USER_INPUT%==1 GOTO :EOF
-ECHO Would you like to reset and/or monitor this network connection?
-SET usrInpt=
-SET /P usrInpt=[y/n]
-IF "%usrInpt%"=="n" IF %NCNUM% LSS %NETWORK_NAMES_NUM% GOTO :NEED_NETWORK
-IF "%usrInpt%"==""  SET usrInpt=y
-IF "%usrInpt%"=="y" SET NETWORK=%NETWORKCOMMON%
-IF "%usrInpt%"=="y" CALL :SETTINGS_EXPORT
-IF "%usrInpt%"=="y" GOTO :EOF
-GOTO :FOUND_CUSTOM_NAME
-
-
-:COMMON_NAMES_NOT_FOUND
-SET currently1=Could not find [%NETWORK%]
-SET currently2=
-SET TimerStatus=
-CALL :STATS
-ECHO.
-ECHO.
-IF %OMIT_USER_INPUT%==1 GOTO :NEED_NETWORK_AUTO
-ECHO.
-ECHO Would you like to view current network connections?
-SET /P usrInpt=[y/n] 
-IF "%usrInpt%"=="n" GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
-IF "%usrInpt%"=="y" GOTO :DISPLAY_NETWORK_CONNECTIONS
-GOTO :NEED_NETWORK
-:DISPLAY_NETWORK_CONNECTIONS
-SET currently2=Showing Network Connections...
-SET TimerStatus=
-CALL :STATS
-%SystemRoot%\explorer.exe /N,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\::{21EC2020-3AEA-1069-A2DD-08002B30309D}\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}
-
-
-:DONT_DISPLAY_NETWORK_CONNECTIONS
-SET currently1=Could not find [%NETWORK%]
-SET currently2=
-SET TimerStatus=
-CALL :STATS
-ECHO.
-ECHO.
-ECHO Would you like to set the Network Name now?
-SET /P usrInpt=[y/n] 
-IF "%usrInpt%"=="n" GOTO :DONT_SET_NETWORK_NAME
-IF "%usrInpt%"=="y" GOTO :SET_NETWORK_NAME
-GOTO :DONT_DISPLAY_NETWORK_CONNECTIONS
-
-:SET_NETWORK_NAME
-CALL :SETTINGS_SETONE B1
-GOTO :TEST_NETWORK_NAME
-
-
-:DONT_SET_NETWORK_NAME
-SET currently1=The network was not found. This script requires 
-SET currently2=a valid connection name to run. EXITING...
-SET TimerStatus=
-CALL :STATS 5
-EXIT
-
-:NEED_NETWORK_AUTO
-SET currently1=The network was not found. NETWORK_RESET fixes
-SET currently2=will be temporarily disabled
-SET TimerStatus=
-CALL :STATS 3
-SET USE_NETWORK_RESET=0
-SET USE_NETWORK_RESET_FAST=0
+:GET_NETWORK_CONNECTIONS
+SET CON_NUM=0
+FOR /F "tokens=* DELIMS=" %%n IN ('NETSH INTERFACE SHOW INTERFACE') DO CALL :GET_NETWORK_CONNECTIONS_PARSE %%n
 GOTO :EOF
-REM -------------END SCRIPT NEEDS NETWORK NAME-------------------
+
+:GET_NETWORK_CONNECTIONS_PARSE
+SET LINE=%*
+ECHO %LINE% |FIND "--------">NUL
+IF NOT ERRORLEVEL 1 GOTO :EOF
+ECHO %LINE% |FIND "Interface Name">NUL
+IF NOT ERRORLEVEL 1 GOTO :EOF
+SET /A CON_NUM+=1
+FOR /F "tokens=1,3*" %%c IN ("%LINE%") DO SET CONNECTION%CON_NUM%_Admin=%%c&SET CONNECTION%CON_NUM%_Type=%%d&SET CONNECTION%CON_NUM%_Name=%%e
+GOTO :EOF
+
 
 
 :SETTINGS_CHECKALL
@@ -2486,7 +2396,7 @@ GOTO :SETTINGS_SELECT_PRESET
 
 :SETTINGS_SET_ALL
 CALL :HEADER
-CALL :SETTINGS_SETONE B1
+CALL :SETTINGS_SETNETWORK
 CALL :SETTINGS_SETONE B2
 CALL :SETTINGS_SETONE B3
 CALL :SETTINGS_SETONE M1
@@ -2530,10 +2440,9 @@ ECHO -Use Logging           (3)   %USELOGGING%
 ECHO.
 SET usrInput=
 SET /P usrInput=[U/M/A/X/1/2/3] 
-IF "%usrInput%"=="1" CALL :SETTINGS_SETONE B1
+IF "%usrInput%"=="1" CALL :SETTINGS_SETNETWORK
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE B2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B3
-IF "%usrInput%"=="4" CALL :SETTINGS_SETONE B4
 IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
 IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
 IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
@@ -2673,6 +2582,35 @@ SET usrInput=
 CALL :SETTINGS_EXPORT
 GOTO :EOF
 
+:SETTINGS_SETNETWORK
+CALL :HEADER
+CALL :GET_NETWORK_CONNECTIONS
+SET NETWORK_OLD=%NETWORK%
+SET NETWORK=
+SET STATSpacer=                                                      !
+ECHO. *Connection Name*
+ECHO. 
+ECHO. Current value: "%NETWORK_OLD%"
+ECHO.
+ECHO. Please select the connection through which you connect to
+ECHO. the internet, or enter a connection name manually:
+ECHO. (Enter nothing to keep the current setting)
+ECHO. NOTE: Capital letters matter!
+ECHO. 
+FOR /L %%n IN (1,1,%CON_NUM%) DO SET SHOWCONN%%n=!CONNECTION%%n_NAME!%STATSpacer%
+FOR /L %%n IN (1,1,%CON_NUM%) DO ECHO -!SHOWCONN%%n:~0,40! [%%n]
+ECHO.
+SET usrInput=
+SET /P usrInput=[] 
+IF "%usrInput%"=="" SET NETWORK=%NETWORK_OLD%&GOTO :EOF
+ECHO Verifying...
+FOR /L %%n IN (1,1,%CON_NUM%) DO IF "%usrInput%"=="%%n" SET NETWORK=!CONNECTION%%n_NAME!
+IF "%NETWORK%"=="" SET NETWORK=%usrInput%
+SET usrInput=
+NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
+IF ERRORLEVEL 1 SET NETWORK=%NETWORK_OLD%&ECHO Not a valid name...&CALL :SLEEP 2&GOTO :SETTINGS_SETNETWORK
+CALL :SETTINGS_EXPORT
+GOTO :EOF
 
 :SETTINGS_GETINFO
 SET usrInput=
@@ -2683,13 +2621,6 @@ SET SETTINGINFO2=
 SET SETTINGINFO3=
 SET SETNVAR=
 
-IF %1==B1 (
-SET SETTINGTITLE=NETWORK
-SET SETTINGOPT=
-SET SETTINGINFO1=Name of the Network to be reset
-REM SET SETTINGINFO2=*enter "n!" to view network connections*
-SET SETTINGINFO3=
-)
 IF %1==B2 (
 SET SETTINGTITLE=MODE
 SET SETTINGOPT=
