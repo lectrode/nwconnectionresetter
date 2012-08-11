@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r176
+	SET rvsn=r178
 REM Branch:
 	SET Branch=
 
@@ -1638,6 +1638,7 @@ REM --------------------------------------------------------------
 
 
 :DETECT_ADMIN_RIGHTS
+SET ADMIN_NOECHO=
 IF "%1"=="silent" SET ADMIN_NOECHO=::
 REM ----------------------DETECT ADMIN RIGHTS---------------------
 %ADMIN_NOECHO%SET currently1=Checking if script has administrative privileges...
