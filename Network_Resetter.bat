@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r172
+	SET rvsn=r173
 REM Branch:
 	SET Branch=
 
@@ -434,7 +434,7 @@ IF "%NETWORK_IsMBN%"=="1" SET TC_MBN_ThisLine=0
 IF "%NETWORK_IsMBN%"=="1" SET isConnected=0
 IF "%NETWORK_IsMBN%"=="1" FOR /F "tokens=* delims=" %%a IN ('NETSH MBN SHOW INTERFACES') DO CALL :TEST_CONNECTION_CHECK_MBNPARSE %%a
 REM IF "%NETWORK_IsMBN%"=="1" FOR /F "tokens=* delims=" %%a IN (C:\output.txt) DO CALL :TEST_CONNECTION_CHECK_MBNPARSE %%a
-IF "%NETWORK_IsMBN%"=="1" GOTO :EOF
+IF "%NETWORK_IsMBN%"=="1" IF "%isConnected%"=="1" GOTO :EOF
 SET /A conchks+=1
 IF %conchks% GEQ %maxconchks% GOTO :TEST_CONNECTION_FAILED
 GOTO :TEST_CONNECTION_CHECK
