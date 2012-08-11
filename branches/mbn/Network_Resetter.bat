@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r174
+	SET rvsn=r177
 REM Branch:
 	SET Branch=MBN
 
@@ -1278,6 +1278,7 @@ REM UPDATECHANNEL: 1=stable 2=beta 3=dev
 %NoECHO%SET currently3=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET currently4=Initializing...
 %NoECHO%CALL :STATS
+CALL :SelfUpdate_GETRemoteServer
 SET rvsnchk=%rvsn:.=%
 SET rvsnchk=%rvsnchk:_=%
 SET rvsnchk=%rvsnchk:r=%
@@ -1289,7 +1290,6 @@ IF %lastUPDATECHANNEL%==b SET lastUPDATECHANNEL=2
 IF %lastUPDATECHANNEL%==r SET lastUPDATECHANNEL=3
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
-CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
 
@@ -2082,6 +2082,12 @@ REM --------------------------------------------------------------
 REM --------------------------------------------------------------
 
 :INITIALIZE
+%NoECHO%@ECHO OFF
+CLS
+REM Set CMD window size
+%NoECHO%MODE CON COLS=81 LINES=25
+%NoECHO%ECHO.
+%NoECHO%ECHO                             Initializing program...
 
 IF NOT "%Branch%"=="" SET branchurl=%Branch%&SET Branch=[%Branch%] &CALL :ToLower branchurl
 SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
@@ -2172,13 +2178,10 @@ REM --------------------------------------------------------------
 
 
 :INITPROG
-PROMPT :
-%NoECHO%@ECHO OFF
-CLS
-REM Set CMD window size
-%NoECHO%MODE CON COLS=81 LINES=25
-%NoECHO%ECHO.
-%NoECHO%ECHO                             Initializing program...
+@PROMPT :
+@CLS
+@ECHO.
+@ECHO                             Initializing program...
 GOTO :EOF
 
 
