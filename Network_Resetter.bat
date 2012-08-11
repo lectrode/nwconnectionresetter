@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r173
+	SET rvsn=r175
 REM Branch:
 	SET Branch=
 
@@ -427,35 +427,12 @@ SET currently2=[Currently Disconnected]
 SET TimerStatus=
 CALL :STATS
 %NoECHO%IF %SHOW_ADVANCED_TESTING%==1 ECHO  Checks: %conchks%
-IF "%NETWORK_IsMBN%"=="0" FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
-IF "%NETWORK_IsMBN%"=="0" ECHO %connect_test% |FIND "Disconnected" >NUL
-IF "%NETWORK_IsMBN%"=="0" IF ERRORLEVEL 1 SET isConnected=1&GOTO :EOF
-IF "%NETWORK_IsMBN%"=="1" SET TC_MBN_ThisLine=0
-IF "%NETWORK_IsMBN%"=="1" SET isConnected=0
-IF "%NETWORK_IsMBN%"=="1" FOR /F "tokens=* delims=" %%a IN ('NETSH MBN SHOW INTERFACES') DO CALL :TEST_CONNECTION_CHECK_MBNPARSE %%a
-REM IF "%NETWORK_IsMBN%"=="1" FOR /F "tokens=* delims=" %%a IN (C:\output.txt) DO CALL :TEST_CONNECTION_CHECK_MBNPARSE %%a
-IF "%NETWORK_IsMBN%"=="1" IF "%isConnected%"=="1" GOTO :EOF
+FOR /F "delims=" %%a IN ('NETSH INTERFACE SHOW INTERFACE "%NETWORK%"') DO @SET connect_test=%%a
+ECHO %connect_test% |FIND "Disconnected" >NUL
+IF ERRORLEVEL 1 SET isConnected=1&GOTO :EOF
 SET /A conchks+=1
 IF %conchks% GEQ %maxconchks% GOTO :TEST_CONNECTION_FAILED
 GOTO :TEST_CONNECTION_CHECK
-
-:TEST_CONNECTION_CHECK_MBNPARSE
-SET TC_MBN_Line=%*
-FOR /F "tokens=1,2 delims=:" %%b IN ("%TC_MBN_Line%") DO SET TC_MBN_LineA=%%b&SET TC_MBN_LineB=%%c
-IF "%TC_MBN_LineA%"=="" GOTO :EOF
-ECHO %TC_MBN_LineA%|FIND "Name">NUL
-SET TC_MBN_ERR=%ERRORLEVEL%
-IF %TC_MBN_ERR%==0 ECHO "%TC_MBN_LineB%"|FIND "%NETWORK%">NUL
-IF %TC_MBN_ERR%==0 IF NOT ERRORLEVEL 1 SET TC_MBN_ThisLine=1&GOTO :EOF
-IF %TC_MBN_ERR%==0 SET TC_MBN_ThisLine=0&GOTO :EOF
-IF %TC_MBN_ThisLine%==0 GOTO :EOF
-ECHO %TC_MBN_LineA%|FIND "State">NUL
-IF ERRORLEVEL 1 GOTO :EOF
-ECHO %TC_MBN_LineB%|FIND "Not">NUL
-IF ERRORLEVEL 1 SET isConnected=1
-GOTO :EOF
-
-
 
 :TEST_CONNECTION_FAILED
 SET currently1=Connectivity test failed
@@ -1661,7 +1638,6 @@ REM --------------------------------------------------------------
 
 
 :DETECT_ADMIN_RIGHTS
-SET ADMIN_NOECHO=
 IF "%1"=="silent" SET ADMIN_NOECHO=::
 REM ----------------------DETECT ADMIN RIGHTS---------------------
 %ADMIN_NOECHO%SET currently1=Checking if script has administrative privileges...
@@ -1853,19 +1829,8 @@ SET currently1=Checking if [%NETWORK%]
 SET currently2=is a valid network connection name...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
-CALL :TESTNetworkName %NETWORK%
-IF "%NETWORK_IsValid%"=="0" GOTO :SETTINGS_SETNETWORK
-GOTO :EOF
-
-:TESTNetworkName
-SET TESTNETWORK=%*
-SET NETWORK_IsValid=1
-SET NETWORK_IsMBN=0
 NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
-IF NOT ERRORLEVEL 1 GOTO :EOF
-NETSH MBN SHOW INTERFACES|FIND "%NETWORK%">NUL
-IF NOT ERRORLEVEL 1 SET NETWORK_IsMBN=1&GOTO :EOF
-SET NETWORK_IsValid=0
+IF ERRORLEVEL 1 GOTO :SETTINGS_SETNETWORK
 GOTO :EOF
 REM --------------------END TEST NETWORK NAME---------------------
 
@@ -2033,7 +1998,6 @@ SET currently1=Checking validity of Settings...
 SET currently2=
 SET TimerStatus=
 CALL :STATS
-CALL :DETECT_ADMIN_RIGHTS
 CALL :TEST01VAR SLWMSG
 CALL :TEST01VAR SHOW_ALL_ALERTS
 CALL :TEST01VAR CONTINUOUS
@@ -2045,7 +2009,6 @@ CALL :TEST01VAR USE_RESET_ROUTE_TABLE
 CALL :TEST01VAR USE_IP_RESET
 CALL :TEST01VAR OMIT_USER_INPUT
 CALL :TEST_FIXES_VALS
-CALL :CHECK_NEED_ADMIN
 
 IF %USE_NETWORK_RESET%==1 (
 	CALL :DETECT_OS
@@ -2643,12 +2606,12 @@ ECHO.
 SET usrInput=
 SET /P usrInput=[] 
 IF "%usrInput%"=="" SET NETWORK=%NETWORK_OLD%&GOTO :EOF
-IF "%SHOW_ALL_ALERTS%"=="1" ECHO Verifying...
+ECHO Verifying...
 FOR /L %%n IN (1,1,%CON_NUM%) DO IF "%usrInput%"=="%%n" SET NETWORK=!CONNECTION%%n_NAME!
 IF "%NETWORK%"=="" SET NETWORK=%usrInput%
 SET usrInput=
-CALL :TESTNetworkName %NETWORK%
-IF "%NETWORK_IsValid%"=="0" SET NETWORK=%NETWORK_OLD%&ECHO Not a valid name...&CALL :SLEEP 2&GOTO :SETTINGS_SETNETWORK
+NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
+IF ERRORLEVEL 1 SET NETWORK=%NETWORK_OLD%&ECHO Not a valid name...&CALL :SLEEP 2&GOTO :SETTINGS_SETNETWORK
 CALL :SETTINGS_EXPORT
 GOTO :EOF
 
