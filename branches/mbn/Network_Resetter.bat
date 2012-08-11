@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r177
+	SET rvsn=r180
 REM Branch:
 	SET Branch=MBN
 
@@ -183,8 +183,8 @@ REM ------------------------PROGRAM SLEEP-------------------------
 REM Program sleeps for %1 seconds
 IF "%1"=="" SET pN=3
 IF NOT "%1"=="" SET pN=%1
-PING -n 2 -w 1000 127.0.0.1>NUL
-PING -n %pN% -w 1000 127.0.0.1>NUL
+PING -n 2 -w 1000 127.0.0.1>NUL 2>&1
+PING -n %pN% -w 1000 127.0.0.1>NUL 2>&1
 GOTO :EOF
 REM ------------------------END PROGRAM SLEEP---------------------
 
@@ -773,7 +773,7 @@ SET TimerStatus=
 CALL :STATS
 
 REM Release IP Address
-IPCONFIG /RELEASE >NUL
+IPCONFIG /RELEASE >NUL 2>&1
 
 
 REM Flush DNS Cache
@@ -782,7 +782,7 @@ SET currently2=
 SET TimerStatus=
 CALL :STATS
 
-IPCONFIG /FLUSHDNS >NUL
+IPCONFIG /FLUSHDNS >NUL 2>&1
 
 
 REM Renew IP Address
@@ -791,7 +791,7 @@ SET currently2=*May take a couple minutes*
 SET TimerStatus=
 CALL :STATS
 
-IPCONFIG /RENEW >NUL
+IPCONFIG /RENEW >NUL 2>&1
 
 REM CANNOT TEST HERE
 REM Checking network connection here causes unwanted recursion
@@ -1421,10 +1421,10 @@ SET SU_Cur_Valid=1
 
 REM Check SVN installed:
 SET SU_ERR=201
-svn -?>NUL
+svn -?>NUL 2>&1
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 REM Valid working copy
-svn info>NUL
+svn info>NUL 2>&1
 IF ERRORLEVEL 1 GOTO :SU_UpdateByCheckout
 
 
@@ -1500,11 +1500,11 @@ CALL :GET_Randomfoldername checkoutfolder
 CALL :GET_Randomfilename NR_Update .bat
 
 SET SU_ERR=303
-IF "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%">NUL
-IF NOT "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%">NUL
+IF "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/trunk "%THISFILEDIR%%checkoutfolder%">NUL 2>&1
+IF NOT "%Branch%"=="" svn checkout --trust-server-cert --non-interactive http://nwconnectionresetter.googlecode.com/svn/branches/%branchurl% "%THISFILEDIR%%checkoutfolder%">NUL 2>&1
 IF NOT EXIST "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" GOTO :SelfUpdate_Error
 SET SU_ERR=304
-MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%">NUL
+MOVE /Y "%THISFILEDIR%%checkoutfolder%\Network_Resetter.bat" "%THISFILEDIR%%NR_Update%">NUL 2>&1
 IF ERRORLEVEL 1 GOTO :SelfUpdate_Error
 SET SU_UBC_DelfolAttempts=0
 :SU_UBC_RetryDelFol
@@ -1837,7 +1837,7 @@ SET currently2=Removing Launcher in Startup folder, if any...
 SET TimerStatus=
 IF "%SHOW_ALL_ALERTS%"=="1" CALL :STATS
 TYPE NUL > "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat"
-DEL /F /Q "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL
+DEL /F /Q "%USERPROFILE%\Start Menu\Programs\Startup\NetworkResetterByLectrode.bat" >NUL 2>&1
 
 GOTO :EOF
 REM ------------------END CHECK START AT LOG ON-------------------
@@ -1861,9 +1861,9 @@ GOTO :EOF
 SET TESTNETWORK=%*
 SET NETWORK_IsValid=1
 SET NETWORK_IsMBN=0
-NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL
+NETSH INTERFACE SHOW INTERFACE|FIND "%NETWORK%">NUL 2>&1
 IF NOT ERRORLEVEL 1 GOTO :EOF
-NETSH MBN SHOW INTERFACES|FIND "%NETWORK%">NUL
+NETSH MBN SHOW INTERFACES|FIND "%NETWORK%">NUL 2>&1
 IF NOT ERRORLEVEL 1 SET NETWORK_IsMBN=1&GOTO :EOF
 SET NETWORK_IsValid=0
 GOTO :EOF
@@ -2082,6 +2082,7 @@ REM --------------------------------------------------------------
 REM --------------------------------------------------------------
 
 :INITIALIZE
+@ECHO ON
 %NoECHO%@ECHO OFF
 CLS
 REM Set CMD window size
@@ -2178,6 +2179,7 @@ REM --------------------------------------------------------------
 
 
 :INITPROG
+@ECHO OFF
 @PROMPT :
 @CLS
 @ECHO.
@@ -2668,7 +2670,7 @@ GOTO :EOF
 
 :SETTINGS_SETNETWORK_BESTGUESS_GUESSING
 IF NOT "%NETWORK%"=="" GOTO :EOF
-NETSH INTERFACE SHOW INTERFACE|FIND "%*">NUL
+NETSH INTERFACE SHOW INTERFACE|FIND "%*">NUL 2>&1
 IF ERRORLEVEL 1 GOTO :EOF
 SET NETWORK=%*
 GOTO :EOF
