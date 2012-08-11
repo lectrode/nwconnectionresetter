@@ -7,7 +7,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r175
+	SET rvsn=r176
 REM Branch:
 	SET Branch=
 
@@ -1255,6 +1255,7 @@ REM UPDATECHANNEL: 1=stable 2=beta 3=dev
 %NoECHO%SET currently3=Self Update [%SU_GUI_UPDATECHANNEL%]
 %NoECHO%SET currently4=Initializing...
 %NoECHO%CALL :STATS
+CALL :SelfUpdate_GETRemoteServer
 SET rvsnchk=%rvsn:.=%
 SET rvsnchk=%rvsnchk:_=%
 SET rvsnchk=%rvsnchk:r=%
@@ -1266,7 +1267,6 @@ IF %lastUPDATECHANNEL%==b SET lastUPDATECHANNEL=2
 IF %lastUPDATECHANNEL%==r SET lastUPDATECHANNEL=3
 IF "%UPDATECHANNEL%"=="3" GOTO :SelfUpdate_dev
 
-CALL :SelfUpdate_GETRemoteServer
 
 REM Get versions
 
@@ -1998,6 +1998,7 @@ SET currently1=Checking validity of Settings...
 SET currently2=
 SET TimerStatus=
 CALL :STATS
+CALL :DETECT_ADMIN_RIGHTS
 CALL :TEST01VAR SLWMSG
 CALL :TEST01VAR SHOW_ALL_ALERTS
 CALL :TEST01VAR CONTINUOUS
@@ -2009,6 +2010,7 @@ CALL :TEST01VAR USE_RESET_ROUTE_TABLE
 CALL :TEST01VAR USE_IP_RESET
 CALL :TEST01VAR OMIT_USER_INPUT
 CALL :TEST_FIXES_VALS
+CALL :CHECK_NEED_ADMIN
 
 IF %USE_NETWORK_RESET%==1 (
 	CALL :DETECT_OS
@@ -2045,6 +2047,12 @@ REM --------------------------------------------------------------
 REM --------------------------------------------------------------
 
 :INITIALIZE
+%NoECHO%@ECHO OFF
+CLS
+REM Set CMD window size
+%NoECHO%MODE CON COLS=81 LINES=25
+%NoECHO%ECHO.
+%NoECHO%ECHO                             Initializing program...
 
 IF NOT "%Branch%"=="" SET branchurl=%Branch%&SET Branch=[%Branch%] &CALL :ToLower branchurl
 SET THISTITLE=Lectrode's Network Connection Resetter %Branch%%rvsn%
@@ -2135,13 +2143,10 @@ REM --------------------------------------------------------------
 
 
 :INITPROG
-PROMPT :
-%NoECHO%@ECHO OFF
-CLS
-REM Set CMD window size
-%NoECHO%MODE CON COLS=81 LINES=25
-%NoECHO%ECHO.
-%NoECHO%ECHO                             Initializing program...
+@PROMPT :
+@CLS
+@ECHO.
+@ECHO                             Initializing program...
 GOTO :EOF
 
 
@@ -2606,7 +2611,7 @@ ECHO.
 SET usrInput=
 SET /P usrInput=[] 
 IF "%usrInput%"=="" SET NETWORK=%NETWORK_OLD%&GOTO :EOF
-ECHO Verifying...
+IF "%SHOW_ALL_ALERTS%"=="1" ECHO Verifying...
 FOR /L %%n IN (1,1,%CON_NUM%) DO IF "%usrInput%"=="%%n" SET NETWORK=!CONNECTION%%n_NAME!
 IF "%NETWORK%"=="" SET NETWORK=%usrInput%
 SET usrInput=
