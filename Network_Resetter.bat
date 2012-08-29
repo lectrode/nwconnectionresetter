@@ -6,7 +6,7 @@ CALL :INITPROG
 REM -----Program Info-----
 REM Name: 		Network Resetter
 REM Revision:
-	SET rvsn=r185
+	SET rvsn=r187
 REM Branch:
 	SET Branch=RestartSvc
 
@@ -746,15 +746,17 @@ IF "%USE_NETWORK_RESET_FAST%"=="1" CALL :FIX_RESET_NETWORK_FAST
 GOTO :EOF
 
 
-REM *****RESET IP ADDRESS*****
+REM *****RESET DHCP Service*****
 :CONNFIX2
 :NETFIX2
-IF "%USE_IP_RESET%"=="1" CALL :FIX_RESET_IP
+IF "%USE_DHCP_RESET%"=="1" CALL :FIX_RESET_DHCP
 GOTO :EOF
 
-REM *****RESET DHCP Service*****
+
+REM *****RESET IP ADDRESS*****
+:CONNFIX3
 :NETFIX3
-IF "%USE_DHCP_RESET%"=="1" CALL :FIX_RESET_DHCP
+IF "%USE_IP_RESET%"=="1" CALL :FIX_RESET_IP
 GOTO :EOF
 
 
@@ -771,6 +773,7 @@ GOTO :EOF
 
 
 REM -----------------END FIX INTERNET CONNECTION------------------
+
 
 
 
@@ -2500,26 +2503,32 @@ CALL :HEADER
 CALL :SETTINGS_SETNETWORK
 CALL :SETTINGS_SETONE B2
 CALL :SETTINGS_SETONE B3
-CALL :SETTINGS_SETONE M1
-CALL :SETTINGS_SETONE M2
-CALL :SETTINGS_SETONE M3
-CALL :SETTINGS_SETONE M4
-CALL :SETTINGS_SETONE M5
-CALL :SETTINGS_SETONE M6
-CALL :SETTINGS_SETONE M7
-CALL :SETTINGS_SETONE M8
-CALL :SETTINGS_SETONE M9
+CALL :SETTINGS_SETONE B4
+CALL :SETTINGS_SETONE B5
+CALL :SETTINGS_SETONE B6
+
+CALL :SETTINGS_SETONE D1
+CALL :SETTINGS_SETONE D2
+CALL :SETTINGS_SETONE D3
+CALL :SETTINGS_SETONE D4
+
+CALL :SETTINGS_SETONE U1
+CALL :SETTINGS_SETONE U2
+CALL :SETTINGS_SETONE U3
+
+CALL :SETTINGS_SETONE F1
+CALL :SETTINGS_SETONE F2
+CALL :SETTINGS_SETONE F3
+CALL :SETTINGS_SETONE F4
+CALL :SETTINGS_SETONE F5
+CALL :SETTINGS_SETONE F6
+CALL :SETTINGS_SETONE F7
+
 CALL :SETTINGS_SETONE A1
 CALL :SETTINGS_SETONE A2
 CALL :SETTINGS_SETONE A3
 CALL :SETTINGS_SETONE A4
 CALL :SETTINGS_SETONE A5
-CALL :SETTINGS_SETONE A6
-CALL :SETTINGS_SETONE A7
-CALL :SETTINGS_SETONE A8
-CALL :SETTINGS_SETONE U1
-CALL :SETTINGS_SETONE U2
-CALL :SETTINGS_SETONE U3
 GOTO :EOF
 
 
@@ -2528,26 +2537,33 @@ CALL :HEADER
 IF "%CONTINUOUS%"=="1" SET MODE=Continuous
 IF "%CONTINUOUS%"=="0" SET MODE=Run Once
 ECHO Navigation:
-ECHO -View Update Settings   (U)
-ECHO -View Misc. Settings    (M)
-ECHO -View Advanced Settings (A)
-ECHO -Return                 (X)
+ECHO View Main Settings[ ]     View Display Settings[D]   Configure Fixes[F]
+ECHO View Update Settings[U]   View Advanced Settings[A]  Return[X]            
 ECHO.
-ECHO What settings would you like to set?
+ECHO -Main Settings-
+ECHO.
 ECHO  [Setting]             [#]  [Current Value]
 ECHO -Connection Name       (1)  "%NETWORK%"
 ECHO -Mode                  (2)   %MODE%
-ECHO -Use Logging           (3)   %USELOGGING%
+IF "%CONTINUOUS%"=="1" ECHO -Check every X minutes (3)   %CHECK_DELAY%
+IF "%CONTINUOUS%"=="0" ECHO -Check every X minutes [Continuous mode only]
+ECHO -Start at Logon        (4)   %START_AT_LOGON%
+ECHO -Start Minimized       (5)   %START_MINIMIZED%
+ECHO -Use Logging           (6)   %USELOGGING%
 ECHO.
 SET usrInput=
-SET /P usrInput=[U/M/A/X/1/2/3] 
+SET /P usrInput=[D/F/U/A/X/1/2/3/4/5] 
 IF "%usrInput%"=="1" CALL :SETTINGS_SETNETWORK
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE B2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B3
-IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B4
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE B5
+IF /I "%usrInput%"=="M" SET usrInput= &GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="D" SET usrInput= &GOTO :SETTINGS_SET_LIST_GUI
+IF /I "%usrInput%"=="F" SET usrInput= &GOTO :SETTINGS_SET_LIST_FIXES
+IF /I "%usrInput%"=="U" SET usrInput= &GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput= &GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput= &GOTO :EOF
 GOTO :SETTINGS_SET_LIST_MAIN
 
 :SETTINGS_SET_LIST_UPDATE
@@ -2556,102 +2572,122 @@ IF "%UPDATECHANNEL%"=="1" SET CURCHANNEL=Stable
 IF "%UPDATECHANNEL%"=="2" SET CURCHANNEL=Beta
 IF "%UPDATECHANNEL%"=="3" SET CURCHANNEL=Dev
 ECHO Navigation:
-ECHO -View Basic Settings    (B)
-ECHO -View Misc. Settings    (M)
-ECHO -View Advanced Settings (A)
-ECHO -Return                 (X)
+ECHO View Main Settings[M]     View Display Settings[D]   Configure Fixes[F]
+ECHO View Update Settings[ ]   View Advanced Settings[A]  Return[X]            
 ECHO.
-ECHO What settings would you like to set?
+ECHO -Update Settings-
+ECHO.
 ECHO  [Setting]             [#]  [Current Value]
 ECHO -Auto Update           (1)   %AUTOUPDATE%
 ECHO -Update Channel        (2)   %CURCHANNEL%
 ECHO -Update Frequency      (3)   %CHECKUPDATEFREQ%
 ECHO.
 SET usrInput=
-SET /P usrInput=[M/A/X/1/2/3] 
+SET /P usrInput=[M/D/F/A/X/1/2/3]  
 IF "%usrInput%"=="1" CALL :SETTINGS_SETONE U1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE U2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE U3
-IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+IF /I "%usrInput%"=="M" SET usrInput= &GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="D" SET usrInput= &GOTO :SETTINGS_SET_LIST_GUI
+IF /I "%usrInput%"=="F" SET usrInput= &GOTO :SETTINGS_SET_LIST_FIXES
+IF /I "%usrInput%"=="U" SET usrInput= &GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput= &GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput= &GOTO :EOF
 GOTO :SETTINGS_SET_LIST_UPDATE
 
-:SETTINGS_SET_LIST_MISC
+
+:SETTINGS_SET_LIST_GUI
 CALL :HEADER
 ECHO Navigation:
-ECHO -View Basic Settings    (B)
-ECHO -View Update Settings   (U)
-ECHO -View Advanced Settings (A)
-ECHO -Return                 (X)
+ECHO View Main Settings[M]     View Display Settings[ ]   Configure Fixes[F]
+ECHO View Update Settings[U]   View Advanced Settings[A]  Return[X]            
 ECHO.
-ECHO What settings would you like to set?
+ECHO -Display Settings-
+ECHO.
 ECHO  [Setting]             [#]  [Current Value]
-ECHO -AutoRetry             (1)   %AUTO_RETRY%
-ECHO -Network Reset Stall   (2)   %MINUTES% Minute[s]
-ECHO -Check Delay           (3)   %CHECK_DELAY% Minute[s]
-ECHO -Show All Alerts       (4)   %SHOW_ALL_ALERTS%
-ECHO -Show Advanced Testing (5)   %SHOW_ADVANCED_TESTING%
-ECHO -Slow Messages         (6)   %SLWMSG%
-ECHO -Timer Refresh Rate    (7)   %TIMER_REFRESH_RATE% Second[s]
-ECHO -Start at Logon        (8)   %START_AT_LOGON%
-ECHO -Start Minimized       (9)   %START_MINIMIZED%
+ECHO -Show All Alerts       (1)   %SHOW_ALL_ALERTS%
+ECHO -Show Advanced Testing (2)   %SHOW_ADVANCED_TESTING%
+ECHO -Slow Messages         (3)   %SLWMSG%
+ECHO -Timer Refresh Rate    (4)   %TIMER_REFRESH_RATE% Second[s]
 ECHO.
 SET usrInput=
-SET /P usrInput=[B/U/A/X/1/2/3/4/5/6/7/8/9] 
-IF "%usrInput%"=="1" CALL :SETTINGS_SETONE M1
-IF "%usrInput%"=="2" CALL :SETTINGS_SETONE M2
-IF "%usrInput%"=="3" CALL :SETTINGS_SETONE M3
-IF "%usrInput%"=="4" CALL :SETTINGS_SETONE M4
-IF "%usrInput%"=="5" CALL :SETTINGS_SETONE M5
-IF "%usrInput%"=="6" CALL :SETTINGS_SETONE M6
-IF "%usrInput%"=="7" CALL :SETTINGS_SETONE M7
-IF "%usrInput%"=="8" CALL :SETTINGS_SETONE M8
-IF "%usrInput%"=="9" CALL :SETTINGS_SETONE M9
-IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="A" SET usrInput=&GOTO :SETTINGS_SET_LIST_ADV
-IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+SET /P usrInput=[M/F/U/A/X/1/2/3/4]  
+IF "%usrInput%"=="1" CALL :SETTINGS_SETONE D1
+IF "%usrInput%"=="2" CALL :SETTINGS_SETONE D2
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE D3
+IF "%usrInput%"=="4" CALL :SETTINGS_SETONE D4
+IF /I "%usrInput%"=="M" SET usrInput= &GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="D" SET usrInput= &GOTO :SETTINGS_SET_LIST_GUI
+IF /I "%usrInput%"=="F" SET usrInput= &GOTO :SETTINGS_SET_LIST_FIXES
+IF /I "%usrInput%"=="U" SET usrInput= &GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput= &GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput= &GOTO :EOF
 GOTO :SETTINGS_SET_LIST_MISC
 
 
 :SETTINGS_SET_LIST_ADV
 CALL :HEADER
 ECHO Navigation:
-ECHO -View Basic Settings    (B)
-ECHO -View Update Settings   (U)
-ECHO -View Misc. Settings    (M)
-ECHO -Return                 (X)
+ECHO View Main Settings[M]     View Display Settings[D]   Configure Fixes[F]
+ECHO View Update Settings[U]   View Advanced Settings[ ]  Return[X]            
 ECHO.
-ECHO What settings would you like to set?
-ECHO  [Setting]                   [##]  [Current Value]
-ECHO -Omit User Input             ( 1)   %OMIT_USER_INPUT%
-ECHO -Skip Initial Ntwk Test      ( 2)   %SKIP_INITIAL_NTWK_TEST%
-ECHO -Enable FIX: Reset IP        ( 3)   %USE_IP_RESET%
-ECHO -Enable FIX: FastNWReset     ( 4)   %USE_NETWORK_RESET_FAST%
-ECHO -Enable FIX: SlowNWReset     ( 5)   %USE_NETWORK_RESET%
-ECHO -Enable FIX: ResetRoutes     ( 6)   %USE_RESET_ROUTE_TABLE%
-ECHO -Treat Timeout as disconnect ( 7)   %TREAT_TIMEOUTS_AS_DISCONNECT%
-ECHO -One Connection name test    ( 8)   %ONLY_ONE_NETWORK_NAME_TEST%
-ECHO -OS Detection Override       ( 9)   %OS_DETECT_OVERRIDE%
+ECHO -Advanced Settings-
+ECHO.
+ECHO  [Setting]                   [#]  [Current Value]
+ECHO -Omit User Input             (1)   %OMIT_USER_INPUT%
+ECHO -Skip Initial Ntwk Test      (2)   %SKIP_INITIAL_NTWK_TEST%
+ECHO -Treat Timeout as disconnect (3)   %TREAT_TIMEOUTS_AS_DISCONNECT%
+ECHO -One Connection name test    (4)   %ONLY_ONE_NETWORK_NAME_TEST%
+ECHO -OS Detection Override       (5)   %OS_DETECT_OVERRIDE%
 ECHO.
 SET usrInput=
-SET /P usrInput=[B/U/M/X/1/2/3/4/5/6/7/8/9/10] 
+SET /P usrInput=[M/D/F/U/X/1/2/3/4/5] 
 IF "%usrInput%"=="1" CALL :SETTINGS_SETONE A1
 IF "%usrInput%"=="2" CALL :SETTINGS_SETONE A2
 IF "%usrInput%"=="3" CALL :SETTINGS_SETONE A3
 IF "%usrInput%"=="4" CALL :SETTINGS_SETONE A4
 IF "%usrInput%"=="5" CALL :SETTINGS_SETONE A5
-IF "%usrInput%"=="6" CALL :SETTINGS_SETONE A6
-IF "%usrInput%"=="7" CALL :SETTINGS_SETONE A7
-IF "%usrInput%"=="8" CALL :SETTINGS_SETONE A8
-IF "%usrInput%"=="9" CALL :SETTINGS_SETONE A9
-IF "%usrInput%"=="10" CALL :SETTINGS_SETONE A10
-IF /I "%usrInput%"=="B" SET usrInput=&GOTO :SETTINGS_SET_LIST_MAIN
-IF /I "%usrInput%"=="U" SET usrInput=&GOTO :SETTINGS_SET_LIST_UPDATE
-IF /I "%usrInput%"=="M" SET usrInput=&GOTO :SETTINGS_SET_LIST_MISC
-IF /I "%usrInput%"=="X" SET usrInput=&GOTO :EOF
+IF /I "%usrInput%"=="M" SET usrInput= &GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="D" SET usrInput= &GOTO :SETTINGS_SET_LIST_GUI
+IF /I "%usrInput%"=="F" SET usrInput= &GOTO :SETTINGS_SET_LIST_FIXES
+IF /I "%usrInput%"=="U" SET usrInput= &GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput= &GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput= &GOTO :EOF
+GOTO :SETTINGS_SET_LIST_ADV
+
+
+:SETTINGS_SET_LIST_FIXES
+CALL :HEADER
+ECHO Navigation:
+ECHO View Main Settings[M]     View Display Settings[D]   Configure Fixes[ ]
+ECHO View Update Settings[U]   View Advanced Settings[A]  Return[X]            
+ECHO.
+ECHO -Fixes Configuration-
+ECHO.
+ECHO  [Setting]                   [##]  [Current Value]
+ECHO -AutoRetry                   (1)   %AUTO_RETRY%
+ECHO -Network Reset Stall         (2)   %MINUTES% Minute[s]
+ECHO -Enable FIX: FastNWReset     (3)   %USE_NETWORK_RESET_FAST%
+ECHO -Enable FIX: Reset DHCP      (4)   %USE_DHCP_RESET%
+ECHO -Enable FIX: Reset IP        (5)   %USE_IP_RESET%
+ECHO -Enable FIX: SlowNWReset     (6)   %USE_NETWORK_RESET%
+ECHO -Enable FIX: ResetRoutes     (7)   %USE_RESET_ROUTE_TABLE%
+ECHO.
+SET usrInput=
+SET /P usrInput=[M/D/U/A/X/1/2/3/4/5/6/7]  
+IF "%usrInput%"=="1" CALL :SETTINGS_SETONE F1
+IF "%usrInput%"=="2" CALL :SETTINGS_SETONE F2
+IF "%usrInput%"=="3" CALL :SETTINGS_SETONE F3
+IF "%usrInput%"=="4" CALL :SETTINGS_SETONE F4
+IF "%usrInput%"=="5" CALL :SETTINGS_SETONE F5
+IF "%usrInput%"=="6" CALL :SETTINGS_SETONE F6
+IF "%usrInput%"=="7" CALL :SETTINGS_SETONE F7
+IF /I "%usrInput%"=="M" SET usrInput= &GOTO :SETTINGS_SET_LIST_MAIN
+IF /I "%usrInput%"=="D" SET usrInput= &GOTO :SETTINGS_SET_LIST_GUI
+IF /I "%usrInput%"=="F" SET usrInput= &GOTO :SETTINGS_SET_LIST_FIXES
+IF /I "%usrInput%"=="U" SET usrInput= &GOTO :SETTINGS_SET_LIST_UPDATE
+IF /I "%usrInput%"=="A" SET usrInput= &GOTO :SETTINGS_SET_LIST_ADV
+IF /I "%usrInput%"=="X" SET usrInput= &GOTO :EOF
 GOTO :SETTINGS_SET_LIST_ADV
 
 :SETTINGS_SETONE
@@ -2752,6 +2788,27 @@ SET SETTINGINFO3=[Must run settings file to configure settings if this is set to
 SET SETNVAR=CONTINUOUS
 )
 IF %1==B3 (
+SET SETTINGTITLE=CHECK_DELAY
+SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
+SET SETTINGINFO1=
+SET SETTINGINFO2=In MODE:Continuous, this is how many minutes between
+SET SETTINGINFO3=connection tests.
+)
+IF %1==B4 (
+SET SETTINGTITLE=START_AT_LOGON
+SET SETTINGOPT=Enter 1 for True, Enter 0 for False
+SET SETTINGINFO1=Start this script at user log on
+SET SETTINGINFO2=When true, this script will start when you log on.
+SET SETTINGINFO3=NOTE: Not available when running with portable or temp settings
+)
+IF %1==B5 (
+SET SETTINGTITLE=START_MINIMIZED
+SET SETTINGOPT=Enter 1 for True, Enter 0 for False
+SET SETTINGINFO1=Start Minimized
+SET SETTINGINFO2=When true, this sript will minimize itself when it is run
+SET SETTINGINFO3=
+)
+IF %1==B6 (
 SET SETTINGTITLE=USE LOGGING
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=
@@ -2783,42 +2840,21 @@ SET SETTINGINFO2=This script will check for updates only
 SET SETTINGINFO3=after this many successful connection tests
 SET SETNVAR=CHECKUPDATEFREQ
 )
-IF %1==M1 (
-SET SETTINGTITLE=AUTO_RETRY
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=
-SET SETTINGINFO2=If fix fails the first time, automatically keep
-SET SETTINGINFO3=retrying. [Applies to Mode:Run Once only!]
-)
-IF %1==M2 (
-SET SETTINGTITLE=MINUTES
-SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
-SET SETTINGINFO1=Number of minutes to wait before re-enabling
-SET SETTINGINFO2=the network adapter [5-15 reccomended]
-SET SETTINGINFO3=
-)
-IF %1==M3 (
-SET SETTINGTITLE=CHECK_DELAY
-SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
-SET SETTINGINFO1=
-SET SETTINGINFO2=In MODE:Continuous, this is how many minutes between
-SET SETTINGINFO3=connection tests.
-)
-IF %1==M4 (
+IF %1==D1 (
 SET SETTINGTITLE=SHOW_ALL_ALERTS
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=When set to On, shows more detailed messages.
 SET SETTINGINFO2=NOTE: Regardless of what you set this too, this
 SET SETTINGINFO3=script will always display important messages.
 )
-IF %1==M5 (
+IF %1==D2 (
 SET SETTINGTITLE=SHOW_ADVANCED_TESTING
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Show Advanced Testing Output
 SET SETTINGINFO2=When true, more details will be shown reguarding
 SET SETTINGINFO3=testing the internet
 )
-IF %1==M6 (
+IF %1==D3 (
 SET SETTINGTITLE=SLOW MESSAGES
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=
@@ -2826,26 +2862,62 @@ SET SETTINGINFO2=When true, this script will pause for every message it displays
 SET SETTINGINFO3=to allow the user to read them [run time will be longer]
 SET SETNVAR=SLWMSG
 )
-IF %1==M7 (
+IF %1==D4 (
 SET SETTINGTITLE=TIMER_REFRESH_RATE
 SET SETTINGOPT=Integers greater than 0 Only! [aka 1,2,3,etc]
 SET SETTINGINFO1=Timer Refresh Rate [Update every # seconds]
 SET SETTINGINFO2=[1-10 recommended]
 SET SETTINGINFO3=
 )
-IF %1==M8 (
-SET SETTINGTITLE=START_AT_LOGON
-SET SETTINGOPT=Enter 1 for True, Enter 0 for False
-SET SETTINGINFO1=Start this script at user log on
-SET SETTINGINFO2=When true, this script will start when you log on.
-SET SETTINGINFO3=NOTE: Not available when running with portable or temp settings
+IF %1==F1 (
+SET SETTINGTITLE=AUTO_RETRY
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=
+SET SETTINGINFO2=If fix fails the first time, automatically keep
+SET SETTINGINFO3=retrying. [Applies to Mode:Run Once only!]
 )
-IF %1==M9 (
-SET SETTINGTITLE=START_MINIMIZED
-SET SETTINGOPT=Enter 1 for True, Enter 0 for False
-SET SETTINGINFO1=Start Minimized
-SET SETTINGINFO2=When true, this sript will minimize itself when it is run
+IF %1==F2 (
+SET SETTINGTITLE=MINUTES
+SET SETTINGOPT=Integers Only! [aka 0,1,2,etc]
+SET SETTINGINFO1=Number of minutes to wait before re-enabling
+SET SETTINGINFO2=the network adapter [5-15 reccomended]
 SET SETTINGINFO3=
+)
+IF %1==F3 (
+SET SETTINGTITLE=USE_NETWORK_RESET_FAST
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Quick Connection Reset
+SET SETTINGINFO2=This fix quickly enables and disables the connection
+SET SETTINGINFO3=*Requires Administrative rights
+)
+IF %1==F4 (
+SET SETTINGTITLE=USE_DHCP_RESET
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Restart the DHCP Service
+SET SETTINGINFO2=*Requires Administrative rights
+SET SETTINGINFO3=
+)
+IF %1==F5 (
+SET SETTINGTITLE=USE_IP_RESET
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Reset the IP Address
+SET SETTINGINFO2=This fix releases, flushes, and renews the IP Address
+SET SETTINGINFO3=*This affects all Network Connections
+)
+IF %1==F6 (
+SET SETTINGTITLE=USE_NETWORK_RESET [Slow]
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Slow Connection Reset
+SET SETTINGINFO2=This fix disables, stalls, and enables the connection
+SET SETTINGINFO3=*Requires Administrative rights
+SET SETNVAR=USE_NETWORK_RESET
+)
+IF %1==F7 (
+SET SETTINGTITLE=USE_RESET_ROUTE_TABLE
+SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
+SET SETTINGINFO1=Enable FIX: Reset Route Table
+SET SETTINGINFO2=This fixes 'Host Unreachable' errors.
+SET SETTINGINFO3=*This affects all Network Connections
 )
 IF %1==A1 (
 SET SETTINGTITLE=OMIT_USER_INPUT
@@ -2862,49 +2934,20 @@ SET SETTINGINFO2=Select this if you want this script to immediately attempt
 SET SETTINGINFO3=to fix your connection without testing the connection first
 )
 IF %1==A3 (
-SET SETTINGTITLE=USE_IP_RESET
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Enable FIX: Reset the IP Address
-SET SETTINGINFO2=Unless you frequently get stuck on "Reseting IP address"
-SET SETTINGINFO3=you should leave this enabled.
-)
-IF %1==A4 (
-SET SETTINGTITLE=USE_NETWORK_RESET_FAST
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Enable FIX: Quick Connection Reset
-SET SETTINGINFO2=If enabled, this is tried first to fix your connection
-SET SETTINGINFO3=In most cases this should be left enabled.
-)
-IF %1==A5 (
-SET SETTINGTITLE=USE_NETWORK_RESET [Slow]
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Enable FIX: Slow Connection Reset
-SET SETTINGINFO2=Slow Reset works more often than Quick Reset.
-SET SETTINGINFO3=In most cases this should be left enabled.
-SET SETNVAR=USE_NETWORK_RESET
-)
-IF %1==A6 (
-SET SETTINGTITLE=USE_RESET_ROUTE_TABLE
-SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
-SET SETTINGINFO1=Enable FIX: Reset Route Table
-SET SETTINGINFO2=This seems to fix 'Host Unreachable' errors, but
-SET SETTINGINFO3=it may have unforseen negative effects.
-)
-IF %1==A7 (
 SET SETTINGTITLE=TREAT_TIMEOUTS_AS_DISCONNECT
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=If you use browser-based network authentication, you may
 SET SETTINGINFO2=need to set this to False. Other times, routers may need
 SET SETTINGINFO3=to re-register your device to fix timeout problems.
 )
-IF %1==A8 (
+IF %1==A4 (
 SET SETTINGTITLE=ONLY_ONE_NETWORK_NAME_TEST
 SET SETTINGOPT=Enter 1 for True, Enter 0 for False
 SET SETTINGINFO1=Don't test Network Name more than once
 SET SETTINGINFO2=Setting to True is ideal on most computers as long as the 
 SET SETTINGINFO3=Network Connection name does not change
 )
-IF %1==A9 (
+IF %1==A5 (
 SET SETTINGTITLE=OS_DETECT_OVERRIDE
 SET SETTINGOPT=Enter 1 for On, Enter 0 for Off
 SET SETTINGINFO1=Override Operating System Detection
@@ -2917,9 +2960,16 @@ GOTO :EOF
 
 :SETTINGS_SETDEFAULT
 REM Defines default setting values
+
+REM Update Channel default
 IF %rvsn:~0,1%==v SET UPDATECHANNEL_D=1
 IF %rvsn:~0,1%==b SET UPDATECHANNEL_D=2
 IF %rvsn:~0,1%==r SET UPDATECHANNEL_D=3
+
+REM DHCP default is IP value
+SET USE_DHCP_RESET_D=1
+IF NOT "%USE_IP_RESET%"=="" SET USE_DHCP_RESET_D=%USE_IP_RESET%
+
 SET MINUTES_D=10
 SET NETWORK_D=Wireless Network Connection
 SET CONTINUOUS_D=0
@@ -2964,6 +3014,7 @@ SET START_MINIMIZED=%START_MINIMIZED_D%
 SET OMIT_USER_INPUT=%OMIT_USER_INPUT_D%
 SET SKIP_INITIAL_NTWK_TEST=%SKIP_INITIAL_NTWK_TEST_D%
 SET USE_IP_RESET=%USE_IP_RESET_D%
+SET USE_DHCP_RESET=%USE_DHCP_RESET_D%
 SET USE_NETWORK_RESET_FAST=%USE_NETWORK_RESET_FAST_D%
 SET USE_NETWORK_RESET=%USE_NETWORK_RESET_D%
 SET USE_RESET_ROUTE_TABLE=%USE_RESET_ROUTE_TABLE_D%
