@@ -3,7 +3,7 @@
 ## Batch file to Monitor and Reset Network Connection ##
 ## OS: Windows XP,Vista,7 and Windows Server 2003,2008 ##
 <br />
-_Please check out my **[Quick Net Fix](https://code.google.com/p/quick-net-fix/)**, as that script has superseded this one in nearly all aspects, including compatibility with older and newer Windows systems_
+_Please check out my **[Quick Net Fix](https://github.com/lectrode/quick-net-fix/blob/wiki/ProjectHome.md)**, as that script has superseded this one in every aspect, including compatibility with older and newer Windows systems_
 <br />
 This is a program I started making in February 2011. The reason I made this was because the school I was at had a flawed wireless network setup. I believe the fault lied with the routers they use.
 
